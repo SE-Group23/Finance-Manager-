@@ -1,6 +1,6 @@
 import express, { Request, Response } from "express";
 import bcrypt from "bcryptjs";
-import pool from "./db";
+import pool from "../db";
 import jwt from "jsonwebtoken";
 
 const router = express.Router();
