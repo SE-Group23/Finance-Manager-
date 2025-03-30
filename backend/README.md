@@ -2,7 +2,6 @@
 
 ## ✅ Overview
 
-This is the backend for a full-stack project using:
 - Node.js + Express
 - PostgreSQL (hosted on [Neon](https://neon.tech))
 - JWT-based Authentication
