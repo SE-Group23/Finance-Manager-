@@ -105,5 +105,16 @@ router.post('/login', async (req: Request, res: Response) => {
   }
 });
 
+router.get("/test-db", async (req: Request, res: Response) => {
+  try {
+    const result = await pool.query("SELECT NOW()");
+    res.json({ message: "DB connected ✅", time: result.rows[0].now });
+  } catch (err) {
+    console.error("DB error:", err);
+    res.status(500).json({ message: "DB connection failed ❌" });
+  }
+});
+
+
 
 export default router;
