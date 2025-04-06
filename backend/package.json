@@ -4,7 +4,11 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon --exec ts-node index.ts"
+    "dev": "nodemon --exec ts-node index.ts",
+    "migrate": "node-pg-migrate -f pg-migrate.config.js",
+    "migrate:up": "node-pg-migrate up -f pg-migrate.config.js",
+  "migrate:down": "node-pg-migrate down -f pg-migrate.config.js",
+    "migrate:create": "node-pg-migrate create -f pg-migrate.config.js -m db/migrations"
   },
   "keywords": [],
   "author": "",
@@ -25,6 +29,7 @@
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",
-    "@types/cors": "^2.8.17"
+    "@types/cors": "^2.8.17",
+    "node-pg-migrate": "^7.9.1"
   }
 }
