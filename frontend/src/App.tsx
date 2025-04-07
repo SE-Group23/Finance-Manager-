@@ -1,7 +1,7 @@
 // frontend/src/App.tsx
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import RegisterPage from './pages/RegisterPage';
+import SignUpPage from './pages/SignUpPage';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import TransactionsPage from './pages/TransactionsPage';
@@ -12,7 +12,7 @@ const App: React.FC = () => {
   return (
     <Router>
       <Routes>
-        <Route path="/register" element={<RegisterPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/transactions" element={<TransactionsPage />} />
