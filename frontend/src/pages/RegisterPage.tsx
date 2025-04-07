@@ -1,70 +1,116 @@
-// frontend/src/pages/RegisterPage.tsx
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { registerUser } from '../services/authService';
+"use client"
 
-const RegisterPage: React.FC = () => {
-  const navigate = useNavigate();
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail]       = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError]       = useState('');
+import React, { useEffect } from "react"
+import SignUpForm from "../components/SignUpForm";
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const data = await registerUser(fullName, email, password);
-      // Save token to localStorage (or via a state management solution)
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('userId', data.userId);
-      // Navigate to the dashboard (or login page)
-      navigate('/dashboard');
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Registration failed');
+const SignUpPage: React.FC = () => {
+  // Add Inter font and reset default margins
+  useEffect(() => {
+    const fontLink = document.createElement("link")
+    fontLink.href = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+    fontLink.rel = "stylesheet"
+    document.head.appendChild(fontLink)
+
+    document.body.style.margin = "0"
+    document.body.style.padding = "0"
+    document.body.style.overflow = "hidden"
+    document.documentElement.style.margin = "0"
+    document.documentElement.style.padding = "0"
+    document.documentElement.style.overflow = "hidden"
+
+    return () => {
+      document.head.removeChild(fontLink)
     }
-  };
+  }, [])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <form onSubmit={handleSubmit} className="bg-white p-8 rounded shadow-md w-full max-w-md">
-        <h2 className="text-2xl font-bold mb-6">Register</h2>
-        {error && <p className="mb-4 text-red-500">{error}</p>}
-        <label className="block mb-2">
-          Full Name
-          <input
-            type="text"
-            className="mt-1 p-2 w-full border rounded"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            required
-          />
-        </label>
-        <label className="block mb-2">
-          Email
-          <input
-            type="email"
-            className="mt-1 p-2 w-full border rounded"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </label>
-        <label className="block mb-4">
-          Password
-          <input
-            type="password"
-            className="mt-1 p-2 w-full border rounded"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </label>
-        <button type="submit" className="w-full bg-blue-500 text-white p-2 rounded">
-          Register
-        </button>
-      </form>
-    </div>
-  );
-};
+    <div style={styles.container}>
+      {/* Left side with illustration */}
+      <div style={styles.leftSide}>
+        {/* Navigation */}
+        <div style={styles.navBar}>
+          <a href="#" style={styles.navLink}>Explore</a>
+          <a href="#" style={styles.navLink}>About Us</a>
+          <a href="#" style={styles.navLink}>Contact</a>
+        </div>
 
-export default RegisterPage;
+        {/* Illustration */}
+        <div style={styles.illustrationArea}>
+          <div style={styles.illustrationContainer}>
+            <img
+              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-LnHpTjxWLfjAVAmzxzmawdcsTVp07D.png"
+              alt="Developer illustration"
+              style={styles.illustration}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Right side with form */}
+      <div style={styles.rightSide}>
+        <SignUpForm />
+      </div>
+    </div>
+  )
+}
+
+const styles = {
+  container: {
+    display: "flex",
+    height: "100vh",
+    width: "100vw",
+    fontFamily: '"Inter", sans-serif',
+    overflow: "hidden",
+  },
+  leftSide: {
+    width: "50%",
+    display: "flex",
+    flexDirection: "column" as const,
+    height: "100%",
+  },
+  navBar: {
+    display: "flex",
+    alignItems: "center",
+    height: "48px",
+    padding: "0 20px",
+    backgroundColor: "#003c36",
+    borderBottom: "1px solid rgba(0, 80, 72, 0.3)",
+  },
+  navLink: {
+    color: "white",
+    textDecoration: "none",
+    fontSize: "14px",
+    marginRight: "32px",
+  },
+  illustrationArea: {
+    flex: 1,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "linear-gradient(to bottom, #004a42 0%, #006e5f 50%, #00806c 100%)",
+    height: "calc(100% - 48px)",
+  },
+  illustrationContainer: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    width: "100%",
+    height: "100%",
+    padding: "20px",
+  },
+  illustration: {
+    maxWidth: "100%",
+    maxHeight: "80%",
+    objectFit: "contain" as const,
+  },
+  rightSide: {
+    width: "50%",
+    backgroundColor: "#f0f8e8",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    height: "100%",
+  },
+}
+
+export default SignUpPage
