@@ -5,7 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
-
+import LoginPage from "./pages/LoginPage"; // Import the LoginPage component
+import SignupPage from "./pages/RegisterPage"
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -16,7 +17,8 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          <Route path="/signin" element={<LoginPage />} /> {/* Update route to LoginPage */}
+          <Route path = "/signup" element = {<SignupPage />}/>
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

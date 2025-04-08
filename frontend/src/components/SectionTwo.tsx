@@ -1,4 +1,4 @@
-import React from 'react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 
@@ -13,9 +13,11 @@ const SectionTwo = () => {
           <a href="#" className="text-white/90 hover:text-white transition duration-300">Contact</a>
         </div>
         {/* Sign In button on the top right */}
-        <Button variant="outline" className="absolute top-4 right-4 text-white border-white/30 hover:bg-white/10 px-6 py-2 rounded-lg bg-transparent">
-          Sign In
-        </Button>
+        <Link to="/signin">
+          <Button variant="outline" className="absolute top-4 right-4 text-white border-white/30 hover:bg-white/10 px-6 py-2 rounded-lg bg-transparent">
+            Sign In
+          </Button>
+        </Link>
       </div>
       
       {/* Main Content */}
@@ -36,11 +38,12 @@ const SectionTwo = () => {
           <p className="text-white/90 my-6 text-lg max-w-md">
             Easily Track Spending, Manage Investments, And Stay On Top Of All Your Deadlines - All In One Secure Platform. Get AI-Powered Insights To Optimize Your Financial Future!
           </p>
-          
-          <Button className="bg-[#00C853] hover:bg-[#00A844] text-white rounded-full py-4 px-8 text-lg flex items-center">
-            Open Account
-            <ArrowRight className="ml-3 h-6 w-6" />
-          </Button>
+          <Link to = "/signup">
+            <Button className="bg-[#00C853] hover:bg-[#00A844] text-white rounded-full py-4 px-8 text-lg flex items-center">
+              Open Account
+              <ArrowRight className="ml-3 h-6 w-6" />
+            </Button>
+          </Link>
         </div>
         
         {/* Image Section */}
