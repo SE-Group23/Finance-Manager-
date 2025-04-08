@@ -18,7 +18,7 @@ export const registerUser: RequestHandler = async (req: Request, res: Response, 
     // Check if the email already exists
     const existing = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     if (existing.rows.length > 0) {
-      res.status(400).json({ error: 'Email already in use' });
+      res.status(409).json({ error: 'Email already in use' });
       return;
     }
     // Hash the password
@@ -26,7 +26,7 @@ export const registerUser: RequestHandler = async (req: Request, res: Response, 
     const hashedPassword = await bcrypt.hash(password, salt);
     // Insert the new user
     const result = await pool.query(
-      `INSERT INTO users (full_name, email, password_hash) 
+      `INSERT INTO users (user_name, email, password_hash) 
        VALUES ($1, $2, $3) 
        RETURNING user_id`,
       [fullName, email, hashedPassword]

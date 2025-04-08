@@ -25,7 +25,7 @@ async function getMonthlyIncome(userId: number, monthStart: Date): Promise<numbe
     `SELECT income_amount FROM user_income WHERE user_id = $1 AND month_start = $2`,
     [userId, monthStart]
   );
-  return incomeResult.rowCount > 0 ? incomeResult.rows[0].income_amount : null;
+  return (incomeResult.rowCount ?? 0) > 0 ? incomeResult.rows[0].income_amount : null;
 }
 
 
@@ -193,7 +193,7 @@ export async function setBudget(req: Request, res: Response): Promise<void> {
     const monthStart = month_start ? new Date(month_start) : getMonthStart();
 
     // Upsert the monthly income, if provided.
-    if (monthly_income !== undefined) {
+    if (monthly_income !== undefined && monthly_income !== null) {
       await upsertMonthlyIncome(userId, monthStart, monthly_income);
     }
 

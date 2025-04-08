@@ -36,18 +36,25 @@ export async function getTransactions(req: Request, res: Response): Promise<void
   try {
     const userId = (req as any).userId;
     const result = await pool.query(
-      'SELECT * FROM transactions WHERE user_id = $1 ORDER BY transaction_date DESC',
+      `SELECT t.transaction_id,
+              t.amount,
+              t.transaction_type,
+              t.vendor,
+              t.description AS note,
+              t.transaction_date,
+              c.category_name AS category
+       FROM transactions t
+       LEFT JOIN categories c ON t.category_id = c.category_id
+       WHERE t.user_id = $1
+       ORDER BY t.transaction_date DESC`,
       [userId]
     );
     res.json(result.rows);
-    return;
   } catch (error) {
     console.error('Error fetching transactions:', error);
     res.status(500).json({ error: 'Error fetching transactions' });
-    return;
   }
 }
-
 
 /**
  * Retrieve a transaction by its ID.
