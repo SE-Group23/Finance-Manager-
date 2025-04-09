@@ -48,7 +48,8 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ activePage }) => {
   // Add a handler for logout button
   const handleLogout = () => {
-    window.location.href = "/" // Redirect to landing page after logout
+    window.location.href = "/api/auth/logout"
+
   }
 
   return (
@@ -69,6 +70,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage }) => {
             active={activePage === "transactions"}
             to="/transactions"
           />
+          
           <NavItem icon={<BudgetsIcon />} text="Budgets" active={activePage === "budgets"} to="/budget" />
           <NavItem icon={<AssetsIcon />} text="Assets" active={activePage === "assets"} to="/assets" />
           <NavItem icon={<CalendarIcon />} text="Calendar" active={activePage === "calendar"} to="/calendar" />
@@ -87,6 +89,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage }) => {
           </button>
         </div>
         <div className="text-sm">
+
           {/* <div className="font-medium">Sam Wheeler</div>
           <div className="text-white text-opacity-80 text-xs">samwheeler@example.com</div> */}
         </div>

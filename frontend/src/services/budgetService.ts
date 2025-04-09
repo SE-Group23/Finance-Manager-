@@ -26,7 +26,7 @@ export async function getBudgets() {
       Authorization: `Bearer ${token}`,
     },
   })
-  return response.data.budgets
+  return response.data
 }
 
 // Set budgets for a specific month
@@ -52,6 +52,36 @@ export async function deleteBudget(budgetId: number) {
       Authorization: `Bearer ${token}`,
     },
   })
+  return response.data
+}
+
+// Update monthly income
+export async function updateMonthlyIncome(amount: number) {
+  const token = localStorage.getItem("token")
+  const response = await axios.post(
+    `${API_URL}/income`,
+    { amount },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  )
+  return response.data
+}
+
+// Update alert settings
+export async function updateAlertSettings(threshold: number) {
+  const token = localStorage.getItem("token")
+  const response = await axios.post(
+    `${API_URL}/alerts`,
+    { threshold },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  )
   return response.data
 }
 
