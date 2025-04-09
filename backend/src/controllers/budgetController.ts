@@ -1,3 +1,4 @@
+// backend/src/controllers/budgetController.ts
 import { Request, Response } from 'express';
 import { pool } from '../db';
 

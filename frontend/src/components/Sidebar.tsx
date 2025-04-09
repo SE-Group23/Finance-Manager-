@@ -49,6 +49,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage }) => {
   // Add a handler for logout button
   const handleLogout = () => {
     window.location.href = "/api/auth/logout"
+
   }
 
   return (
@@ -69,7 +70,8 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage }) => {
             active={activePage === "transactions"}
             to="/transactions"
           />
-          <NavItem icon={<BudgetsIcon />} text="Budgets" active={activePage === "budgets"} to="/budgets" />
+          
+          <NavItem icon={<BudgetsIcon />} text="Budgets" active={activePage === "budgets"} to="/budget" />
           <NavItem icon={<AssetsIcon />} text="Assets" active={activePage === "assets"} to="/assets" />
           <NavItem icon={<CalendarIcon />} text="Calendar" active={activePage === "calendar"} to="/calendar" />
           <NavItem icon={<ZakatIcon />} text="Zakat & Tax" active={activePage === "zakat"} to="/zakat" />
@@ -87,8 +89,9 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage }) => {
           </button>
         </div>
         <div className="text-sm">
-          <div className="font-medium">Sam Wheeler</div>
-          <div className="text-white text-opacity-80 text-xs">samwheeler@example.com</div>
+
+          {/* <div className="font-medium">Sam Wheeler</div>
+          <div className="text-white text-opacity-80 text-xs">samwheeler@example.com</div> */}
         </div>
       </div>
     </div>
