@@ -15,7 +15,7 @@ export default function BudgetManagerContent() {
     { name: "Bills and Utilities", used: 150, budget: 200, color: "#7CD5F9" },
   ])
 // Here
-  const totalBudget = 10300
+  const totalBudget = 1030
   const totalSpent = 1000
   const remainingBudget = totalBudget - totalSpent
   const spentPercentage = Math.round((totalSpent / totalBudget) * 100)
