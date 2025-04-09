@@ -1,3 +1,4 @@
+// AUTH CONTROLLER
 import { Request, Response, NextFunction, RequestHandler } from 'express';
 import bcrypt from 'bcrypt';
 import { pool } from '../db';
