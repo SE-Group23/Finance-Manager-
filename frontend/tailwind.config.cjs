@@ -43,6 +43,12 @@ module.exports = {
         "primary-light": "#006e5f",
         "primary-lighter": "#00806c",
         "background-light": "#f0f8e8",
+        'finapp-teal': {
+          DEFAULT: '#00897b',
+          dark: '#00695c',
+        },
+        'finapp-green': '#00C853',
+        ...require('tailwindcss/colors'),
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -51,6 +57,16 @@ module.exports = {
       },
       fontFamily: {
         inter: ["Inter", "sans-serif"],
+      },
+      animation: {
+          'spin-slow': 'spin 8s linear infinite',
+          'fade-in': 'fade-in 0.6s ease-out forwards',
+      },
+      keyframes: {
+        'fade-in': {
+          '0%': { opacity: '0', transform: 'translateY(10px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
       },
     },
   },
