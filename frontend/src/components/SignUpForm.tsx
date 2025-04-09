@@ -1,24 +1,28 @@
 import React, { useState } from "react";
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const API_URL = `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api/auth/register`;
-
 
 const SignUpForm: React.FC = () => {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
+  const navigate = useNavigate();
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const response = await axios.post(API_URL, { fullName, email, password });
       console.log("Registration successful", response.data);
-      // Handle success (e.g. redirect or update UI)
-    } catch (error) {
-      console.error("Registration error", error);
-      // Handle error (e.g. display error message)
+      navigate('/dashboard');
+
+    } catch (err: any) {
+      const message = err?.response?.data?.error || err?.message || "Registration failed";
+      console.error("Registration error", message);
+      setError(message);
     }
   };
   
@@ -26,6 +30,13 @@ const SignUpForm: React.FC = () => {
   return (
     <div className="p-8 rounded shadow-md w-96 bg-white">
       <h2 className="text-2xl font-semibold mb-4 text-gray-800">Sign Up</h2>
+      
+      {error && (
+        <div className="mb-4 text-sm text-red-600 bg-red-100 border border-red-400 rounded px-4 py-2">
+          {error}
+        </div>
+      )}
+
       <form onSubmit={handleSubmit}>
         {/* Full Name Field */}
         <div className="mb-4">

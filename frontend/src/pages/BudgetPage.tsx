@@ -1,4 +1,3 @@
-// frontend/src/pages/BudgetPage.tsx
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
@@ -7,16 +6,17 @@ interface BudgetRecord {
   category_id: number;
   category_name: string;
   budget_limit: number;
+  month_start: string;
   spent: number;
   alert: boolean;
 }
 
+// The GET response shape
 interface BudgetData {
-  month_start: string;
-  monthly_income: number | null;
   budgets: BudgetRecord[];
 }
 
+// For posting new category limits
 interface CategoryLimitInput {
   category: string;
   limit: string;
@@ -25,140 +25,152 @@ interface CategoryLimitInput {
 const BUDGET_API_URL = `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api/budgets`;
 
 const BudgetPage: React.FC = () => {
-  // Form state for monthly income
-  const [monthlyIncome, setMonthlyIncome] = useState('');
-  // Dynamic array for category-based budgets
-  const [categoryLimits, setCategoryLimits] = useState<CategoryLimitInput[]>([
-    { category: '', limit: '' },
-  ]);
-  // For selecting the month (optional, defaults to current month)
-  const [selectedMonth, setSelectedMonth] = useState(() => {
+  // Form state: The user picks a month and a set of category limits
+  const [monthStart, setMonthStart] = useState(() => {
+    // default to the first day of this month
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
   });
-  // The budget data fetched from the API
-  const [budgetData, setBudgetData] = useState<BudgetData | null>(null);
-  // Message for success or error
-  const [message, setMessage] = useState('');
+  const [categoryLimits, setCategoryLimits] = useState<CategoryLimitInput[]>([
+    { category: '', limit: '' },
+  ]);
 
+  // The budget data fetched from the API (showing all months)
+  const [budgetData, setBudgetData] = useState<BudgetData | null>(null);
+  const [message, setMessage] = useState('');
   const token = localStorage.getItem('token');
 
-  // Fetch the current budget data when the component mounts or selectedMonth changes
+  // 1) Fetch all budgets (no month param needed)
   useEffect(() => {
-    async function fetchBudget() {
+    async function fetchBudgets() {
       try {
         const res = await axios.get(BUDGET_API_URL, {
           headers: { Authorization: `Bearer ${token}` },
-          params: { month: selectedMonth },
         });
         setBudgetData(res.data);
-        if (res.data) {
-          // Optionally update the form fields based on existing data
-          setMonthlyIncome(res.data.monthly_income ? String(res.data.monthly_income) : '');
-          // The backend returns an array of budgets; you could prefill the categoryLimits if desired.
-        }
       } catch (error) {
-        console.error('Error fetching budget:', error);
+        console.error('Error fetching budgets:', error);
+        setMessage('Failed to load budgets.');
       }
     }
-    fetchBudget();
-  }, [token, selectedMonth]);
+    fetchBudgets();
+  }, [token]);
 
-  // Handle dynamic addition of a new category limit row
+  // Add another row for category/limit input
   const addCategoryLimit = () => {
     setCategoryLimits([...categoryLimits, { category: '', limit: '' }]);
   };
 
-  // Remove a category limit row by index
+  // Remove a row from the local form
   const removeCategoryLimit = (index: number) => {
     setCategoryLimits(categoryLimits.filter((_, i) => i !== index));
   };
 
-  // Update a specific category limit input
-  const updateCategoryLimit = (index: number, field: 'category' | 'limit', value: string) => {
-    const newCategoryLimits = [...categoryLimits];
-    newCategoryLimits[index] = { ...newCategoryLimits[index], [field]: value };
-    setCategoryLimits(newCategoryLimits);
+  // Update a category limit row in the local form
+  const updateCategoryLimit = (
+    index: number,
+    field: 'category' | 'limit',
+    value: string
+  ) => {
+    const newLimits = [...categoryLimits];
+    newLimits[index] = { ...newLimits[index], [field]: value };
+    setCategoryLimits(newLimits);
   };
 
-  // Submit the budget data to the backend
+  // 2) Submit new budgets for the chosen month
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMessage('');
-    // Validate monthly income (if provided)
-    if (monthlyIncome !== '' && (isNaN(parseFloat(monthlyIncome)) || parseFloat(monthlyIncome) < 0)) {
-      setMessage('Invalid monthly income. It must be a non-negative number.');
-      return;
-    }
-    // Validate each category limit input
+
+    // Validate
     for (const cl of categoryLimits) {
-      if (!cl.category || isNaN(parseFloat(cl.limit)) || parseFloat(cl.limit) <= 0) {
-        setMessage('Each category limit must include a valid category and a limit greater than 0.');
+      if (!cl.category || isNaN(+cl.limit) || +cl.limit <= 0) {
+        setMessage('Each category limit must have a valid category and a limit > 0.');
         return;
       }
     }
 
-    // Construct payload: send monthly_income and array of category_limits
+    // Build the payload with the user-chosen month
     const payload = {
-      month_start: selectedMonth, // optional; backend defaults to current month if not provided
-      monthly_income: monthlyIncome ? parseFloat(monthlyIncome) : null,
+      month_start: monthStart, // server normalizes day=1 anyway
       category_limits: categoryLimits,
     };
 
     try {
-      const res = await axios.post(BUDGET_API_URL, payload, {
+      await axios.post(BUDGET_API_URL, payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setMessage('Budget(s) created/updated.');
+
+      // Refetch full budget list
+      const res = await axios.get(BUDGET_API_URL, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setBudgetData(res.data);
-      setMessage('Budget updated successfully.');
+
+      // Optional: Clear out the form
+      // setCategoryLimits([{ category: '', limit: '' }]);
     } catch (error: any) {
       console.error('Error updating budget:', error);
       setMessage(error.response?.data?.error || 'Budget update failed.');
     }
   };
 
+  // 3) Delete a budget item
+  const handleDeleteBudget = async (budgetId: number) => {
+    setMessage('');
+    try {
+      await axios.delete(`${BUDGET_API_URL}/${budgetId}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setMessage('Budget deleted.');
+
+      // refetch
+      const refreshed = await axios.get(BUDGET_API_URL, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setBudgetData(refreshed.data);
+    } catch (error) {
+      console.error('Error deleting budget:', error);
+      setMessage('Failed to delete budget.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <h1 className="text-3xl font-bold mb-4">Manage Budget</h1>
-      
-      <form onSubmit={handleSubmit} className="bg-white p-4 rounded shadow max-w-2xl mb-6">
+
+      {/* FORM to add or update budgets for a specific new month */}
+      <form onSubmit={handleSubmit} className="bg-white p-4 rounded shadow max-w-2xl">
+        <h2 className="text-xl font-semibold mb-2">Add/Update Budgets for a Month</h2>
         <div className="mb-4">
-          <label className="block mb-1">Select Month</label>
+          <label className="block mb-1">Month</label>
           <input
             type="date"
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
+            value={monthStart}
+            onChange={(e) => setMonthStart(e.target.value)}
             className="p-2 border rounded w-full"
           />
-        </div>
-        
-        <div className="mb-4">
-          <label className="block mb-1">Monthly Income (optional)</label>
-          <input
-            type="number"
-            value={monthlyIncome}
-            onChange={(e) => setMonthlyIncome(e.target.value)}
-            className="p-2 border rounded w-full"
-            min="0"
-          />
+          <p className="text-sm text-gray-500">
+            Only the month/year matter—server normalizes to day=1.
+          </p>
         </div>
 
-        <h2 className="text-xl font-semibold mb-2">Category-Based Spending Limits</h2>
         {categoryLimits.map((cl, index) => (
           <div key={index} className="mb-4 flex flex-col md:flex-row gap-2">
             <input
               type="text"
+              placeholder="Category e.g. Food"
               value={cl.category}
               onChange={(e) => updateCategoryLimit(index, 'category', e.target.value)}
-              placeholder="Category (e.g., Food)"
               className="p-2 border rounded w-full md:w-1/2"
               required
             />
             <input
               type="number"
+              placeholder="Spending limit"
               value={cl.limit}
               onChange={(e) => updateCategoryLimit(index, 'limit', e.target.value)}
-              placeholder="Spending Limit"
               className="p-2 border rounded w-full md:w-1/2"
               min="0"
               required
@@ -166,8 +178,8 @@ const BudgetPage: React.FC = () => {
             {categoryLimits.length > 1 && (
               <button
                 type="button"
-                onClick={() => removeCategoryLimit(index)}
                 className="bg-red-500 text-white p-2 rounded"
+                onClick={() => removeCategoryLimit(index)}
               >
                 Remove
               </button>
@@ -177,58 +189,72 @@ const BudgetPage: React.FC = () => {
         <button
           type="button"
           onClick={addCategoryLimit}
-          className="mb-4 bg-green-500 text-white p-2 rounded"
+          className="bg-green-500 text-white p-2 rounded"
         >
-          Add Category Limit
+          + Add Another Category
         </button>
-        <div>
+
+        <div className="mt-4">
           <button type="submit" className="bg-blue-500 text-white p-2 rounded">
-            Update Budget
+            Save Budgets
           </button>
         </div>
       </form>
-      
-      {message && <p className="mb-4 text-green-600">{message}</p>}
-      
-      {budgetData && (
-        <div className="mt-6 bg-white p-4 rounded shadow max-w-2xl">
-          <h2 className="text-xl font-bold mb-2">Budget Overview</h2>
-          <p>
-            <strong>Month:</strong> {new Date(budgetData.month_start).toLocaleDateString()}
-          </p>
-          <p>
-            <strong>Monthly Income:</strong> {budgetData.monthly_income !== null ? budgetData.monthly_income : 'Not set'}
-          </p>
-          {budgetData.budgets && budgetData.budgets.length > 0 ? (
-            <table className="table-auto mt-4 w-full border">
-              <thead>
-                <tr className="bg-gray-200">
-                  <th className="p-2 border">Category</th>
-                  <th className="p-2 border">Budget Limit</th>
-                  <th className="p-2 border">Spent</th>
-                  <th className="p-2 border">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {budgetData.budgets.map((b: BudgetRecord) => (
+
+      {message && <p className="text-red-600 mt-4">{message}</p>}
+
+      {/* TABLE of all budgets (for every month) */}
+      {budgetData && budgetData.budgets && budgetData.budgets.length > 0 ? (
+        <div className="mt-8 bg-white p-4 rounded shadow max-w-4xl">
+          <h2 className="text-xl font-bold mb-2">All Budgets</h2>
+
+          <table className="table-auto w-full border">
+            <thead className="bg-gray-200">
+              <tr>
+                <th className="p-2 border">Month</th>
+                <th className="p-2 border">Category</th>
+                <th className="p-2 border">Budget Limit</th>
+                <th className="p-2 border">Spent</th>
+                <th className="p-2 border">Status</th>
+                <th className="p-2 border">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {budgetData.budgets.map((b) => {
+                const monthStr = new Date(b.month_start).toLocaleDateString(undefined, {
+                  year: 'numeric',
+                  month: 'short',
+                });
+                return (
                   <tr key={b.budget_id} className="text-center">
+                    <td className="p-2 border">{monthStr}</td>
                     <td className="p-2 border">{b.category_name}</td>
                     <td className="p-2 border">{b.budget_limit}</td>
                     <td className="p-2 border">{b.spent}</td>
                     <td className="p-2 border">
                       {b.alert ? (
-                        <span className="text-red-500 font-bold">Over Budget</span>
+                        <span className="text-red-600 font-semibold">Over Budget</span>
                       ) : (
                         <span className="text-green-500">Within Limit</span>
                       )}
                     </td>
+                    <td className="p-2 border">
+                      <button
+                        onClick={() => handleDeleteBudget(b.budget_id)}
+                        className="bg-red-500 text-white px-2 py-1 rounded"
+                      >
+                        Remove
+                      </button>
+                    </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <p>No category budgets set for this month.</p>
-          )}
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="mt-8">
+          <p>No budgets found.</p>
         </div>
       )}
     </div>
