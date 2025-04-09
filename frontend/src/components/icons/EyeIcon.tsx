@@ -1,11 +1,9 @@
-// src/components/SignUp/EyeIcon.tsx
-import React from "react"
+import React from "react";
 
 const EyeIcon: React.FC = () => (
-    <svg
+  <svg
     xmlns="http://www.w3.org/2000/svg"
-    width="14"
-    height="14"
+    className="w-4 h-4"  // Tailwind utility classes for width & height
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
@@ -13,11 +11,9 @@ const EyeIcon: React.FC = () => (
     strokeLinecap="round"
     strokeLinejoin="round"
   >
-    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-    <circle cx="12" cy="12" r="3"></circle>
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+    <circle cx="12" cy="12" r="3" />
   </svg>
+);
 
-)
-
-export default EyeIcon
-
+export default EyeIcon;

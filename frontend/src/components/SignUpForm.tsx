@@ -1,72 +1,92 @@
-import React, { useState } from "react"
-import styles from "./signup.module.css"
-
-// Icon components
-const EyeIcon: React.FC = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-    <circle cx="12" cy="12" r="3" />
-  </svg>
-)
-
-const EyeOffIcon: React.FC = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
-    <line x1="1" y1="1" x2="23" y2="23" />
-  </svg>
-)
+import React, { useState } from "react";
+import axios from 'axios';
 
 const SignUpForm: React.FC = () => {
-  const [showPassword, setShowPassword] = useState(false)
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post('/api/auth/register', { fullName, email, password });
+      console.log("Registration successful", response.data);
+      // Handle success (e.g. redirect or update UI)
+    } catch (error) {
+      console.error("Registration error", error);
+      // Handle error (e.g. display error message)
+    }
+  };
+  
 
   return (
-    <div className={styles.formWrapper}>
-      <h1 className={styles.title}>Sign Up To TBD</h1>
-
-      <div className={styles.formBox}>
-        <div className={styles.inputGroup}>
-          <label htmlFor="username" className={styles.label}>
-            Username
+    <div className="p-8 rounded shadow-md w-96 bg-white">
+      <h2 className="text-2xl font-semibold mb-4 text-gray-800">Sign Up</h2>
+      <form onSubmit={handleSubmit}>
+        {/* Full Name Field */}
+        <div className="mb-4">
+          <label htmlFor="fullName" className="block text-gray-700 text-sm font-bold mb-2">
+            Full Name
           </label>
-          <input type="text" id="username" defaultValue="tobedecided" className={styles.input} />
+          <input
+            type="text"
+            id="fullName"
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            placeholder="Full Name"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            required
+          />
         </div>
-
-        <div className={styles.inputGroup}>
-          <label htmlFor="email" className={styles.label}>
+        {/* Email Field */}
+        <div className="mb-4">
+          <label htmlFor="email" className="block text-gray-700 text-sm font-bold mb-2">
             Email
           </label>
-          <input type="email" id="email" defaultValue="group23@gmail.com" className={styles.input} />
+          <input
+            type="email"
+            id="email"
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            placeholder="Email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
         </div>
-
-        <div className={styles.inputGroup}>
-          <label htmlFor="password" className={styles.label}>
+        {/* Password Field */}
+        <div className="mb-6">
+          <label htmlFor="password" className="block text-gray-700 text-sm font-bold mb-2">
             Password
           </label>
-          <div className={styles.passwordField}>
-            <input
-              type={showPassword ? "text" : "password"}
-              id="password"
-              defaultValue="••••••••••••"
-              className={styles.input}
-              style={{ paddingRight: "24px" }}
-            />
-            <button type="button" className={styles.toggleButton} onClick={() => setShowPassword(!showPassword)}>
-              {showPassword ? <EyeOffIcon /> : <EyeIcon />}
-            </button>
-          </div>
+          <input
+            type="password"
+            id="password"
+            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
         </div>
-      </div>
-
-      <button className={styles.signupButton}>Sign Up</button>
-
-      <p className={styles.loginText}>
-        Already have an account?{" "}
-        <a href="#" className={styles.loginLink}>
-          Login
-        </a>
-      </p>
+        {/* Submit Button and Forgot Password Link */}
+        <div className="flex items-center justify-between">
+          <button
+            className="bg-primary-lighter hover:bg-primary-light text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+            type="submit"
+          >
+            Sign Up
+          </button>
+          <a
+            className="inline-block align-baseline font-bold text-sm text-primary-lighter hover:text-primary-light"
+            href="#"
+          >
+            Forgot Password?
+          </a>
+        </div>
+      </form>
     </div>
-  )
-}
+  );
+};
 
-export default SignUpForm
+export default SignUpForm;
