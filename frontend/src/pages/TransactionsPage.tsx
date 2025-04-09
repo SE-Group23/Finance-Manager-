@@ -6,10 +6,13 @@ interface Transaction {
   transaction_id: number;
   amount: number;
   category: string;
+  transaction_type: 'credit' | 'debit';
   vendor?: string;
   note?: string;
   transaction_date: string;
 }
+
+const TRANSACTIONS_API_URL = `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api/transactions`;
 
 const TransactionsPage: React.FC = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -18,14 +21,14 @@ const TransactionsPage: React.FC = () => {
   const [vendor, setVendor] = useState('');
   const [note, setNote] = useState('');
   const [transactionDate, setTransactionDate] = useState('');
-
+  const [transactionType, setTransactionType] = useState<'debit' | 'credit'>('debit');
   const token = localStorage.getItem('token');
 
   // Fetch transactions on component mount
   useEffect(() => {
     async function fetchTransactions() {
       try {
-        const res = await axios.get('http://localhost:8999/api/transactions', {
+        const res = await axios.get(TRANSACTIONS_API_URL, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setTransactions(res.data);
@@ -45,8 +48,9 @@ const TransactionsPage: React.FC = () => {
         vendor,
         note,
         transactionDate: transactionDate || new Date().toISOString(),
+        transaction_type: transactionType,  // New field added here
       };
-      const res = await axios.post('http://localhost:8999/api/transactions', newTransaction, {
+      const res = await axios.post(TRANSACTIONS_API_URL, newTransaction, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setTransactions([res.data, ...transactions]);
@@ -74,6 +78,17 @@ const TransactionsPage: React.FC = () => {
             className="p-2 border rounded w-full"
             required
           />
+        </div>
+        <div className="mb-4">
+          <label className="block mb-1">Transaction Type</label>
+          <select
+            value={transactionType}
+            onChange={(e) => setTransactionType(e.target.value as 'debit' | 'credit')}
+            className="p-2 border rounded w-full"
+          >
+            <option value="debit">Debit (Expense)</option>
+            <option value="credit">Credit (Income)</option>
+          </select>
         </div>
         <div className="mb-4">
           <label className="block mb-1">Category</label>
@@ -120,11 +135,19 @@ const TransactionsPage: React.FC = () => {
         {transactions.map((t) => (
           <li key={t.transaction_id} className="border-b py-2">
             <p>
-              <strong>Amount:</strong> {t.amount} | <strong>Category:</strong> {t.category}
+              <strong>Amount:</strong> {t.amount}
+              {` | `}
+              <strong>Category:</strong> {t.category}
+            </p>
+            <p>
+              <strong>Type:</strong>{' '}
+              {t.transaction_type === 'credit' ? 'Credit (Income)' : 'Debit (Expense)'}
             </p>
             {t.vendor && <p><strong>Vendor:</strong> {t.vendor}</p>}
             {t.note && <p><strong>Note:</strong> {t.note}</p>}
-            <p><strong>Date:</strong> {new Date(t.transaction_date).toLocaleString()}</p>
+            <p>
+              <strong>Date:</strong> {new Date(t.transaction_date).toLocaleString()}
+            </p>
           </li>
         ))}
       </ul>

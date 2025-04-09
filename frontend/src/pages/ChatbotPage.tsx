@@ -2,6 +2,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
+const CHATBOT_API_URL = `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api/chatbot`;
+
 const ChatbotPage: React.FC = () => {
   const [query, setQuery] = useState('');
   const [response, setResponse] = useState('');
@@ -17,7 +19,7 @@ const ChatbotPage: React.FC = () => {
     setLoading(true);
     try {
       const res = await axios.post(
-        'http://localhost:8999/api/chatbot',
+        CHATBOT_API_URL,
         { message: query },
         { headers: { Authorization: `Bearer ${token}` } }
       );

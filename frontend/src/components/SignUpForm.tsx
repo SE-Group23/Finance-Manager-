@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import axios from 'axios';
 
+const API_URL = `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api/auth/register`;
+
+
 const SignUpForm: React.FC = () => {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -10,7 +13,7 @@ const SignUpForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await axios.post('/api/auth/register', { fullName, email, password });
+      const response = await axios.post(API_URL, { fullName, email, password });
       console.log("Registration successful", response.data);
       // Handle success (e.g. redirect or update UI)
     } catch (error) {
