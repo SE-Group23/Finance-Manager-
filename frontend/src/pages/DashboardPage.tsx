@@ -94,8 +94,8 @@ const DashboardPage: React.FC = () => {
     fetchDashboardData()
   }, [])
 
-  // Colors for the pie chart - updated to match Figma
-  const COLORS = ["#00C49F", "#FFEE58", "#FF9800", "#7B68EE", "#FF5252", "#2196F3"]
+  // Colors for the pie chart
+  const COLORS = ["#00C49F", "#0088FE", "#FFBB28", "#FF8042", "#a64dff", "#ff4d4d"]
 
   // Format currency
   const formatCurrency = (amount: number) => {
@@ -155,7 +155,7 @@ const DashboardPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gray-50">
+      <div className="flex h-screen items-center justify-center">
         <div className="text-xl">Loading dashboard...</div>
       </div>
     )
@@ -163,7 +163,7 @@ const DashboardPage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gray-50">
+      <div className="flex h-screen items-center justify-center">
         <div className="text-xl text-red-500">{error}</div>
       </div>
     )
@@ -181,16 +181,16 @@ const DashboardPage: React.FC = () => {
       (!dashboardData.categoryBreakdown || dashboardData.categoryBreakdown.length === 0))
 
   return (
-    <div className="flex min-h-screen bg-gray-50 font-inter">
+    <div className="flex min-h-screen bg-background-light font-inter">
       {/* Sidebar - Using our shared component */}
       <Sidebar activePage="dashboard" />
 
       {/* Main content */}
       <div className="flex-1 p-8">
-        <h1 className="text-2xl font-bold mb-6 text-gray-800">Dashboard</h1>
+        <h1 className="text-2xl font-bold mb-8">Dashboard</h1>
 
         {emptyState ? (
-          <div className="bg-white rounded-lg shadow-sm p-8 text-center">
+          <div className="bg-white rounded-lg shadow p-8 text-center">
             <h2 className="text-xl font-semibold mb-4">Welcome to your Finance Dashboard!</h2>
             <p className="mb-6">
               Start by adding transactions and setting up budgets to see your financial overview here.
@@ -206,36 +206,35 @@ const DashboardPage: React.FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Net Worth */}
-            <div className="bg-navbar text-white p-6 rounded-lg shadow-sm">
-              <h2 className="text-lg font-medium mb-4">Net Worth</h2>
+            {/* Net Cash */}
+            <div className="bg-navbar text-white p-6 rounded-lg shadow">
+              <h2 className="text-lg font-medium mb-4">Net Cash</h2>
               <div className="text-4xl font-bold mb-4">{formatCurrency(dashboardData?.netCash || 0)}</div>
               <div className="flex justify-between">
                 <div>
-                  <div className="text-teal-200 text-sm">Assets</div>
+                  <div className="text-teal-200">Credits</div>
                   <div className="font-semibold">{formatCurrency(dashboardData?.totalCredit || 0)}</div>
                 </div>
                 <div>
-                  <div className="text-teal-200 text-sm">Liabilities</div>
+                  <div className="text-teal-200">Debits</div>
                   <div className="font-semibold">{formatCurrency(dashboardData?.totalDebit || 0)}</div>
                 </div>
               </div>
             </div>
 
             {/* Monthly Expense Summary */}
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h2 className="text-lg font-medium mb-4 text-gray-800">Monthly Expense Summary</h2>
-              <div className="flex items-center justify-between">
-                <div className="relative w-[180px] h-[180px]">
-                  {dashboardData?.categoryBreakdown && dashboardData.categoryBreakdown.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
+            <div className="bg-white p-6 rounded-lg shadow">
+              <h2 className="text-lg font-medium mb-4">Monthly Expense Summary ({currentMonth})</h2>
+              <div className="flex items-center justify-center">
+                {dashboardData?.categoryBreakdown && dashboardData.categoryBreakdown.length > 0 ? (
+                  <div className="relative">
+                    <ResponsiveContainer width={200} height={200}>
                       <PieChartComponent>
                         <Pie
                           data={dashboardData.categoryBreakdown}
                           cx="50%"
                           cy="50%"
                           labelLine={false}
-                          innerRadius={50}
                           outerRadius={80}
                           fill="#8884d8"
                           dataKey="amount"
@@ -247,35 +246,33 @@ const DashboardPage: React.FC = () => {
                         <Tooltip formatter={(value) => formatCurrency(Number(value))} />
                       </PieChartComponent>
                     </ResponsiveContainer>
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-gray-500">No data available</div>
-                  )}
-                  <div className="absolute inset-0 flex items-center justify-center flex-col">
-                    <div className="text-2xl font-bold text-gray-800">
-                      {formatCurrency(dashboardData?.totalMonthlyExpenses || 0)}
+                    <div className="absolute inset-0 flex items-center justify-center flex-col">
+                      <div className="text-2xl font-bold">{formatCurrency(dashboardData.totalMonthlyExpenses)}</div>
                     </div>
                   </div>
-                </div>
-                <div className="flex flex-col gap-2">
-                  {dashboardData?.categoryBreakdown?.slice(0, 6).map((category, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                      ></div>
-                      <span className="text-sm text-gray-700">{category.category_name}</span>
-                    </div>
-                  ))}
-                </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">No expense data available for {currentMonth}</div>
+                )}
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                {dashboardData?.categoryBreakdown?.slice(0, 6).map((category, index) => (
+                  <div key={index} className="flex items-center gap-2">
+                    <div
+                      className="w-3 h-3 rounded-full"
+                      style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                    ></div>
+                    <span className="text-sm">{category.category_name}</span>
+                  </div>
+                ))}
               </div>
             </div>
 
             {/* Total Budget Spent */}
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h2 className="text-lg font-medium mb-4 text-gray-800">Total Budget Spent</h2>
+            <div className="bg-white p-6 rounded-lg shadow">
+              <h2 className="text-lg font-medium mb-4">Total Budget Spent ({currentMonth})</h2>
               <div className="h-4 bg-gray-200 rounded-full overflow-hidden mb-2">
                 <div
-                  className="h-full bg-chatbot-highlight"
+                  className="h-full bg-gradient-to-r from-lime-300 to-lime-500"
                   style={{ width: `${dashboardData?.budgetProgress?.percentage || 0}%` }}
                 ></div>
               </div>
@@ -287,34 +284,29 @@ const DashboardPage: React.FC = () => {
             </div>
 
             {/* Transaction History */}
-            <div className="bg-white p-6 rounded-lg shadow-sm">
-              <h2 className="text-lg font-medium mb-4 text-gray-800">Transaction History</h2>
+            <div className="bg-white p-6 rounded-lg shadow">
+              <h2 className="text-lg font-medium mb-4">Transaction History</h2>
               {dashboardData?.recentTransactions && dashboardData.recentTransactions.length > 0 ? (
                 <div className="space-y-4">
-                  {dashboardData.recentTransactions.slice(0, 3).map((transaction, index) => (
+                  {dashboardData.recentTransactions.map((transaction, index) => (
                     <div key={transaction.transaction_id} className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div
-                          className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                            transaction.transaction_type === "credit"
-                              ? "bg-green-100 text-green-600"
-                              : "bg-red-100 text-red-600"
-                          }`}
-                        >
-                          {transaction.transaction_type === "credit" ? <ArrowUp size={14} /> : <ArrowDown size={14} />}
-                        </div>
+                      <div className="flex items-center gap-4">
+                        <div className="text-center font-medium w-6">{index + 1}</div>
                         <div>
-                          <div className="font-medium text-gray-800">
-                            {transaction.vendor || transaction.category_name}
-                          </div>
+                          <div className="font-medium">{transaction.vendor || transaction.category_name}</div>
                           <div className="text-xs text-gray-500">{formatDate(transaction.transaction_date)}</div>
                         </div>
                       </div>
                       <div
-                        className={`font-medium ${
+                        className={`font-medium flex items-center ${
                           transaction.transaction_type === "credit" ? "text-green-600" : "text-red-600"
                         }`}
                       >
+                        {transaction.transaction_type === "credit" ? (
+                          <ArrowUp size={16} className="mr-1" />
+                        ) : (
+                          <ArrowDown size={16} className="mr-1" />
+                        )}
                         {formatCurrency(transaction.amount)}
                       </div>
                     </div>
@@ -324,10 +316,7 @@ const DashboardPage: React.FC = () => {
                 <div className="text-center py-8 text-gray-500">No transactions yet</div>
               )}
               <div className="mt-6 text-right">
-                <Link
-                  to="/transactions"
-                  className="text-navbar hover:text-navbar-dark flex items-center justify-end text-sm"
-                >
+                <Link to="/transactions" className="text-navbar hover:text-navbar-dark flex items-center justify-end">
                   View full Transaction History
                   <ChevronRight size={16} className="ml-1" />
                 </Link>
@@ -335,19 +324,19 @@ const DashboardPage: React.FC = () => {
             </div>
 
             {/* Budget by Category */}
-            <div className="bg-white p-6 rounded-lg shadow-sm lg:col-span-2">
-              <h2 className="text-lg font-medium mb-4 text-gray-800">Budget by Category</h2>
+            <div className="bg-white p-6 rounded-lg shadow lg:col-span-2">
+              <h2 className="text-lg font-medium mb-4">Budget by Category ({currentMonth})</h2>
               {dashboardData?.budgets && dashboardData.budgets.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {dashboardData.budgets.slice(0, 4).map((budget) => (
+                  {dashboardData.budgets.map((budget) => (
                     <div key={budget.budget_id || `budget-${budget.category_name}`}>
                       <div className="flex justify-between mb-1">
-                        <span className="font-medium text-gray-800">{budget.category_name}</span>
+                        <span className="font-medium">{budget.category_name}</span>
                         <span className="text-gray-600">{calculatePercentage(budget.spent, budget.budget_limit)}%</span>
                       </div>
                       <div className="h-2 bg-gray-200 rounded-full overflow-hidden mb-2">
                         <div
-                          className="h-full bg-chatbot-highlight"
+                          className="h-full bg-gradient-to-r from-lime-300 to-lime-500"
                           style={{ width: `${calculatePercentage(budget.spent, budget.budget_limit)}%` }}
                         ></div>
                       </div>
@@ -358,7 +347,7 @@ const DashboardPage: React.FC = () => {
                 <div className="text-center py-8 text-gray-500">No budgets set for {currentMonth}</div>
               )}
               <div className="mt-6 text-right">
-                <Link to="/budget" className="text-navbar hover:text-navbar-dark flex items-center justify-end text-sm">
+                <Link to="/budget" className="text-navbar hover:text-navbar-dark flex items-center justify-end">
                   View full Budget Details
                   <ChevronRight size={16} className="ml-1" />
                 </Link>
