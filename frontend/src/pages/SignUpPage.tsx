@@ -38,7 +38,7 @@ const SignUpPage: React.FC = () => {
         <div style={styles.illustrationArea}>
           <div style={styles.illustrationContainer}>
             <img
-              src="https://hebbkx1anhila5yf.public.blob.vercel-storage.com/image-LnHpTjxWLfjAVAmzxzmawdcsTVp07D.png"
+              src="/src/assets/developer-image.png"
               alt="Developer illustration"
               style={styles.illustration}
             />
