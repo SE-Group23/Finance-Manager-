@@ -1,22 +1,8 @@
 "use client"
-
-import type React from "react"
-
-import { useState, useRef, useEffect } from "react"
+import React, { useState, useRef, useEffect } from "react"
 import Sidebar from "../components/Sidebar"
 import { SendIcon, LightbulbIcon, ChatbotIcon, AlertTriangleIcon } from "../components/icons/sidebar-icons"
-
-interface Prompt {
-  text: string
-}
-
-interface Capability {
-  description: string
-}
-
-interface Limitation {
-  description: string
-}
+import { getChatbotResponse } from "../services/chatbotService"
 
 interface Message {
   id: string
@@ -25,19 +11,19 @@ interface Message {
   timestamp: Date
 }
 
-const examplePrompts: Prompt[] = [
+const examplePrompts = [
   { text: "What's the 50/30/20 budgeting rule?" },
   { text: "Can you analyze my spending and suggest ways to save?" },
   { text: "What's the best way to start investing?" },
 ]
 
-const capabilities: Capability[] = [
+const capabilities = [
   { description: "Provides easy to understand financial information." },
   { description: "Personalised budget based on spending patterns analysation" },
   { description: "Tracks portfolio performance and explains investment strategies" },
 ]
 
-const limitations: Limitation[] = [
+const limitations = [
   { description: "May not reflect the latest changes in financial regulations" },
   { description: "Advice limited to available data" },
   { description: "Cannot predict stock market shifts and investment returns" },
@@ -49,59 +35,59 @@ const ChatbotPage: React.FC = () => {
   const [showIntro, setShowIntro] = useState<boolean>(true)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  const scrollToBottom = (): void => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
-  }
-
+  // auto-scroll to the bottom of the chat
   useEffect(() => {
-    scrollToBottom()
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-  const handleSubmit = (e: React.FormEvent): void => {
+  // Handle the chat form submission
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!inputValue.trim()) return
 
-    // Hide intro when conversation starts
-    if (showIntro) {
-      setShowIntro(false)
-    }
+    // Hide the intro once we start sending a message
+    if (showIntro) setShowIntro(false)
 
-    // Add user message
+    // 1. Create the user's message
     const userMessage: Message = {
       id: Date.now().toString(),
       content: inputValue,
       sender: "user",
       timestamp: new Date(),
     }
+    setMessages(prev => [...prev, userMessage])
 
-    setMessages((prev) => [...prev, userMessage])
+    // Clear the input
     setInputValue("")
 
-    // Simulate AI response after a short delay
-    setTimeout(() => {
+    try {
+      // 2. Actually call the chatbot endpoint
+      const aiText = await getChatbotResponse(userMessage.content)
+
+      // 3. Create the AI message object
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: getAIResponse(inputValue),
+        content: aiText,
         sender: "ai",
         timestamp: new Date(),
       }
-      setMessages((prev) => [...prev, aiMessage])
-    }, 1000)
-  }
 
-  const getAIResponse = (query: string): string => {
-    // Simple response logic - in a real app, this would connect to an AI service
-    if (query.toLowerCase().includes("budget") || query.toLowerCase().includes("50/30/20")) {
-      return "The 50/30/20 budgeting rule suggests allocating 50% of your income to needs, 30% to wants, and 20% to savings and debt repayment. This creates a balanced approach to managing your finances."
-    } else if (query.toLowerCase().includes("save") || query.toLowerCase().includes("saving")) {
-      return "Based on typical spending patterns, you could save money by: 1) Reviewing subscription services you rarely use, 2) Meal planning to reduce food waste, 3) Using cashback or rewards credit cards for regular purchases."
-    } else if (query.toLowerCase().includes("invest") || query.toLowerCase().includes("investing")) {
-      return "For beginners, a good way to start investing is through index funds or ETFs that track the broader market. These provide diversification with lower fees. Consider starting with a small, regular investment to build the habit."
-    } else {
-      return "Thank you for your question. I can help with budgeting, saving strategies, investment advice, and general financial planning. Could you provide more details about your specific financial situation?"
+      // 4. Add the AI message to state
+      setMessages(prev => [...prev, aiMessage])
+    } catch (error) {
+      console.error("Error getting chatbot response:", error)
+      // Show a fallback error
+      const errorMessage: Message = {
+        id: (Date.now() + 2).toString(),
+        content: "Sorry, there was a problem getting the chatbot response. Please try again.",
+        sender: "ai",
+        timestamp: new Date(),
+      }
+      setMessages(prev => [...prev, errorMessage])
     }
   }
 
+  // convenience for clicking example prompts
   const handleExampleClick = (text: string): void => {
     setInputValue(text)
   }
@@ -127,7 +113,7 @@ const ChatbotPage: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-                  {/* Examples Section */}
+                  {/* Examples */}
                   <div className="flex flex-col items-center space-y-4">
                     <div className="w-12 h-12 rounded-full bg-navbar bg-opacity-20 flex items-center justify-center mb-3">
                       <LightbulbIcon className="h-6 w-6 text-navbar" />
@@ -138,7 +124,7 @@ const ChatbotPage: React.FC = () => {
                         <button
                           key={index}
                           onClick={() => handleExampleClick(prompt.text)}
-                          className="w-full h-16 text-left p-2 bg-box-color rounded-lg text-sm hover:bg-[#EFF5C8] transition-colors font-medium text-center flex items-center justify-center text-gray-600"
+                          className="w-full h-16 p-2 bg-box-color rounded-lg text-sm hover:bg-[#EFF5C8] transition-colors font-medium text-center flex items-center justify-center text-gray-600"
                         >
                           {prompt.text} →
                         </button>
@@ -146,37 +132,37 @@ const ChatbotPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Capabilities Section */}
+                  {/* Capabilities */}
                   <div className="flex flex-col items-center space-y-4">
                     <div className="w-12 h-12 rounded-full bg-navbar bg-opacity-20 flex items-center justify-center mb-3">
                       <ChatbotIcon className="h-6 w-6 text-navbar" />
                     </div>
                     <h3 className="font-medium text-navbar mb-5 text-base">Capabilities</h3>
                     <div className="space-y-3 w-full">
-                      {capabilities.map((capability, index) => (
+                      {capabilities.map((cap, index) => (
                         <div
                           key={index}
                           className="w-full h-16 p-2 bg-box-color rounded-lg text-sm font-medium flex items-center justify-center text-center text-gray-600"
                         >
-                          {capability.description}
+                          {cap.description}
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  {/* Limitations Section */}
+                  {/* Limitations */}
                   <div className="flex flex-col items-center space-y-4">
                     <div className="w-12 h-12 rounded-full bg-navbar bg-opacity-20 flex items-center justify-center mb-3">
                       <AlertTriangleIcon className="h-6 w-6 text-navbar" />
                     </div>
                     <h3 className="font-medium text-navbar mb-5 text-base">Limitations</h3>
                     <div className="space-y-3 w-full">
-                      {limitations.map((limitation, index) => (
+                      {limitations.map((lim, index) => (
                         <div
                           key={index}
                           className="w-full h-16 p-2 bg-box-color rounded-lg text-sm font-medium flex items-center justify-center text-center text-gray-600"
                         >
-                          {limitation.description}
+                          {lim.description}
                         </div>
                       ))}
                     </div>
@@ -184,6 +170,7 @@ const ChatbotPage: React.FC = () => {
                 </div>
               </>
             ) : (
+              // Show conversation
               <div className="flex flex-col space-y-4 pb-4 flex-1">
                 {messages.map((message) => (
                   <div
@@ -209,7 +196,7 @@ const ChatbotPage: React.FC = () => {
             )}
           </div>
 
-          {/* Chat Input */}
+          {/* Chat Input Box */}
           <div className="max-w-2xl mx-auto w-full mt-auto pt-6">
             <form onSubmit={handleSubmit} className="relative">
               <input
@@ -217,11 +204,15 @@ const ChatbotPage: React.FC = () => {
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
                 placeholder="Ask me anything about your budget, spending or investments!"
-                className="w-full pl-4 pr-12 py-3 rounded-full bg-white border border-gray-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-navbar focus:border-transparent font-inter placeholder:font-medium placeholder:text-gray-500"
+                className="w-full pl-4 pr-12 py-3 rounded-full bg-white border border-gray-200 shadow-sm 
+                           focus:outline-none focus:ring-2 focus:ring-navbar focus:border-transparent 
+                           placeholder:font-medium placeholder:text-gray-500"
               />
               <button
                 type="submit"
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-500 hover:bg-navbar hover:text-white transition-colors"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 w-8 h-8 flex 
+                           items-center justify-center rounded-full bg-gray-100 text-gray-500 
+                           hover:bg-navbar hover:text-white transition-colors"
               >
                 <SendIcon size={16} />
               </button>
