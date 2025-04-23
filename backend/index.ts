@@ -7,6 +7,7 @@ import transactionRoutes from './src/routes/transactionRoutes';
 import budgetRoutes from './src/routes/budgetRoutes';
 import chatbotRoutes from './src/routes/chatbotRoutes';
 import dashboardRoutes from './src/routes/dashboardRoutes';
+import assetRoutes from './src/routes/assetRoutes';
 
 dotenv.config();
 
@@ -20,6 +21,7 @@ app.use('/api/transactions', transactionRoutes);
 app.use('/api/budgets', budgetRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/assets',   assetRoutes);  
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
