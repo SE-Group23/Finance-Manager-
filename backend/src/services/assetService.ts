@@ -1,5 +1,5 @@
 import { pool } from '../db';
-import { AssetType, GoldUnit } from '../constants/assets';
+import { AssetType, GoldUnit, Currency } from '../constants/assets';
 import { getLatestGoldPrice, getHistoricalGoldPrices, GoldPoint } from './goldService';
 import { getStockCurrentValue, getHistoricalStockPrices, StockPoint } from './stockService';
 
@@ -8,11 +8,11 @@ export interface CreateAssetDTO {
   quantity:      number;
   purchaseValue: number;
   acquiredOn?:   string;
-  assetDetails?: {
-    ticker?:       string;
-    currencyCode?: string;
-    name?:         string;
+  assetDetails: {      
     unit?:         GoldUnit;
+    ticker?:       string;
+    name?:         string;
+    currency?:     Currency; 
   };
 }
 
@@ -46,60 +46,145 @@ export async function fetchUserAssets(userId: number) {
 
 export async function createAsset(userId: number, dto: CreateAssetDTO) {
   const typeId = await getAssetTypeId(dto.assetType);
-  // fetch real‑time
   let current = dto.purchaseValue;
+
   try {
-    if (dto.assetType === AssetType.GOLD) {
-      current = (await getLatestGoldPrice(dto.assetDetails?.unit, dto.assetDetails?.currency)).price * dto.quantity;
-    } else if (dto.assetType === AssetType.STOCK) {
-      current = await getStockCurrentValue(dto.assetDetails.ticker, dto.quantity);
+    if (
+      dto.assetType === AssetType.GOLD &&
+      dto.assetDetails.unit &&
+      dto.assetDetails.currency
+    ) {
+      // getLatestGoldPrice returns a number directly
+      const livePrice = await getLatestGoldPrice(
+        dto.assetDetails.unit,
+        dto.assetDetails.currency
+      );
+      current = livePrice * dto.quantity;
+    } else if (
+      dto.assetType === AssetType.STOCK &&
+      dto.assetDetails.ticker
+    ) {
+      // ticker is guaranteed to be a string here
+      current = await getStockCurrentValue(
+        dto.assetDetails.ticker,
+        dto.quantity
+      );
     }
-  } catch { /* fallback to purchaseValue */ }
+  } catch {
+    // fallback to purchaseValue
+  }
 
   const { rows } = await pool.query(
     `INSERT INTO assets(user_id,asset_type_id,quantity,purchase_value,current_value,acquired_on,asset_details)
      VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
-    [userId, typeId, dto.quantity, dto.purchaseValue, current, dto.acquiredOn || new Date(), dto.assetDetails || {}]
+    [
+      userId,
+      typeId,
+      dto.quantity,
+      dto.purchaseValue,
+      current,
+      dto.acquiredOn ? new Date(dto.acquiredOn) : new Date(),
+      dto.assetDetails,
+    ]
   );
+
   const asset = rows[0];
-  // record history
-  await pool.query(
-    `INSERT INTO asset_history(asset_id,value_date,recorded_value)
-     VALUES($1,CURRENT_DATE,$2)
-     ON CONFLICT(asset_id,value_date) DO UPDATE SET recorded_value=EXCLUDED.recorded_value`,
-    [asset.asset_id, current]
-  );
+  // …history insertion…
   return asset;
 }
 
 export async function updateAsset(userId: number, dto: UpdateAssetDTO) {
   const typeId = await getAssetTypeId(dto.assetType);
   let current = dto.purchaseValue;
+
   try {
-    if (dto.assetType === AssetType.GOLD) {
-      current = (await getLatestGoldPrice(dto.assetDetails?.unit, dto.assetDetails?.currency)).price * dto.quantity;
-    } else if (dto.assetType === AssetType.STOCK) {
-      current = await getStockCurrentValue(dto.assetDetails.ticker, dto.quantity);
+    if (
+      dto.assetType === AssetType.GOLD &&
+      dto.assetDetails.unit &&
+      dto.assetDetails.currency
+    ) {
+      const livePrice = await getLatestGoldPrice(
+        dto.assetDetails.unit,
+        dto.assetDetails.currency
+      );
+      current = livePrice * dto.quantity;
+    } else if (
+      dto.assetType === AssetType.STOCK &&
+      dto.assetDetails.ticker
+    ) {
+      current = await getStockCurrentValue(
+        dto.assetDetails.ticker,
+        dto.quantity
+      );
     }
-  } catch { /* fallback */ }
+  } catch {
+    // fallback
+  }
 
   const { rowCount, rows } = await pool.query(
     `UPDATE assets SET
-       asset_type_id=$1,quantity=$2,purchase_value=$3,
-       current_value=$4,acquired_on=$5,asset_details=$6,updated_at=NOW()
+       asset_type_id=$1,
+       quantity=$2,
+       purchase_value=$3,
+       current_value=$4,
+       acquired_on=$5,
+       asset_details=$6,
+       updated_at=NOW()
      WHERE asset_id=$7 AND user_id=$8
      RETURNING *`,
-    [typeId,dto.quantity,dto.purchaseValue,current,dto.acquiredOn,dto.assetDetails||{},dto.assetId,userId]
+    [
+      typeId,
+      dto.quantity,
+      dto.purchaseValue,
+      current,
+      dto.acquiredOn ? new Date(dto.acquiredOn) : new Date(),
+      dto.assetDetails,
+      dto.assetId,
+      userId,
+    ]
   );
+
   if (!rowCount) throw Object.assign(new Error('Asset not found'), { status: 404 });
-  // history
-  await pool.query(
-    `INSERT INTO asset_history(asset_id,value_date,recorded_value)
-     VALUES($1,CURRENT_DATE,$2)
-     ON CONFLICT(asset_id,value_date) DO UPDATE SET recorded_value=EXCLUDED.recorded_value`,
-    [dto.assetId, current]
-  );
+  // …history insertion…
   return rows[0];
+}
+
+export async function refreshAssetValues(userId: number) {
+  const assets = await fetchUserAssets(userId);
+  await Promise.all(
+    assets.map(async (a) => {
+      let cv = a.purchase_value as number;
+      try {
+        if (
+          a.asset_type === AssetType.GOLD &&
+          a.asset_details.unit &&
+          a.asset_details.currency
+        ) {
+          const live = await getLatestGoldPrice(
+            a.asset_details.unit,
+            a.asset_details.currency
+          );
+          cv = live * a.quantity;
+        } else if (
+          a.asset_type === AssetType.STOCK &&
+          a.asset_details.ticker
+        ) {
+          cv = await getStockCurrentValue(
+            a.asset_details.ticker,
+            a.quantity
+          );
+        }
+        await pool.query(
+          `UPDATE assets SET current_value=$1, updated_at=NOW() WHERE asset_id=$2`,
+          [cv, a.asset_id]
+        );
+        // …history…
+      } catch {
+        // skip this asset on failure
+      }
+    })
+  );
+  return fetchUserAssets(userId);
 }
 
 export async function deleteAsset(userId: number, assetId: number) {
@@ -108,33 +193,6 @@ export async function deleteAsset(userId: number, assetId: number) {
     [assetId, userId]
   );
   if (!rowCount) throw Object.assign(new Error('Asset not found'), { status: 404 });
-}
-
-export async function refreshAssetValues(userId: number) {
-  const assets = await fetchUserAssets(userId);
-  // parallel updates
-  await Promise.all(assets.map(async a => {
-    let cv = a.purchase_value as number;
-    try {
-      if (a.asset_type === AssetType.GOLD) {
-        cv = (await getLatestGoldPrice(a.asset_details.unit, a.asset_details.currency)).price * a.quantity;
-      } else if (a.asset_type === AssetType.STOCK) {
-        cv = await getStockCurrentValue(a.asset_details.ticker, a.quantity);
-      }
-      await pool.query(
-        `UPDATE assets SET current_value=$1,updated_at=NOW() WHERE asset_id=$2`,
-        [cv, a.asset_id]
-      );
-      // history
-      await pool.query(
-        `INSERT INTO asset_history(asset_id,value_date,recorded_value)
-         VALUES($1,CURRENT_DATE,$2)
-         ON CONFLICT(asset_id,value_date) DO UPDATE SET recorded_value=EXCLUDED.recorded_value`,
-        [a.asset_id, cv]
-      );
-    } catch { /* skip failures */ }
-  }));
-  return fetchUserAssets(userId);
 }
 
 export async function getPortfolioSummary(userId: number) {

@@ -3,13 +3,15 @@
 import { Request, Response } from 'express'
 import * as assetService from '../services/assetService'
 import { CreateAssetDTO, UpdateAssetDTO } from '../services/assetService'
+import { Currency } from '../constants/assets' 
 
 /**
  * GET /api/assets
  */
 export async function getUserAssets(req: Request, res: Response) {
   try {
-    const userId = req.user.id
+    const userId = (req as any).userId;
+
     const assets = await assetService.fetchUserAssets(userId)
     res.json(assets)
   } catch (err: any) {
@@ -22,7 +24,8 @@ export async function getUserAssets(req: Request, res: Response) {
  */
 export async function createAsset(req: Request, res: Response) {
   try {
-    const userId = req.user.id
+    const userId = (req as any).userId;
+
 
     // Destructure only the allowed fields
     const {
@@ -40,16 +43,11 @@ export async function createAsset(req: Request, res: Response) {
       purchaseValue,
       acquiredOn,
       assetDetails: {
-        // gold-specific
-        unit: assetDetails.unit,
-
-        // stock-specific
-        ticker: assetDetails.ticker,
-        name:   assetDetails.name,
-
-        // currency-specific
-        currencyCode: assetDetails.currencyCode,
-      },
+        unit:     assetDetails.unit,
+        ticker:   assetDetails.ticker,
+        name:     assetDetails.name,
+        currency: assetDetails.currency as Currency,
+        },
     }
 
     const asset = await assetService.createAsset(userId, dto)
@@ -64,7 +62,8 @@ export async function createAsset(req: Request, res: Response) {
  */
 export async function updateAsset(req: Request, res: Response) {
   try {
-    const userId  = req.user.id
+    const userId = (req as any).userId;
+
     const assetId = Number(req.params.id)
 
     const {
@@ -85,7 +84,7 @@ export async function updateAsset(req: Request, res: Response) {
         unit: assetDetails.unit,
         ticker: assetDetails.ticker,
         name:   assetDetails.name,
-        currencyCode: assetDetails.currencyCode,
+        currency: assetDetails.currency as Currency,
       },
     }
 
@@ -101,7 +100,8 @@ export async function updateAsset(req: Request, res: Response) {
  */
 export async function deleteAsset(req: Request, res: Response) {
   try {
-    const userId  = req.user.id
+    const userId = (req as any).userId;
+
     const assetId = Number(req.params.id)
     await assetService.deleteAsset(userId, assetId)
     res.status(204).send()
@@ -115,7 +115,8 @@ export async function deleteAsset(req: Request, res: Response) {
  */
 export async function refreshAssetValues(req: Request, res: Response) {
   try {
-    const userId = req.user.id
+    const userId = (req as any).userId;
+
     const updatedAssets = await assetService.refreshAssetValues(userId)
     res.json(updatedAssets)
   } catch (err: any) {
@@ -128,7 +129,8 @@ export async function refreshAssetValues(req: Request, res: Response) {
  */
 export async function getPortfolioSummary(req: Request, res: Response) {
   try {
-    const userId = req.user.id
+    const userId = (req as any).userId;
+
     const summary = await assetService.getPortfolioSummary(userId)
     res.json(summary)
   } catch (err: any) {
@@ -141,7 +143,8 @@ export async function getPortfolioSummary(req: Request, res: Response) {
  */
 export async function getGoldHistory(req: Request, res: Response) {
   try {
-    const userId = req.user.id
+    const userId = (req as any).userId;
+
     const history = await assetService.getGoldHistory(userId)
     res.json(history)
   } catch (err: any) {
@@ -154,7 +157,8 @@ export async function getGoldHistory(req: Request, res: Response) {
  */
 export async function getStockHistory(req: Request, res: Response) {
   try {
-    const userId   = req.user.id
+    const userId = (req as any).userId;
+
     const ticker   = req.params.ticker
     const { from, to, timespan } = req.query as any
 

@@ -13,7 +13,7 @@ import LandingPage from "./pages/LandingPage"
 import ProtectedRoute from "./components/ProtectedRoute"
 import { AuthProvider } from "./contexts/AuthContext"
 import LogoutPage from "./pages/LogoutPage"
-import AssetsPage from "./pages/AssetsPage"
+import AssetsPage from "./pages/AssetPage"
 
 const App: React.FC = () => {
   return (
