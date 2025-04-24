@@ -1,0 +1,36 @@
+# Global
+.DS_Store
+.env
+logs
+*.log
+
+# Node
+node_modules/
+
+# Vite/React/Frontend build files
+frontend/dist/
+frontend/node_modules/
+forntend/.env
+
+# TypeScript
+*.tsbuildinfo
+
+# Backend build files
+backend/dist/
+backend/node_modules/
+backend/.env
+
+testing/
+
+
+# Ignore local database, temp files, backups etc.
+*.sqlite
+*.bak
+*.tmp
+*.swp
+
+# VSCode settings (optional)
+.vscode/
+
+# OS specific
+Thumbs.db
