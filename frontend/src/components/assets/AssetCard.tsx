@@ -21,17 +21,17 @@ const AssetCard: React.FC<AssetCardProps> = ({ asset, expanded, assetType, total
   const purchaseDate = new Date(asset.acquired_on).toLocaleDateString()
 
   return (
-    <div className="text-gray-800">
+    <div className="text-white">
       <div className="flex justify-between items-start">
         <div>
           <h3 className="text-xl font-semibold">{assetType}</h3>
-          <p className="text-sm text-gray-500">Purchased: {purchaseDate}</p>
+          <p className="text-sm text-gray-300">Purchased: {purchaseDate}</p>
         </div>
         <div className="flex space-x-2">
-          <button className="p-1 text-gray-400 hover:text-gray-600">
+          <button className="p-1 text-gray-300 hover:text-white">
             <Edit size={16} />
           </button>
-          <button className="p-1 text-gray-400 hover:text-red-600">
+          <button className="p-1 text-gray-300 hover:text-red-400">
             <Trash2 size={16} />
           </button>
         </div>
@@ -39,21 +39,27 @@ const AssetCard: React.FC<AssetCardProps> = ({ asset, expanded, assetType, total
 
       <div className="flex justify-between mt-4">
         <div>
-          <p className="text-sm text-gray-500">Value</p>
+          <p className="text-sm text-gray-300">Value</p>
           <p className="text-xl font-semibold">${totalValue.toLocaleString()}</p>
         </div>
         <div>
-          <p className="text-sm text-gray-500">{assetType !== "CURRENCY" ? "Quantity" : ""}</p>
+          <p className="text-sm text-gray-300">{assetType !== "CURRENCY" ? "Quantity" : ""}</p>
           <p className="text-xl font-semibold">{assetType !== "CURRENCY" ? `${totalQuantity}${unit}` : "-"}</p>
         </div>
       </div>
 
-      <div className={`mt-2 ${isPositive ? "text-green-500" : "text-red-500"}`}>
+      <div className={`mt-2 ${isPositive ? "text-green-400" : "text-red-400"}`}>
         {isPositive ? "+" : ""}
-        {formattedPercentChange}% <span className="text-gray-500 text-sm">this month</span>
+        {formattedPercentChange}% <span className="text-gray-300 text-sm">this month</span>
       </div>
 
-      <div className="flex justify-center mt-2">{expanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}</div>
+      <div className="flex justify-center mt-2">
+        {expanded ? (
+          <ChevronUp size={20} className="text-gray-300" />
+        ) : (
+          <ChevronDown size={20} className="text-gray-300" />
+        )}
+      </div>
     </div>
   )
 }

@@ -91,7 +91,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ assetType, asset, onClose, onSubm
               name="unit"
               value={formData.unit}
               onChange={handleChange}
-              className="w-full p-2 border rounded text-gray-800 bg-white"
+              className="w-full p-2 border rounded-md text-gray-800 bg-white"
               required
             >
               <option value={GoldUnit.GRAM}>Gram</option>
@@ -106,7 +106,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ assetType, asset, onClose, onSubm
               name="quantity"
               value={formData.quantity}
               onChange={handleChange}
-              className="w-full p-2 border rounded text-gray-800 bg-white"
+              className="w-full p-2 border rounded-md text-gray-800 bg-white"
               step="0.01"
               min="0"
               required
@@ -124,7 +124,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ assetType, asset, onClose, onSubm
               name="ticker"
               value={formData.ticker}
               onChange={handleChange}
-              className="w-full p-2 border rounded text-gray-800 bg-white"
+              className="w-full p-2 border rounded-md text-gray-800 bg-white"
               required
             />
           </div>
@@ -135,7 +135,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ assetType, asset, onClose, onSubm
               name="name"
               value={formData.name}
               onChange={handleChange}
-              className="w-full p-2 border rounded text-gray-800 bg-white"
+              className="w-full p-2 border rounded-md text-gray-800 bg-white"
               required
             />
           </div>
@@ -146,7 +146,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ assetType, asset, onClose, onSubm
               name="quantity"
               value={formData.quantity}
               onChange={handleChange}
-              className="w-full p-2 border rounded text-gray-800 bg-white"
+              className="w-full p-2 border rounded-md text-gray-800 bg-white"
               min="0"
               required
             />
@@ -162,7 +162,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ assetType, asset, onClose, onSubm
               name="currency"
               value={formData.currency}
               onChange={handleChange}
-              className="w-full p-2 border rounded text-gray-800 bg-white"
+              className="w-full p-2 border rounded-md text-gray-800 bg-white"
               required
             >
               <option value={Currency.USD}>USD</option>
@@ -178,7 +178,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ assetType, asset, onClose, onSubm
               name="name"
               value={formData.name}
               onChange={handleChange}
-              className="w-full p-2 border rounded text-gray-800 bg-white"
+              className="w-full p-2 border rounded-md text-gray-800 bg-white"
             />
           </div>
         </>
@@ -191,7 +191,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ assetType, asset, onClose, onSubm
           name="purchaseValue"
           value={formData.purchaseValue}
           onChange={handleChange}
-          className="w-full p-2 border rounded text-gray-800 bg-white"
+          className="w-full p-2 border rounded-md text-gray-800 bg-white"
           step="0.01"
           min="0"
           required
@@ -205,7 +205,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ assetType, asset, onClose, onSubm
           name="acquiredOn"
           value={formData.acquiredOn}
           onChange={handleChange}
-          className="w-full p-2 border rounded text-gray-800 bg-white"
+          className="w-full p-2 border rounded-md text-gray-800 bg-white"
           required
         />
       </div>
@@ -214,13 +214,13 @@ const AssetForm: React.FC<AssetFormProps> = ({ assetType, asset, onClose, onSubm
         <button
           type="button"
           onClick={onClose}
-          className="px-4 py-2 border border-white rounded text-white hover:bg-primary-dark"
+          className="px-4 py-2 border border-white rounded-lg text-white hover:bg-dark"
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="px-4 py-2 bg-chatbot-highlight text-primary-dark rounded hover:bg-yellow-300 font-medium"
+          className="px-4 py-2 bg-secondary text-dark rounded-lg hover:bg-secondary-dark font-medium"
           disabled={loading}
         >
           {loading ? "Saving..." : "Save"}

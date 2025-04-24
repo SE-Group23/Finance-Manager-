@@ -2,7 +2,6 @@
 
 import type React from "react"
 import type { PortfolioSummary } from "../../types/asset"
-import { RefreshCw } from "lucide-react"
 
 interface AssetOverviewProps {
   summary: PortfolioSummary | null
@@ -31,33 +30,31 @@ const AssetOverview: React.FC<AssetOverviewProps> = ({ summary, loading, onRefre
   const currencyTotal = summary?.distribution?.find((d) => d.asset_type === "CURRENCY")?.total || 0
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Total Asset Value</h2>
-        <button
-          onClick={onRefresh}
-          className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-          title="Refresh asset values"
-        >
-          <RefreshCw size={18} />
-        </button>
+    <div className="flex justify-start items-start gap-12">
+    {/* Left: Total Value */}
+    <div className="flex-grow">
+      <h2 className="text-l font-semibold mb-2 text-gray-500">Total Asset Value</h2>
+      <div className="text-5xl font-bold">${totalCurrent.toLocaleString()}</div>
+    </div>
+  
+    {/* Right: Breakdown — indented and inline */}
+    <div className="flex flex-col space-y-1 text-sm ml-10">
+      <div className="flex justify-between gap-2 text-yellow-500 font-medium">
+        <span>Gold</span>
+        <span className="text-gray-900 font-semibold">${goldTotal.toLocaleString()}</span>
       </div>
-      <div className="text-5xl font-bold mb-6">${totalCurrent.toLocaleString()}</div>
-      <div className="grid grid-cols-3 gap-4">
-        <div>
-          <div className="text-sm text-green-600 font-medium">Gold</div>
-          <div className="font-semibold">${goldTotal.toLocaleString()}</div>
-        </div>
-        <div>
-          <div className="text-sm text-blue-600 font-medium">Stocks</div>
-          <div className="font-semibold">${stocksTotal.toLocaleString()}</div>
-        </div>
-        <div>
-          <div className="text-sm text-yellow-500 font-medium">Currency</div>
-          <div className="font-semibold">${currencyTotal.toLocaleString()}</div>
-        </div>
+      <div className="flex justify-between gap-2 text-red-400 font-medium">
+        <span>Stocks</span>
+        <span className="text-gray-900 font-semibold">${stocksTotal.toLocaleString()}</span>
+      </div>
+      <div className="flex justify-between gap-2 text-orange-400 font-medium">
+        <span>Currency</span>
+        <span className="text-gray-900 font-semibold">${currencyTotal.toLocaleString()}</span>
       </div>
     </div>
+  </div>
+  
+
   )
 }
 

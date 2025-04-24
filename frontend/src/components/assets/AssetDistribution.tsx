@@ -1,5 +1,5 @@
 import type React from "react"
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts"
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts"
 
 interface DistributionItem {
   asset_type: string
@@ -13,7 +13,7 @@ interface AssetDistributionProps {
   loading: boolean
 }
 
-const COLORS = ["#eab308", "#ef4444", "#3b82f6"]
+const COLORS = ["#e8fb5a", "#e88b8b", "#ffa726"]
 
 const AssetDistribution: React.FC<AssetDistributionProps> = ({ distribution, loading }) => {
   if (loading) {
@@ -34,30 +34,32 @@ const AssetDistribution: React.FC<AssetDistributionProps> = ({ distribution, loa
 
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-4">Asset Distribution</h2>
-      <div className="h-64">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={chartData}
-              cx="50%"
-              cy="50%"
-              labelLine={false}
-              outerRadius={80}
-              fill="#8884d8"
-              dataKey="value"
-              label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-            >
-              {chartData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-              ))}
-            </Pie>
-            <Tooltip
-              formatter={(value, name, props) => [`$${props.payload.total.toLocaleString()} (${value}%)`, name]}
-            />
-            <Legend />
-          </PieChart>
-        </ResponsiveContainer>
+      <div className="flex items-center">
+        <div className="w-1/3">
+          <ResponsiveContainer width="100%" height={200}>
+            <PieChart>
+              <Pie data={chartData} cx="50%" cy="50%" labelLine={false} outerRadius={80} fill="#8884d8" dataKey="value">
+                {chartData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip
+                formatter={(value, name, props) => [`$${props.payload.total.toLocaleString()} (${value}%)`, name]}
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+        <div className="w-2/3 grid grid-cols-3 gap-4">
+          {chartData.map((item, index) => (
+            <div key={item.name} className="text-center">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }}></div>
+                <span className="font-medium">{item.name}</span>
+              </div>
+              <div className="text-2xl font-bold">{item.value}%</div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   )

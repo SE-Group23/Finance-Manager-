@@ -2,6 +2,7 @@ export const ENV = {
     POLYGON_API_KEY: 'POLYGON_API_KEY',
     RAPIDAPI_KEY:    'RAPIDAPI_KEY',
     RAPIDAPI_HOST:   'RAPIDAPI_HOST',
+    CURRENCY_API_KEY: 'CURRENCY_API_KEY',
   } as const;
   
   export function getEnv(key: keyof typeof ENV): string {
