@@ -63,7 +63,7 @@ const App: React.FC = () => {
             }
           />
 
-<Route
+          <Route
             path="/zakat-tax"
             element={
               <ProtectedRoute>

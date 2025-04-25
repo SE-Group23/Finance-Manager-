@@ -39,7 +39,6 @@ interface TaxSummary {
   }
 }
 
-// Default empty states - will be replaced with real data
 const emptyZakat: ZakatSummary = {
   nisaab_status: {
     status: "Loading...",
@@ -90,9 +89,7 @@ const ZakatTaxPage: React.FC = () => {
 
         const response = await fetchZakatAndTaxSummary()
 
-        // Check if the response contains the expected data structure
         if (response && response.zakat && response.tax) {
-          // Check if Zakat data exists (assets are present)
           const zakatData = response.zakat
           const hasAssets =
             zakatData.current_assets > 0 ||
@@ -102,7 +99,6 @@ const ZakatTaxPage: React.FC = () => {
 
           setHasZakatData(hasAssets)
 
-          // If no assets, update the status
           if (!hasAssets) {
             zakatData.nisaab_status = {
               status: "Nisaab Threshold Not Met",
@@ -113,13 +109,11 @@ const ZakatTaxPage: React.FC = () => {
 
           setZakat(zakatData)
 
-          // Check if Tax data exists (income is present)
           const taxData = response.tax
           const hasIncome = taxData.annual_income > 0
 
           setHasTaxData(hasIncome)
 
-          // If no income, update the status
           if (!hasIncome) {
             taxData.threshold_status = {
               status: "Tax Threshold Not Met",
@@ -130,24 +124,20 @@ const ZakatTaxPage: React.FC = () => {
 
           setTax(taxData)
         } else {
-          // Use empty defaults but don't show API error
           console.warn("API response missing expected data structure", response)
           setApiError(true)
         }
       } catch (err) {
         console.error("Failed to load Zakat & Tax data:", err)
         setApiError(true)
-        // State already initialized with defaults, so no need to set those again
       } finally {
         setLoading(false)
       }
     }
 
-    // Fetch real data from the service
     fetchData()
   }, [])
 
-  // Navigation handlers
   const navigateToAssets = () => {
     navigate("/assets")
   }
