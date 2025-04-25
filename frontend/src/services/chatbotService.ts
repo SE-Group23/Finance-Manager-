@@ -1,15 +1,12 @@
-// frontend/src/services/chatbotService.ts
 import axios from 'axios';
 
 const API_URL = `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api/chatbot`;
 
-// getChatbotResponse is a function that sends the user's message to the server
 export async function getChatbotResponse(message: string) {
-    // 1. Retrieve the token from localStorage
+   
     const token = localStorage.getItem('token');
     if (!token) {
         throw new Error('No token found in localStorage');
-        
     }
 
     const config = {
@@ -24,5 +21,5 @@ export async function getChatbotResponse(message: string) {
 
     const response = await axios.post(API_URL, body, config);
 
-    return response.data.response; // This is the AI-generated string
+    return response.data.response; 
 }

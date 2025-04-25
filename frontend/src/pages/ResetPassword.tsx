@@ -70,7 +70,7 @@ const ResetPassword: React.FC = () => {
       
       if (res.ok) {
         setMessage(data.message || "Password reset successful!");
-        
+        // Redirect to login after 2 seconds
         setTimeout(() => navigate("/login"), 2000);
       } else {
         setMessage(data.message || "Failed to reset password");
@@ -84,7 +84,6 @@ const ResetPassword: React.FC = () => {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden">
-  
       <div className="w-1/2 flex flex-col h-full">
         <div className="flex-1 bg-gradient-to-b from-teal-900 to-teal-600 flex items-center justify-center">
           <div className="flex justify-center items-center w-full h-full p-5">

@@ -1,13 +1,14 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Edit, X, Plus, Save, Check, Bell} from "lucide-react"
+import { Edit, X, Plus, Save, Check, Bell } from "lucide-react"
 import {
   getBudgets,
   setBudgets,
   deleteBudget,
   getCurrentMonthStart,
   calculateBudgetStats,
+  type Budget,
   type CategoryLimit,
 } from "../services/budgetService"
 import LoadingScreen from "./LoadingScreen"
@@ -20,9 +21,10 @@ export default function BudgetManagerContent() {
   const [newBudgetAmount, setNewBudgetAmount] = useState<string>("")
   const [showAddCategory, setShowAddCategory] = useState(false)
   const [newCategory, setNewCategory] = useState({ name: "", budget: "" })
+  const [monthlyIncome, setMonthlyIncome] = useState<number>(0)
 
   const [alertThreshold, setAlertThreshold] = useState<number>(100)
-  const [setFormLoading] = useState(false)
+  const [formLoading, setFormLoading] = useState(false)
 
   const categoryColors: Record<string, string> = {
     "Food and Drink": "#8FD14F",
@@ -59,9 +61,11 @@ export default function BudgetManagerContent() {
       }))
 
       setBudgetsState(budgetsWithColor)
+      setMonthlyIncome(data.monthly_income || 0)
       setAlertThreshold(data.alert_threshold || 100)
       setError(null)
     } catch (err) {
+      console.error("Error fetching budgets:", err)
       setError("Failed to load budgets. Please try again later.")
     } finally {
       setLoading(false)
@@ -71,6 +75,7 @@ export default function BudgetManagerContent() {
   useEffect(() => {
     fetchBudgets()
   }, [])
+
 
   const handleEdit = (index: number) => {
     setEditingIndex(index)
@@ -104,6 +109,7 @@ export default function BudgetManagerContent() {
       setEditingIndex(null)
       setError(null)
     } catch (err) {
+      
       setError("Failed to update budget. Please try again.")
     }
   }
@@ -117,6 +123,7 @@ export default function BudgetManagerContent() {
       setBudgetsState(updatedBudgets)
       setError(null)
     } catch (err) {
+      
       setError("Failed to delete budget. Please try again.")
     }
   }
@@ -149,6 +156,7 @@ export default function BudgetManagerContent() {
       setShowAddCategory(false)
       setError(null)
     } catch (err) {
+     
       setError("Failed to add category. Please try again.")
     }
   }
@@ -225,6 +233,7 @@ export default function BudgetManagerContent() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        
           <div className="bg-navbar text-white p-6 rounded-2xl shadow h-80">
           <h2 className="text-xl font-semibold mb-4">This Month</h2>
 
