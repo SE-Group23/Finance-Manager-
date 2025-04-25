@@ -74,7 +74,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage }) => {
           <NavItem icon={<BudgetsIcon />} text="Budgets" active={activePage === "budgets"} to="/budget" />
           <NavItem icon={<AssetsIcon />} text="Assets" active={activePage === "assets"} to="/assets" />
           <NavItem icon={<CalendarIcon />} text="Calendar" active={activePage === "calendar"} to="/calendar" />
-          <NavItem icon={<ZakatIcon />} text="Zakat & Tax" active={activePage === "zakat"} to="/zakat" />
+          <NavItem icon={<ZakatIcon />} text="Zakat & Tax" active={activePage === "zakat-tax"} to="/zakat-tax" />
           <NavItem icon={<ChatbotIcon />} text="AI Chatbot" active={activePage === "chatbot"} to="/chatbot" />
         </ul>
       </nav>

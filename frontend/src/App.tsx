@@ -13,6 +13,8 @@ import LandingPage from "./pages/LandingPage"
 import ProtectedRoute from "./components/ProtectedRoute"
 import { AuthProvider } from "./contexts/AuthContext"
 import LogoutPage from "./pages/LogoutPage"
+import ZakatTaxPage from "./pages/ZakatTaxPage" // ⬅️ Add this at the top
+
 
 const App: React.FC = () => {
   return (
@@ -57,6 +59,15 @@ const App: React.FC = () => {
             element={
               <ProtectedRoute>
                 <ChatbotPage />
+              </ProtectedRoute>
+            }
+          />
+
+<Route
+            path="/zakat-tax"
+            element={
+              <ProtectedRoute>
+                <ZakatTaxPage />
               </ProtectedRoute>
             }
           />

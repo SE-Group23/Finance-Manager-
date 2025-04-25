@@ -7,6 +7,7 @@ import transactionRoutes from './src/routes/transactionRoutes';
 import budgetRoutes from './src/routes/budgetRoutes';
 import chatbotRoutes from './src/routes/chatbotRoutes';
 import dashboardRoutes from './src/routes/dashboardRoutes';
+import zakatTaxRoutes from './src/routes/zakatTaxRoutes';
 
 import type { Request, Response } from "express"
 
@@ -22,6 +23,8 @@ app.use('/api/transactions', transactionRoutes);
 app.use('/api/budgets', budgetRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/zakat-tax', zakatTaxRoutes)
+
 
 app.get("/", (req: Request, res: Response) => {
   res.json({ message: "API is running..." });
