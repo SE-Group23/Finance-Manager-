@@ -74,16 +74,16 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage }) => {
           <NavItem icon={<BudgetsIcon />} text="Budgets" active={activePage === "budgets"} to="/budget" />
           <NavItem icon={<AssetsIcon />} text="Assets" active={activePage === "assets"} to="/assets" />
           <NavItem icon={<CalendarIcon />} text="Calendar" active={activePage === "calendar"} to="/calendar" />
-          <NavItem icon={<ZakatIcon />} text="Zakat & Tax" active={activePage === "zakat"} to="/zakat" />
+          <NavItem icon={<ZakatIcon />} text="Zakat & Tax" active={activePage === "zakat-tax"} to="/zakat-tax" />
           <NavItem icon={<ChatbotIcon />} text="AI Chatbot" active={activePage === "chatbot"} to="/chatbot" />
         </ul>
       </nav>
 
       <div className="mt-auto border-t border-navbar-dark p-4">
         <div className="flex items-center gap-4 mb-2">
-          <Link to="/settings" className="text-white hover:text-gray-200">
+          {/* <Link to="/settings" className="text-white hover:text-gray-200">
             <SettingsIcon size={18} />
-          </Link>
+          </Link> */}
           <button onClick={handleLogout} className="text-white hover:text-gray-200">
             <LogoutIcon size={18} />
           </button>

@@ -1,9 +1,9 @@
 import { Router } from 'express';
 import { requireAuth } from '../middleware/requireAuth';
 import {
-  getBudget,
-  setBudget,
-  deleteBudget
+    getBudget,
+    setBudget,
+    deleteBudget
 } from '../controllers/budgetController';
 
 const router = Router();
