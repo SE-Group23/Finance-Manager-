@@ -85,7 +85,7 @@ async function getOrCreateMetadata(dto: CreateAssetDTO): Promise<number> {
     const ins = await pool.query(
       `INSERT INTO asset_metadata(asset_type_id, ticker, company_name, currency_code)
        VALUES($1,$2,$3,$4) RETURNING metadata_id`,
-      [typeId, meta.ticker, meta.name, meta.currency]
+      [typeId, meta.ticker, meta.name, "USD"]
     );
     return ins.rows[0].metadata_id;
   }
@@ -141,12 +141,16 @@ export async function createAsset(userId: number, dto: CreateAssetDTO) {
       current = live * dto.quantity;
     }
     else if (dto.assetType === AssetType.STOCK) {
-      current = await stockSvc.getStockCurrentValue(dto.assetDetails.ticker!, dto.quantity);
+      current = await stockSvc.getStockCurrentValue(dto.assetDetails.ticker!, dto.quantity, dto.acquiredOn!);
     }
     else if (dto.assetType === AssetType.CURRENCY) {
-      // just 1:1 to USD or convert purchaseValue currency→USD
-      const rates = await fxSvc.convertCurrency(dto.quantity, dto.assetDetails.currencyCode!, ['USD']);
-      current = rates.find(r => r.code === 'USD')!.value;
+      const code = dto.assetDetails.currencyCode!;
+      const date = dto.acquiredOn ? new Date(dto.acquiredOn).toISOString().split("T")[0] : undefined;
+
+      // Try from local DB first, then API
+      let converted = await fxSvc.getLatestRateToPKR(code, date);
+
+      current = converted * dto.quantity;
     }
   } catch (e) {
     console.error("❌ [createAsset] Failed to fetch current value:");
@@ -210,7 +214,7 @@ export async function updateAsset(userId: number, dto: UpdateAssetDTO) {
     current = live * dto.quantity;
   }
   else if (dto.assetType === AssetType.STOCK) {
-    current = await stockSvc.getStockCurrentValue(dto.assetDetails.ticker!, dto.quantity);
+    current = await stockSvc.getStockCurrentValue(dto.assetDetails.ticker!, dto.quantity, dto.acquiredOn!);
   }
   else if (dto.assetType === AssetType.CURRENCY) {
     const rates = await fxSvc.convertCurrency(dto.quantity, dto.assetDetails.currencyCode!, ['USD']);
@@ -262,13 +266,17 @@ export async function fetchUserAssets(userId: number) {
   const { rows } = await pool.query(`
     SELECT a.*, t.asset_type_name AS asset_type, m.*
       FROM assets a
-      JOIN asset_metadata m ON a.metadata_id=m.metadata_id
-      JOIN asset_types t ON m.asset_type_id=t.asset_type_id
-     WHERE a.user_id=$1
+      JOIN asset_metadata m ON a.metadata_id = m.metadata_id
+      JOIN asset_types t ON m.asset_type_id = t.asset_type_id
+     WHERE a.user_id = $1
      ORDER BY a.acquired_on DESC
-  `,[userId]);
+  `, [userId]);
+
+  // If converted_value_pkr is already in the DB, no need to recalculate
   return rows;
 }
+
+
 
 export async function refreshAssetValues(userId: number) {
   // fetch all + re‐compute each via its service
@@ -278,7 +286,7 @@ export async function refreshAssetValues(userId: number) {
     if (a.asset_type===AssetType.GOLD) {
       newVal = (await goldSvc.getLatestGoldPrice("tola", "PKR")) * a.quantity;
     } else if (a.asset_type===AssetType.STOCK) {
-      newVal = await stockSvc.getStockCurrentValue(a.ticker, a.quantity);
+      newVal = await stockSvc.getStockCurrentValue(a.ticker, a.quantity, a.acquiredOn);
     } else {
       // currency → USD
       const rates = await fxSvc.convertCurrency(a.quantity, a.currency_code, ['USD']);

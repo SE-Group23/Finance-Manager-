@@ -51,7 +51,11 @@ const AssetCard: React.FC<AssetCardProps> = ({
       <div className="flex justify-between items-start">
         <div>
           <h3 className="text-xl font-semibold">{assetType}</h3>
-          <p className="text-sm text-gray-300">{assetType !== "CURRENCY" ? `${totalQuantity}${unit}` : ""}</p>
+          <p className="text-sm text-gray-300">
+            {assetType !== "CURRENCY"
+              ? `${totalQuantity}${unit}`
+              : `${asset.quantity} ${asset.currency_code || asset.asset_details?.currencyCode || ""}`}
+          </p>
         </div>
         <div className="flex space-x-2">
           <button className="p-1 text-gray-300 hover:text-white" onClick={handleEdit}>
@@ -66,10 +70,10 @@ const AssetCard: React.FC<AssetCardProps> = ({
       <div className="flex justify-between mt-4">
         <div>
           <p className="text-sm text-gray-300">Purchase Value</p>
-          <p className="text-xl font-semibold">${Number.parseFloat(asset.purchase_value.toString()).toFixed(2)}</p>
+          <p className="text-l font-semibold">${Number.parseFloat(asset.purchase_value.toString()).toFixed(2)}</p>
         </div>
         <div>
-          <p className={`text-xl font-semibold ${isPositive ? "text-green-400" : "text-red-400"}`}>
+          <p className={`text-sm font-semibold ${isPositive ? "text-green-400" : "text-red-400"}`}>
             {isPositive ? "+" : ""}
             {formattedPercentChange}%
           </p>

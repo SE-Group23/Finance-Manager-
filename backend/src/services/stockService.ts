@@ -73,30 +73,69 @@ export async function getTickerMeta(ticker: string): Promise<TickerMeta | null> 
   };
 }
 
-/** Get today’s stock close from DB or API */
-export async function getStockCurrentValue(ticker: string, quantity: number): Promise<number> {
-  const today = new Date().toISOString().split('T')[0];
-  const existing = await pool.query(
-    `SELECT close FROM stock_price_history WHERE ticker = $1 AND price_date = $2`,
-    [ticker, today]
-  );
-  if (existing.rowCount) return existing.rows[0].close * quantity;
+function getValidStockDate(acquiredOn: string): string {
+  const inputDate = new Date(acquiredOn);
+  const today = new Date();
 
-  const url = `${API.STOCK.OPEN_CLOSE}/${ticker}/${today}`;
-  const res = await axios.get(url, { params: { adjusted: true, apiKey: POLYGON_API_KEY } });
+  // Only compare date parts
+  inputDate.setHours(0, 0, 0, 0);
+  today.setHours(0, 0, 0, 0);
 
-  const { open, close, high, low, volume } = res.data;
-
-  await pool.query(
-    `INSERT INTO stock_price_history (ticker, price_date, open, high, low, close, volume)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)
-     ON CONFLICT (ticker, price_date) DO UPDATE
-     SET open = EXCLUDED.open, high = EXCLUDED.high, low = EXCLUDED.low, close = EXCLUDED.close, volume = EXCLUDED.volume`,
-    [ticker, today, open, high, low, close, volume]
-  );
-
-  return close * quantity;
+  if (inputDate >= today) {
+    // If acquisition date is today or future, fallback to yesterday
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+    return yesterday.toISOString().split('T')[0];
+  } else {
+    return acquiredOn;
+  }
 }
+
+export async function getStockCurrentValue(ticker: string, quantity: number, acquisitionDate: string): Promise<number> {
+  const priceDate = getValidStockDate(acquisitionDate);
+  console.log(`[getStockCurrentValue] ${ticker} (target date: ${priceDate})`);
+
+  try {
+    console.log(`[getStockCurrentValue] Checking DB for ${ticker}...`);
+    const existing = await pool.query(
+      `SELECT close FROM stock_price_history WHERE ticker = $1 AND price_date = $2`,
+      [ticker, priceDate]
+    );
+    if (existing.rowCount) return existing.rows[0].close * quantity;
+  } catch (e: any) {
+    console.error("Error checking DB for stock value:", e.message);
+  }
+
+  console.log(`[getStockCurrentValue] Fetching current value from API for ${ticker}...`);
+
+  let ret = 0;
+  try {
+    const url = `${API.STOCK.OPEN_CLOSE}/${ticker}/${priceDate}`;
+    const res = await axios.get(url, { params: { adjusted: true, apiKey: POLYGON_API_KEY } });
+
+    const { open, close, high, low, volume } = res.data;
+    console.log(`[getStockCurrentValue] API data for ${ticker} - close: ${close}`);
+
+    try {
+      await pool.query(
+        `INSERT INTO stock_price_history (ticker, price_date, open, high, low, close, volume)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         ON CONFLICT (ticker, price_date) DO UPDATE
+         SET open = EXCLUDED.open, high = EXCLUDED.high, low = EXCLUDED.low, close = EXCLUDED.close, volume = EXCLUDED.volume`,
+        [ticker, priceDate, open, high, low, close, volume]
+      );
+    } catch (e: any) {
+      console.error("Error inserting stock current value into DB:", e.message);
+    }
+
+    ret = close * quantity;
+  } catch (e: any) {
+    console.error("Error fetching stock current value:", e.message);
+  }
+
+  return ret;
+}
+
 
 /** Fetch & insert historical prices */
 export async function getHistoricalStockPrices(

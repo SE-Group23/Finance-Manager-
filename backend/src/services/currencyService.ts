@@ -1,9 +1,10 @@
 import axios from 'axios';
 import { pool } from '../db';
 import { getEnv } from '../constants/env';
+import { API } from '../constants/api';
 
 const CURRENCY_API_KEY = getEnv('CURRENCY_API_KEY');
-const BASE_URL = 'https://api.currencyapi.com/v3';
+const BASE_URL = API.CURRENCY;
 
 interface CurrencyRate {
   code: string;
@@ -82,6 +83,37 @@ export async function getHistoricalRates(date: string, base: string = 'USD', tar
   }
 }
 
+export async function getLatestRateToPKR(code: string, date?: string): Promise<number> {
+  const target = code.toUpperCase();
+  const base = 'PKR';
+
+  // If no date passed or date is today, use yesterday
+  const today = new Date().toISOString().split('T')[0];
+  let effectiveDate = date || today;
+
+  const isToday = effectiveDate === today;
+  if (isToday) {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    effectiveDate = yesterday.toISOString().split('T')[0];
+  }
+
+  try {
+    const local = await pool.query(
+      `SELECT exchange_rate FROM currency_exchange_history
+       WHERE base_currency=$1 AND target_currency=$2 AND rate_date <= $3
+       ORDER BY rate_date DESC LIMIT 1`,
+      [base, target, effectiveDate]
+    );
+    if (local.rowCount) return local.rows[0].exchange_rate;
+  } catch (e: any) {
+    console.error(`[getLatestRateToPKR] Error fetching from local DB: ${e.message}`);
+  }
+
+  const [rate] = await convertCurrency(1, base, [target], effectiveDate);
+  return rate.value;
+}
+
 /** Get exchange rates for a range (charting) */
 export async function getRangeRates(
   base: string,
@@ -105,25 +137,37 @@ export async function getRangeRates(
 }
 
 /** Convert amount using today's or historical rates */
-export async function convertCurrency(
-  value: number,
-  base: string,
-  targets: string[],
-  date?: string
-): Promise<CurrencyRate[]> {
-  const res = await axios.get(`${BASE_URL}/convert`, {
-    params: {
-      apikey: CURRENCY_API_KEY,
-      value,
-      base_currency: base,
-      currencies: targets.join(','),
-      date
-    }
-  });
+export async function convertCurrency(value: number, base: string, targets: string[], date?: string): Promise<CurrencyRate[]> {
+  let result: CurrencyRate[] = [];
 
-  const result: CurrencyRate[] = [];
-  for (const code in res.data.data) {
-    result.push({ code, value: res.data.data[code].value });
+  const isToday = !date || new Date(date).toISOString().split('T')[0] === new Date().toISOString().split('T')[0];
+  const endpoint = `${BASE_URL}/latest`;
+  const base_currency = base.toUpperCase();
+
+  try {
+    const res = await axios.get(endpoint, {
+      params: {
+        apikey: CURRENCY_API_KEY,
+        base_currency,
+        currencies: targets.join(',')
+      }
+    });
+
+    const rates = res.data.data;
+
+    for (const code of targets) {
+      const targetRate = rates[code.toUpperCase()];
+      if (!targetRate) continue;
+
+      const converted = value / targetRate.value;
+      result.push({ code, value: converted });
+    }
+
+
+    console.log(`[convertCurrency] base=${base}, value=${value}, targets=${targets}, converted=`, result);
+  } catch (e: any) {
+    console.error(`[convertCurrency] Fallback using /latest failed: ${e.message}`);
   }
+
   return result;
 }

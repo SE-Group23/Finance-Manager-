@@ -93,7 +93,7 @@ const AssetList: React.FC<AssetListProps> = ({ assets, loading }) => {
               assetType="GOLD"
               totalValue={goldAssets.reduce((sum, asset) => sum + asset.current_value, 0)}
               totalQuantity={goldAssets.reduce((sum, asset) => sum + asset.quantity, 0)}
-              unit="g"
+              unit=" tola"
               onDelete={handleDeleteAsset}
               onEdit={handleEditAsset}
               onClick={() => setDetailsModalType("GOLD")}
@@ -117,7 +117,7 @@ const AssetList: React.FC<AssetListProps> = ({ assets, loading }) => {
               assetType="STOCK"
               totalValue={stockAssets.reduce((sum, asset) => sum + asset.current_value, 0)}
               totalQuantity={stockAssets.reduce((sum, asset) => sum + asset.quantity, 0)}
-              unit="shares"
+              unit=" shares"
               onDelete={handleDeleteAsset}
               onEdit={handleEditAsset}
               onClick={() => setDetailsModalType("STOCK")}
@@ -205,7 +205,7 @@ const AssetList: React.FC<AssetListProps> = ({ assets, loading }) => {
               <h2 className="text-xl font-semibold mb-4">Add New Asset</h2>
               <div className="flex space-x-4 mb-4">
                 <button
-                  className="flex-1 py-2 rounded-md bg-green-100 hover:bg-green-200 text-dark"
+                  className="flex-1 py-2 rounded-md bg-green-500 hover:bg-green-200 text-dark"
                   onClick={() => {
                     setShowAddForm(false)
                     setSelectedAssetType("GOLD")
@@ -214,7 +214,7 @@ const AssetList: React.FC<AssetListProps> = ({ assets, loading }) => {
                   Gold
                 </button>
                 <button
-                  className="flex-1 py-2 rounded-md bg-blue-100 hover:bg-blue-200 text-dark"
+                  className="flex-1 py-2 rounded-md bg-blue-300 hover:bg-blue-200 text-dark"
                   onClick={() => {
                     setShowAddForm(false)
                     setSelectedAssetType("STOCK")
@@ -223,7 +223,7 @@ const AssetList: React.FC<AssetListProps> = ({ assets, loading }) => {
                   Stock
                 </button>
                 <button
-                  className="flex-1 py-2 rounded-md bg-yellow-100 hover:bg-yellow-200 text-dark"
+                  className="flex-1 py-2 rounded-md bg-yellow-400 hover:bg-yellow-200 text-dark"
                   onClick={() => {
                     setShowAddForm(false)
                     setSelectedAssetType("CURRENCY")

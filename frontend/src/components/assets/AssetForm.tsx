@@ -1,23 +1,34 @@
-//Asset Form
-
 "use client"
 
 import type React from "react"
-import { useState } from "react"
-import { createAsset, updateAsset } from "../../services/assetService"
-import { AssetType, Currency, GoldUnit } from "../../types/asset"
+import { useState, useEffect } from "react"
+import { Currency, GoldUnit } from "../../types/asset"
 
 interface AssetFormProps {
   assetType: string
   asset?: any
   onClose: () => void
+  createAsset: (assetData: any) => Promise<void>
+  updateAsset: (assetId: string, assetData: any) => Promise<void>
   onSubmitStart?: () => void
   onSubmitEnd?: () => void
 }
 
-const AssetForm: React.FC<AssetFormProps> = ({ assetType, asset, onClose, onSubmitStart, onSubmitEnd }) => {
+const AssetForm: React.FC<AssetFormProps> = ({
+  assetType,
+  asset,
+  onClose,
+  createAsset,
+  updateAsset,
+  onSubmitStart,
+  onSubmitEnd,
+}) => {
+  // Normalize assetType to uppercase for consistent comparison
+  const normalizedAssetType = assetType.toUpperCase()
+
   const [formData, setFormData] = useState({
     quantity: asset?.quantity || 0,
+    pricePerShare: 0,
     purchaseValue: asset?.purchase_value || 0,
     acquiredOn: asset?.acquired_on
       ? new Date(asset.acquired_on).toISOString().split("T")[0]
@@ -31,93 +42,129 @@ const AssetForm: React.FC<AssetFormProps> = ({ assetType, asset, onClose, onSubm
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [tickerError, setTickerError] = useState("")
+
+  // Validate ticker format for stock assets
+  useEffect(() => {
+    if (normalizedAssetType === "STOCK" && formData.ticker) {
+      // Basic ticker validation - alphanumeric and typically 1-5 characters
+      const isValidTicker = /^[A-Z0-9.]{1,5}$/.test(formData.ticker.toUpperCase())
+      if (!isValidTicker) {
+        setTickerError("Please enter a valid ticker symbol (1-5 characters)")
+      } else {
+        setTickerError("")
+      }
+    }
+  }, [formData.ticker, normalizedAssetType])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: name === "quantity" || name === "purchaseValue" ? Number(value) : value,
-    }))
+    
+    // Convert ticker to uppercase for stocks
+    if (name === "ticker") {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value.toUpperCase(),
+      }))
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: name === "quantity" || name === "purchaseValue" ? Number(value) : value,
+      }))
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    onSubmitStart?.();
-  
+    e.preventDefault()
+    
+    // Validate form before submission
+    if (normalizedAssetType === "STOCK") {
+      if (!formData.ticker) {
+        setError("Ticker symbol is required")
+        return
+      }
+      if (tickerError) {
+        setError(tickerError)
+        return
+      }
+    }
+    
+    setLoading(true)
+    setError("")
+    onSubmitStart?.()
+
     try {
       // Create a payload that exactly matches what the backend expects
-      let assetData: any = {
-        assetType: assetType.toLowerCase(),
+      const assetData: any = {
+        assetType: normalizedAssetType.toLowerCase(),
         quantity: Number(formData.quantity),
-        purchaseValue: Number(formData.purchaseValue),
         acquiredOn: formData.acquiredOn,
-        assetDetails: {}
-      };
+        assetDetails: {},
+      }
 
-      
-      
       // Set the appropriate asset details based on asset type
-      if (assetType === "GOLD") {
+      if (normalizedAssetType === "GOLD") {
+        assetData.purchaseValue = Number(formData.purchaseValue)
         assetData.assetDetails = {
           unit: "tola",
-          currency: "PKR"
-        };
+          currency: "PKR",
+        }
 
-        const quantity = formData.unit === GoldUnit.GRAM
-          ? formData.quantity / 11.6638
-          : formData.quantity;
+        const quantity = formData.unit === GoldUnit.GRAM ? formData.quantity / 11.6638 : formData.quantity
 
-          assetData.quantity = quantity;
-
-      } else if (assetType === "STOCK") {
+        assetData.quantity = quantity
+      } else if (normalizedAssetType === "STOCK") {
+        assetData.purchaseValue = Number(formData.pricePerShare) * Number(formData.quantity);
+        
         assetData.assetDetails = {
-          ticker: formData.ticker,
-          name: formData.name
-        };
-      } else if (assetType === "CURRENCY") {
+          ticker: formData.ticker.trim().toUpperCase(), 
+          name: formData.name || formData.ticker.toUpperCase(), 
+        }
+
+
+
+        // For stocks, we don't need to set currency as the backend will handle it
+      } else if (normalizedAssetType === "CURRENCY") {
+        assetData.purchaseValue = Number(formData.quantity);
         assetData.assetDetails = {
-          currencyCode: formData.currencyCode, // <-- explicitly use currency_code
-          name: formData.name
-        };
+          currencyCode: formData.currencyCode.toUpperCase(),
+          name: formData.name,
+        }
       }
-      
-  
-      console.log("Submitting asset data:", JSON.stringify(assetData));
-  
+
+      console.log("Submitting asset data:", JSON.stringify(assetData))
+
       if (asset) {
-        await updateAsset(asset.asset_id, assetData);
+        await updateAsset(asset.asset_id, assetData)
       } else {
-        await createAsset(assetData);
+        await createAsset(assetData)
       }
-  
-      onClose();
-      window.location.reload();
+
+      onClose()
+      window.location.reload()
     } catch (err: any) {
-      console.error("Error saving asset:", err);
+      console.error("Error saving asset:", err)
       if (err.response) {
-        console.error("Error response data:", err.response.data);
-        console.error("Error response status:", err.response.status);
-        console.error("Error response headers:", err.response.headers);
+        console.error("Error response data:", err.response.data)
+        console.error("Error response status:", err.response.status)
+        console.error("Error response headers:", err.response.headers)
       }
-      setError(err.response?.data?.error || "Failed to save asset. Please try again.");
+      setError(err.response?.data?.error || "Failed to save asset. Please try again.")
     } finally {
-      setLoading(false);
-      onSubmitEnd?.();
+      setLoading(false)
+      onSubmitEnd?.()
     }
-  };
+  }
 
   return (
     <form onSubmit={handleSubmit} className="text-white">
       <h3 className="text-lg font-semibold mb-4">
-        {asset ? "Edit" : "Add"} {assetType}
+        {asset ? "Edit" : "Add"} {normalizedAssetType}
       </h3>
 
       {error && <div className="mb-4 p-2 bg-red-100 text-red-800 rounded">{error}</div>}
 
       {/* Common fields for all asset types */}
-
       <div className="mb-4">
         <label className="block text-sm font-medium mb-1">Acquisition Date</label>
         <input
@@ -130,8 +177,25 @@ const AssetForm: React.FC<AssetFormProps> = ({ assetType, asset, onClose, onSubm
         />
       </div>
 
-      <div className="mb-4">
-        <label className="block text-sm font-medium mb-1">Purchase Value</label>
+      {/* <div className="mb-4">
+        <label className="block text-sm font-medium mb-1">Purchase Value (USD)</label>
+        <input
+          type="number"
+          name="purchaseValue"
+          value={formData.purchaseValue}
+          onChange={handleChange}
+          className="w-full p-2 border rounded-md text-gray-800 bg-white"
+          step="0.01"
+          min="0"
+          required
+        />
+      </div> */}
+
+      {/* Gold-specific fields */}
+      {normalizedAssetType === "GOLD" && (
+        <>
+        <div className="mb-4">
+        <label className="block text-sm font-medium mb-1">Purchase Value (USD)</label>
         <input
           type="number"
           name="purchaseValue"
@@ -143,11 +207,7 @@ const AssetForm: React.FC<AssetFormProps> = ({ assetType, asset, onClose, onSubm
           required
         />
       </div>
-
-      {/* Gold-specific fields */}
-      {assetType === "GOLD" && (
-        <>
-        <div className="mb-4">
+          <div className="mb-4">
             <label className="block text-sm font-medium mb-1">Currency of Purchase</label>
             <select
               name="currency"
@@ -171,7 +231,6 @@ const AssetForm: React.FC<AssetFormProps> = ({ assetType, asset, onClose, onSubm
             >
               <option value={GoldUnit.TOLA}>Tola</option>
               <option value={GoldUnit.GRAM}>Gram</option>
-              
             </select>
           </div>
           <div className="mb-4">
@@ -191,27 +250,19 @@ const AssetForm: React.FC<AssetFormProps> = ({ assetType, asset, onClose, onSubm
       )}
 
       {/* Stock-specific fields */}
-      {assetType === "STOCK" && (
+      {normalizedAssetType === "STOCK" && (
         <>
           <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Ticker Symbol</label>
+            <label className="block text-sm font-medium mb-1">Price per Share (USD)</label>
             <input
-              type="text"
-              name="ticker"
-              value={formData.ticker}
+              type="number"
+              name="pricePerShare"
+              value={formData.pricePerShare}
               onChange={handleChange}
               className="w-full p-2 border rounded-md text-gray-800 bg-white"
+              step="0.01"
+              min="0"
               required
-            />
-          </div>
-          <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Company Name</label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              className="w-full p-2 border rounded-md text-gray-800 bg-white"
             />
           </div>
           <div className="mb-4">
@@ -226,11 +277,43 @@ const AssetForm: React.FC<AssetFormProps> = ({ assetType, asset, onClose, onSubm
               required
             />
           </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">Ticker Symbol</label>
+            <input
+              type="text"
+              name="ticker"
+              value={formData.ticker}
+              onChange={handleChange}
+              className={`w-full p-2 border rounded-md text-gray-800 bg-white ${
+                tickerError ? "border-red-500" : ""
+              }`}
+              placeholder="AAPL"
+              required
+            />
+            {tickerError && <p className="text-red-500 text-xs mt-1">{tickerError}</p>}
+            <p className="text-xs text-gray-400 mt-1">Enter the stock symbol (e.g., AAPL for Apple)</p>
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">Company Name (Optional)</label>
+            <input
+              type="text"
+              name="name"
+              value={formData.name}
+              onChange={handleChange}
+              className="w-full p-2 border rounded-md text-gray-800 bg-white"
+              placeholder="Apple Inc."
+            />
+          </div>
+          <div className="mb-4">
+            <p className="text-sm text-gray-400">
+              <strong>Note:</strong> Stock values are tracked in USD.
+            </p>
+          </div>
         </>
       )}
 
       {/* Currency-specific fields */}
-      {assetType === "CURRENCY" && (
+      {normalizedAssetType === "CURRENCY" && (
         <>
           <div className="mb-4">
             <label className="block text-sm font-medium mb-1">Currency</label>

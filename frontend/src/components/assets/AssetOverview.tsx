@@ -25,31 +25,31 @@ const AssetOverview: React.FC<AssetOverviewProps> = ({ summary, loading, onRefre
   }
 
   const totalCurrent = summary?.portfolio_summary?.total_current || 0
-  const goldTotal = summary?.distribution?.find((d) => d.asset_type === "GOLD")?.total || 0
-  const stocksTotal = summary?.distribution?.find((d) => d.asset_type === "STOCK")?.total || 0
-  const currencyTotal = summary?.distribution?.find((d) => d.asset_type === "CURRENCY")?.total || 0
+  const goldTotal = summary?.distribution?.find((d) => d.asset_type.toUpperCase() === "GOLD")?.total || 0
+  const stocksTotal = summary?.distribution?.find((d) => d.asset_type.toUpperCase() === "STOCK")?.total || 0
+  const currencyTotal = summary?.distribution?.find((d) => d.asset_type.toUpperCase() === "CURRENCY")?.total || 0
 
   return (
     <div className="flex justify-start items-start gap-12">
     {/* Left: Total Value */}
     <div className="flex-grow">
       <h2 className="text-l font-semibold mb-2 text-gray-500">Total Asset Value</h2>
-      <div className="text-5xl font-bold">${totalCurrent.toLocaleString()}</div>
+      <div className="text-3xl font-bold">PKR {totalCurrent.toLocaleString()}</div>
     </div>
   
     {/* Right: Breakdown — indented and inline */}
-    <div className="flex flex-col space-y-1 text-sm ml-10">
-      <div className="flex justify-between gap-2 text-yellow-500 font-medium">
+    <div className="flex flex-col space-y-1 text-sm ml-3">
+      <div className="flex justify-between gap-3 text-yellow-500 font-medium">
         <span>Gold</span>
-        <span className="text-gray-900 font-semibold">${goldTotal.toLocaleString()}</span>
+        <span className="text-gray-900 font-semibold">PKR {goldTotal.toLocaleString()}</span>
       </div>
-      <div className="flex justify-between gap-2 text-red-400 font-medium">
+      <div className="flex justify-between gap-3 text-red-400 font-medium">
         <span>Stocks</span>
-        <span className="text-gray-900 font-semibold">${stocksTotal.toLocaleString()}</span>
+        <span className="text-gray-900 font-semibold">PKR {stocksTotal.toLocaleString()}</span>
       </div>
-      <div className="flex justify-between gap-2 text-orange-400 font-medium">
+      <div className="flex justify-between gap-3 text-orange-400 font-medium">
         <span>Currency</span>
-        <span className="text-gray-900 font-semibold">${currencyTotal.toLocaleString()}</span>
+        <span className="text-gray-900 font-semibold">PKR {currencyTotal.toLocaleString()}</span>
       </div>
     </div>
   </div>

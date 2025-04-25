@@ -75,11 +75,11 @@ const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ assets, assetType
               <p className="text-xl font-bold text-white">${totalPurchaseValue.toFixed(2)}</p>
             </div>
             <div className="bg-dark p-4 rounded-lg">
-              <p className="text-sm text-gray-400">Performance</p>
+              {/* <p className="text-sm text-gray-400">Performance</p>
               <p className={`text-xl font-bold ${isPositive ? "text-green-500" : "text-red-500"}`}>
                 {isPositive ? "+" : ""}
                 {formattedPercentChange}%
-              </p>
+              </p> */}
             </div>
           </div>
 
@@ -101,18 +101,26 @@ const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ assets, assetType
                     <p className="font-medium text-white">
                       {assetType === "STOCK"
                         ? `${asset.asset_details?.ticker} - ${asset.asset_details?.name}`
-                        : asset.asset_details?.name || assetType}
+                        : assetType === "CURRENCY"
+                          ? `${asset.currencyCode || asset.asset_details?.currencyCode || ""}`
+                          : asset.asset_details?.name || assetType}
+                    </p>
+                    <p className="text-m text-white">
+                      {assetType === "CURRENCY"
+                        ? `Amount: ${asset.quantity} ${asset.currency_code || asset.asset_details?.currencyCode || ""} `
+                        : `${asset.quantity} ${asset.asset_details?.unit || getUnit()} - `}
+                      
                     </p>
                     <p className="text-sm text-gray-400">
-                      {assetType !== "CURRENCY" && `${asset.quantity} ${asset.asset_details?.unit || getUnit()} - `}
-                      Purchased: {new Date(asset.acquired_on).toLocaleDateString()}
+                    Purchased: {new Date(asset.acquired_on).toLocaleDateString()}
                     </p>
+                   
                   </div>
                   <div className="text-right">
-                    <p className="font-medium text-white">
-                      ${Number.parseFloat(asset.current_value.toString()).toFixed(2)}
+                    <p className="font-medium text-sm text-gray-400">
+                      Value: PKR {Number.parseFloat(asset.current_value.toString()).toFixed(2)}
                     </p>
-                    <p
+                    {/* <p
                       className={`text-sm ${asset.current_value > asset.purchase_value ? "text-green-500" : "text-red-500"}`}
                     >
                       {asset.current_value > asset.purchase_value ? "+" : ""}
@@ -123,7 +131,7 @@ const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ assets, assetType
                         100
                       ).toFixed(1)}
                       %
-                    </p>
+                    </p> */}
                   </div>
                 </div>
                 <div className="flex justify-end mt-2 space-x-2">
