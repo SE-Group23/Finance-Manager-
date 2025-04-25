@@ -33,7 +33,7 @@ export default function RecurringCalendarPage() {
     const [error, setError] = useState<string | null>(null)
     const [loading, setLoading] = useState(true)
     const [eventAmounts, setEventAmounts] = useState<Record<number, number>>({})
-    const [refreshKey, setRefreshKey] = useState(0) // Used to force re-render of components
+    const [refreshKey, setRefreshKey] = useState(0) 
     const [isDeleting, setIsDeleting] = useState(false) // Track deletion state
     const [isProcessing, setIsProcessing] = useState(false) // Track any API operation
 

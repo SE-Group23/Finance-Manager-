@@ -137,9 +137,8 @@ const TransactionsPage: React.FC = () => {
 
 
 
-  // Add a new state variable for tracking invalid amount input
   const [amountError, setAmountError] = useState(false)
-  // Add new state variables for field validation errors after the existing state declarations
+
   const [fieldErrors, setFieldErrors] = useState({
     title: false,
     amount: false,
@@ -147,7 +146,7 @@ const TransactionsPage: React.FC = () => {
     date: false,
     category: false,
   })
-  // Add state for editing form
+
   const [editForm, setEditForm] = useState({
     title: "",
     amount: "",
@@ -166,7 +165,6 @@ const TransactionsPage: React.FC = () => {
   })
   const [editAmountError, setEditAmountError] = useState(false)
 
-  // Convert between date formats
   useEffect(() => {
     if (datePickerValue) {
       const date = new Date(datePickerValue)
@@ -177,7 +175,6 @@ const TransactionsPage: React.FC = () => {
     }
   }, [datePickerValue])
 
-  // Convert between date formats for edit form
   useEffect(() => {
     if (editForm.datePickerValue) {
       const date = new Date(editForm.datePickerValue)
@@ -188,7 +185,6 @@ const TransactionsPage: React.FC = () => {
     }
   }, [editForm.datePickerValue])
 
-  // Group transactions by date
   const groupedTransactions = transactions.reduce((groups: Record<string, Transaction[]>, transaction) => {
     const date = new Date(transaction.transaction_date).toLocaleDateString("en-US", {
       month: "short",
@@ -203,11 +199,9 @@ const TransactionsPage: React.FC = () => {
     return groups
   }, {})
 
-  // Replace the handleSubmit function with this updated version that sorts transactions by date
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    // Check for empty required fields
     const errors = {
       title: title.trim() === "",
       amount: amount.trim() === "",
@@ -218,21 +212,14 @@ const TransactionsPage: React.FC = () => {
 
     setFieldErrors(errors)
 
-    // If any required field is empty, prevent submission
     if (Object.values(errors).some((error) => error)) {
       return
     }
 
     try {
       const newTransaction = {
-        // transaction_id: Math.floor(Math.random() * 1000),
-        // amount: Number.parseFloat(amount),
-        // category,
-        // payment_method: paymentMethod,
-        // transaction_date: transactionDate || new Date().toISOString(),
-        // transaction_type: transactionType,
-        // vendor: title,
-        user_id: 1, // Replace with actual user ID from session
+     
+        user_id: 1,
         amount: Number.parseFloat(amount),
         transaction_type: transactionType,
         category_id: getCategoryId(category),
@@ -242,10 +229,6 @@ const TransactionsPage: React.FC = () => {
         payment_method: paymentMethod,
       }
 
-      // // Add the new transaction and sort all transactions by date (newest first)
-      // const updatedTransactions = [...transactions, newTransaction as Transaction].sort((a, b) => {
-      //   return new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime()
-      // })
 
       const created = await createTransaction(newTransaction)
       console.log("created", created)
@@ -279,10 +262,6 @@ const TransactionsPage: React.FC = () => {
     })
   }
 
-  // const handleDelete = (id: number) => {
-  //   // For preview, just update the state directly
-  //   setTransactions(transactions.filter((t) => t.transaction_id !== id))
-  // }
   const handleDelete = async (id: number) => {
     try {
       await deleteTransaction(id)
@@ -292,28 +271,6 @@ const TransactionsPage: React.FC = () => {
     }
   }
 
-  // const getCategoryClass = (category: string) => {
-  //   switch (category.toLowerCase()) {
-  //     case "food and drink":
-  //       return "bg-green-100 text-green-800"
-  //     case "bills and utilities":
-  //       return "bg-blue-100 text-blue-800"
-  //     case "personal":
-  //       return "bg-pink-100 text-pink-800"
-  //     case "income":
-  //       return "bg-lime-100 text-lime-800"
-  //     case "transport":
-  //       return "bg-purple-100 text-purple-800"
-  //     case "shopping":
-  //       return "bg-amber-100 text-amber-800"
-  //     case "entertainment":
-  //       return "bg-orange-100 text-orange-800"
-  //     case "health and fitness":
-  //       return "bg-teal-100 text-teal-800"
-  //     default:
-  //       return "bg-gray-100 text-gray-800"
-  //   }
-  // }
 
   const getCategoryClass = (category?: string) => {
     if (!category) return "bg-gray-100 text-gray-800"

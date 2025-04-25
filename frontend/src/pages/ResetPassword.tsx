@@ -15,7 +15,6 @@ const ResetPassword: React.FC = () => {
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const navigate = useNavigate();
 
-  // Password validation status
   const [validations, setValidations] = useState({
     length: false,
     capital: false,
@@ -26,7 +25,6 @@ const ResetPassword: React.FC = () => {
     setShowPassword(!showPassword);
   };
 
-  // Update validation status whenever password changes
   useEffect(() => {
     setValidations({
       length: newPassword.length >= 8,
@@ -49,7 +47,6 @@ const ResetPassword: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Check if validation passes
     if (validationErrors.length > 0) {
       return;
     }
@@ -73,7 +70,7 @@ const ResetPassword: React.FC = () => {
       
       if (res.ok) {
         setMessage(data.message || "Password reset successful!");
-        // Redirect to login after 2 seconds
+        
         setTimeout(() => navigate("/login"), 2000);
       } else {
         setMessage(data.message || "Failed to reset password");
@@ -87,7 +84,7 @@ const ResetPassword: React.FC = () => {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden">
-      {/* Left side with illustration */}
+  
       <div className="w-1/2 flex flex-col h-full">
         <div className="flex-1 bg-gradient-to-b from-teal-900 to-teal-600 flex items-center justify-center">
           <div className="flex justify-center items-center w-full h-full p-5">
@@ -100,7 +97,6 @@ const ResetPassword: React.FC = () => {
         </div>
       </div>
 
-      {/* Right side with reset password form */}
       <div className="w-1/2 bg-gray-50 flex items-center justify-center h-full">
         <div className="w-full max-w-md px-8">
           <h1 className="text-5xl font-bold mb-12">Reset Password</h1>
@@ -140,7 +136,6 @@ const ResetPassword: React.FC = () => {
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
               
-              {/* Password requirements section - with red indicators for unfulfilled requirements */}
               <div className="mt-2 text-sm">
                 <p className="font-medium text-gray-700 mb-1">Password must have:</p>
                 <ul className="space-y-1 pl-5 list-disc">

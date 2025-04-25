@@ -1,8 +1,6 @@
-// // backend/src/controllers/transactionController.ts
 import { Request, Response } from "express"
 import { pool } from "../db"
 
-// GET /transactions
 export const getTransactions = async (_req: Request, res: Response) => {
   try {
     const query = `
@@ -23,12 +21,10 @@ export const getTransactions = async (_req: Request, res: Response) => {
     const result = await pool.query(query)
     res.status(200).json(result.rows)
   } catch (error) {
-    console.error("Error fetching transactions:", error)
     res.status(500).json({ error: "Failed to fetch transactions" })
   }
 }
 
-// POST /transactions
 export const createTransaction = async (req: Request, res: Response) => {
   try {
     const {
@@ -62,7 +58,6 @@ export const createTransaction = async (req: Request, res: Response) => {
       [user_id, amount, transaction_type, category_id, vendor, transaction_date, description, payment_method]
     )
 
-    //res.status(201).json(result.rows[0])
 
     const created = result.rows[0]
 
@@ -74,7 +69,6 @@ export const createTransaction = async (req: Request, res: Response) => {
 
     const category_name = categoryRes.rows[0]?.category_name || "Unknown"
 
-    //res.status(201).json({ ...created, category_name })
 
     res.status(201).json({
       transaction_id: created.transaction_id,
@@ -85,19 +79,17 @@ export const createTransaction = async (req: Request, res: Response) => {
       description: created.description,
       transaction_date: created.transaction_date,
       category_id: created.category_id,
-      payment_method: created.payment_method, // ✅ explicitly add it
-      category_name, // ✅ from second query
+      payment_method: created.payment_method, 
+      category_name, 
     })
     
 
 
   } catch (error) {
-    console.error("Error creating transaction:", error)
     res.status(500).json({ error: "Failed to create transaction" })
   }
 }
 
-// PUT /transactions/:id
 export const updateTransaction = async (req: Request, res: Response) => {
   try {
     const { id } = req.params
@@ -131,8 +123,6 @@ export const updateTransaction = async (req: Request, res: Response) => {
       [amount, transaction_type, category_id, vendor, transaction_date, description, payment_method, id]
     )
 
-    //res.status(200).json(result.rows[0])
-
     const updated = result.rows[0]
 
     const categoryRes = await pool.query(
@@ -145,28 +135,24 @@ export const updateTransaction = async (req: Request, res: Response) => {
     res.status(200).json({ ...updated, category_name })
 
   } catch (error) {
-    console.error("Error updating transaction:", error)
     res.status(500).json({ error: "Failed to update transaction" })
   }
 }
 
-// DELETE /transactions/:id
 export const deleteTransaction = async (req: Request, res: Response) => {
   try {
     const { id } = req.params
     await pool.query("DELETE FROM transactions WHERE transaction_id = $1", [id])
     res.status(204).send()
   } catch (error) {
-    console.error("Error deleting transaction:", error)
     res.status(500).json({ error: "Failed to delete transaction" })
   }
 }
 
 export const getSummary = async (req: Request, res: Response) => {
   try {
-    const userId = Number(req.query.user_id || req.body.user_id || 1) // get from session in real use
+    const userId = Number(req.query.user_id || req.body.user_id || 1)
 
-    // Get income and expenses
     const txnQuery = `
       SELECT
         COALESCE(SUM(CASE WHEN t.transaction_type = 'credit' AND c.category_name = 'Income' THEN t.amount ELSE 0 END), 0) AS income,
@@ -178,7 +164,6 @@ export const getSummary = async (req: Request, res: Response) => {
     const txnResult = await pool.query(txnQuery, [userId])
     const { income, expenses } = txnResult.rows[0]
 
-    // Get asset value
     const assetResult = await pool.query(
       `SELECT COALESCE(SUM(current_value), 0) AS asset_total FROM assets WHERE user_id = $1`,
       [userId]
@@ -193,7 +178,6 @@ export const getSummary = async (req: Request, res: Response) => {
       netWorth,
     })
   } catch (error) {
-    console.error("Error fetching summary:", error)
     res.status(500).json({ error: "Failed to load summary" })
   }
 }
