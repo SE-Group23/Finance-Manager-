@@ -43,8 +43,8 @@ module.exports = {
         "primary-medium": "#004852", //updated
         "primary-light": "#006e5f",
         "primary-lighter": "#00806c",
-        //"background-light": "#f0f8e8",
-        "background-light": "#ECF6F3", //updated
+        "background-light": "#f0f8e8",
+        //"background-light": "#ECF6F3", //updated
         "finapp-teal": {
           DEFAULT: "#00897b",
           dark: "#00695c",

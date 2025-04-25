@@ -1,271 +1,200 @@
-// backend/src/controllers/transactionController.ts
-import { Request, Response } from 'express';
-import { pool } from '../db';
+// // backend/src/controllers/transactionController.ts
+import { Request, Response } from "express"
+import { pool } from "../db"
 
-
-/**
- * Transaction Data Get
- */
-
-/**
- * Helper function to get or create a category by its name.
- * Returns the category_id.
- */
-async function getCategoryId(categoryName: string): Promise<number> {
-  // Try to find the category by name.
-  let result = await pool.query(
-    "SELECT category_id FROM categories WHERE category_name = $1",
-    [categoryName]
-  );
-
-  if (result.rowCount === 0) {
-    // Category does not exist; insert it.
-    result = await pool.query(
-      "INSERT INTO categories (category_name) VALUES ($1) RETURNING category_id",
-      [categoryName]
-    );
-  }
-
-  return result.rows[0].category_id;
-}
-
-/**
- * Retrieve all transactions for the logged-in user.
- */
-export async function getTransactions(req: Request, res: Response): Promise<void> {
+// GET /transactions
+export const getTransactions = async (_req: Request, res: Response) => {
   try {
-    const userId = (req as any).userId;
-    const result = await pool.query(
-      `SELECT t.transaction_id,
-              t.amount,
-              t.transaction_type,
-              t.vendor,
-              t.description AS note,
-              t.transaction_date,
-              c.category_name AS category
-       FROM transactions t
-       LEFT JOIN categories c ON t.category_id = c.category_id
-       WHERE t.user_id = $1
-       ORDER BY t.transaction_date DESC`,
-      [userId]
-    );
-    res.json(result.rows);
+    const query = `
+      SELECT 
+        t.transaction_id,
+        t.user_id,
+        t.amount,
+        t.transaction_type,
+        t.transaction_date,
+        t.vendor,
+        t.description,
+        t.category_id,
+        c.category_name
+      FROM transactions t
+      LEFT JOIN categories c ON t.category_id = c.category_id
+      ORDER BY t.transaction_date DESC
+    `
+    const result = await pool.query(query)
+    res.status(200).json(result.rows)
   } catch (error) {
-    console.error('Error fetching transactions:', error);
-    res.status(500).json({ error: 'Error fetching transactions' });
+    console.error("Error fetching transactions:", error)
+    res.status(500).json({ error: "Failed to fetch transactions" })
   }
 }
 
-/**
- * Retrieve a transaction by its ID.
- */
-export async function getTransactionById(req: Request, res: Response): Promise<void> {
+// POST /transactions
+export const createTransaction = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).userId;
-    const { id } = req.params;
-    const result = await pool.query(
-      'SELECT * FROM transactions WHERE transaction_id = $1 AND user_id = $2',
-      [id, userId]
-    );
-    if (result.rowCount === 0) {
-      res.status(404).json({ error: 'Transaction not found' });
-      return;
-    }
-    res.json(result.rows[0]);
-    return;
-  } catch (error) {
-    console.error('Error fetching transaction by ID:', error);
-    res.status(500).json({ error: 'Error fetching transaction' });
-    return;
-  }
-}
+    const {
+      user_id,
+      amount,
+      transaction_type,
+      category_id,
+      vendor,
+      transaction_date,
+      description,
+      payment_method,
+    } = req.body
 
-/**
- * Retrieve transactions for the logged-in user within a date range.
- * Expects 'start' and 'end' query parameters in ISO date format.
- */
-export async function getTransactionsByDateRange(req: Request, res: Response): Promise<void> {
-  try {
-    const userId = (req as any).userId;
-    const { start, end } = req.query;
-
-    if (!start || !end) {
-      res.status(400).json({ error: 'Start and end dates are required as query parameters.' });
-      return;
+    if (
+      !user_id ||
+      !amount ||
+      !transaction_type ||
+      !category_id ||
+      !transaction_date
+    ) {
+      res.status(400).json({ error: "Missing required fields" })
     }
 
     const result = await pool.query(
-      `SELECT * FROM transactions 
-       WHERE user_id = $1 
-         AND transaction_date BETWEEN $2 AND $3
-       ORDER BY transaction_date DESC`,
-      [userId, new Date(start as string), new Date(end as string)]
-    );
+      `
+      INSERT INTO transactions (
+        user_id, amount, transaction_type, category_id, vendor, transaction_date, description, payment_method
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING *
+      `,
+      [user_id, amount, transaction_type, category_id, vendor, transaction_date, description, payment_method]
+    )
 
-    res.json(result.rows);
-    return;
-  } catch (error) {
-    console.error('Error fetching transactions by date range:', error);
-    res.status(500).json({ error: 'Error fetching transactions' });
-    return;
-  }
-}
+    //res.status(201).json(result.rows[0])
 
-/**
- * Retrieve all categories associated with the logged-in user.
- * This fetches the unique categories from the user's transactions.
- */
-export async function getUserCategories(req: Request, res: Response): Promise<void> {
-  try {
-    const userId = (req as any).userId;
-    const result = await pool.query(
-      `SELECT DISTINCT c.category_id, c.category_name
-       FROM categories c
-       INNER JOIN transactions t ON c.category_id = t.category_id
-       WHERE t.user_id = $1
-       ORDER BY c.category_name`,
-      [userId]
-    );
-    res.json(result.rows);
-    return;
-  } catch (error) {
-    console.error('Error fetching user categories:', error);
-    res.status(500).json({ error: 'Error fetching categories' });
-    return;
-  }
-}
+    const created = result.rows[0]
 
-/**
- * Retrieve transactions for the logged-in user filtered by transaction type.
- * Accepts a query parameter 'type' (e.g., 'credit' or 'debit').
- */
-export async function getTransactionsByType(req: Request, res: Response): Promise<void> {
-  try {
-    const userId = (req as any).userId;
-    const { type } = req.query;
+    const categoryRes = await pool.query(`
+      SELECT category_name 
+      FROM categories 
+      WHERE category_id = $1
+    `, [created.category_id])
 
-    if (!type) {
-      res.status(400).json({ error: 'Transaction type is required as query parameter.' });
-      return;
-    }
+    const category_name = categoryRes.rows[0]?.category_name || "Unknown"
+
+    //res.status(201).json({ ...created, category_name })
+
+    res.status(201).json({
+      transaction_id: created.transaction_id,
+      user_id: created.user_id,
+      amount: created.amount,
+      transaction_type: created.transaction_type,
+      vendor: created.vendor,
+      description: created.description,
+      transaction_date: created.transaction_date,
+      category_id: created.category_id,
+      payment_method: created.payment_method, // ✅ explicitly add it
+      category_name, // ✅ from second query
+    })
     
-    // Validate that the provided type is either 'credit' or 'debit'
-    if (type !== 'credit' && type !== 'debit') {
-      res.status(400).json({ error: "Invalid transaction type. Expected 'credit' or 'debit'." });
-      return;
-    }
 
-    const result = await pool.query(
-      `SELECT * FROM transactions 
-       WHERE user_id = $1 AND transaction_type = $2 
-       ORDER BY transaction_date DESC`,
-      [userId, type]
-    );
 
-    res.json(result.rows);
-    return;
   } catch (error) {
-    console.error('Error fetching transactions by type:', error);
-    res.status(500).json({ error: 'Error fetching transactions by type' });
-    return;
+    console.error("Error creating transaction:", error)
+    res.status(500).json({ error: "Failed to create transaction" })
   }
 }
 
-
-// ------------------------------------------------------------------------------------------------------------
-
-/**
- * Transaction Data Put
- */
-
-/**
- * Create a new transaction.
- * UC-3: The user submits transaction amount, category, (optional) vendor, note, and optionally a date.
- */
-export async function createTransaction(req: Request, res: Response): Promise<void> {
+// PUT /transactions/:id
+export const updateTransaction = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).userId;
-    
-    const { amount, category, note, vendor, transactionDate, transaction_type } = req.body;
-    if (!amount || !category || !transaction_type) {
-      res.status(400).json({ error: 'Amount, category, and transaction type are required.' });
-      return;
+    const { id } = req.params
+    const {
+      amount,
+      transaction_type,
+      category_id,
+      vendor,
+      transaction_date,
+      description,
+      payment_method,
+    } = req.body
+
+    if (!amount || !transaction_type || !category_id || !transaction_date) {
+      res.status(400).json({ error: "Missing required fields" })
     }
 
-    // Resolve the category name to its ID (create it if necessary).
-    const categoryId = await getCategoryId(category);
-
-    // Use provided transactionDate if available, otherwise default to NOW()
-    const tDate = transactionDate ? transactionDate : new Date();
-
     const result = await pool.query(
-      `INSERT INTO transactions (user_id, amount, transaction_type, category_id, vendor, transaction_date, description)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
-       RETURNING *`,
-      [userId, amount, transaction_type, categoryId, vendor, tDate, note]
-    );
+      `
+      UPDATE transactions
+      SET amount = $1,
+          transaction_type = $2,
+          category_id = $3,
+          vendor = $4,
+          transaction_date = $5,
+          description = $6
+          payment_method = $7
+      WHERE transaction_id = $8
+      RETURNING *
+      `,
+      [amount, transaction_type, category_id, vendor, transaction_date, description, payment_method, id]
+    )
 
-    res.status(201).json(result.rows[0]);
-    return;
+    //res.status(200).json(result.rows[0])
+
+    const updated = result.rows[0]
+
+    const categoryRes = await pool.query(
+      `SELECT category_name FROM categories WHERE category_id = $1`,
+      [updated.category_id]
+    )
+
+    const category_name = categoryRes.rows[0]?.category_name || "Unknown"
+
+    res.status(200).json({ ...updated, category_name })
+
   } catch (error) {
-    console.error('Error creating transaction:', error);
-    res.status(500).json({ error: 'Error creating transaction' });
-    return;
+    console.error("Error updating transaction:", error)
+    res.status(500).json({ error: "Failed to update transaction" })
   }
 }
 
-/**
- * Update a transaction.
- */
-export async function updateTransaction(req: Request, res: Response): Promise<void> {
+// DELETE /transactions/:id
+export const deleteTransaction = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).userId;
-    const { id } = req.params;
-    const { amount, category, note, vendor, transactionDate, transaction_type } = req.body;
-    const categoryId = await getCategoryId(category);
-
-    const result = await pool.query(
-      `UPDATE transactions 
-       SET amount = $1, transaction_type = $2, category_id = $3, description = $4, vendor = $5, transaction_date = $6
-       WHERE transaction_id = $7 AND user_id = $8
-       RETURNING *`,
-      [amount, transaction_type, categoryId, note, vendor, transactionDate, id, userId]
-    );
-
-    if (result.rowCount === 0) {
-      res.status(404).json({ error: 'Transaction not found' });
-      return;
-    }
-    res.json(result.rows[0]);
-    return;
+    const { id } = req.params
+    await pool.query("DELETE FROM transactions WHERE transaction_id = $1", [id])
+    res.status(204).send()
   } catch (error) {
-    console.error('Error updating transaction:', error);
-    res.status(500).json({ error: 'Error updating transaction' });
-    return;
+    console.error("Error deleting transaction:", error)
+    res.status(500).json({ error: "Failed to delete transaction" })
   }
 }
 
-/**
- * Delete a transaction.
- */
-export async function deleteTransaction(req: Request, res: Response): Promise<void> {
+export const getSummary = async (req: Request, res: Response) => {
   try {
-    const userId = (req as any).userId;
-    const { id } = req.params;
-    const result = await pool.query(
-      'DELETE FROM transactions WHERE transaction_id = $1 AND user_id = $2',
-      [id, userId]
-    );
-    if (result.rowCount === 0) {
-      res.status(404).json({ error: 'Transaction not found' });
-      return;
-    }
-    res.json({ success: true });
-    return;
+    const userId = Number(req.query.user_id || req.body.user_id || 1) // get from session in real use
+
+    // Get income and expenses
+    const txnQuery = `
+      SELECT
+        COALESCE(SUM(CASE WHEN t.transaction_type = 'credit' AND c.category_name = 'Income' THEN t.amount ELSE 0 END), 0) AS income,
+        COALESCE(SUM(CASE WHEN t.transaction_type = 'debit' THEN t.amount ELSE 0 END), 0) AS expenses
+      FROM transactions t
+      JOIN categories c ON t.category_id = c.category_id
+      WHERE t.user_id = $1
+    `
+    const txnResult = await pool.query(txnQuery, [userId])
+    const { income, expenses } = txnResult.rows[0]
+
+    // Get asset value
+    const assetResult = await pool.query(
+      `SELECT COALESCE(SUM(current_value), 0) AS asset_total FROM assets WHERE user_id = $1`,
+      [userId]
+    )
+    const { asset_total } = assetResult.rows[0]
+
+    const netWorth = Number(income) - Number(expenses) + Number(asset_total)
+
+    res.json({
+      income: Number(income),
+      expenses: Number(expenses),
+      netWorth,
+    })
   } catch (error) {
-    console.error('Error deleting transaction:', error);
-    res.status(500).json({ error: 'Error deleting transaction' });
-    return;
+    console.error("Error fetching summary:", error)
+    res.status(500).json({ error: "Failed to load summary" })
   }
 }
 

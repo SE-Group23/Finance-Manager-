@@ -1,180 +1,15 @@
-// // frontend/src/pages/TransactionsPage.tsx
-// import React, { useEffect, useState } from 'react';
-// import axios from 'axios';
-
-// interface Transaction {
-//   transaction_id: number;
-//   amount: number;
-//   category: string;
-//   transaction_type: 'credit' | 'debit';
-//   vendor?: string;
-//   note?: string;
-//   transaction_date: string;
-// }
-
-// const TRANSACTIONS_API_URL = `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api/transactions`;
-
-// const TransactionsPage: React.FC = () => {
-//   const [transactions, setTransactions] = useState<Transaction[]>([]);
-//   const [amount, setAmount] = useState('');
-//   const [category, setCategory] = useState('');
-//   const [vendor, setVendor] = useState('');
-//   const [note, setNote] = useState('');
-//   const [transactionDate, setTransactionDate] = useState('');
-//   const [transactionType, setTransactionType] = useState<'debit' | 'credit'>('debit');
-//   const token = localStorage.getItem('token');
-
-//   // Fetch transactions on component mount
-//   useEffect(() => {
-//     async function fetchTransactions() {
-//       try {
-//         const res = await axios.get(TRANSACTIONS_API_URL, {
-//           headers: { Authorization: `Bearer ${token}` },
-//         });
-//         setTransactions(res.data);
-//       } catch (error) {
-//         console.error('Error fetching transactions:', error);
-//       }
-//     }
-//     fetchTransactions();
-//   }, [token]);
-
-//   const handleSubmit = async (e: React.FormEvent) => {
-//     e.preventDefault();
-//     try {
-//       const newTransaction = {
-//         amount: parseFloat(amount),
-//         category,
-//         vendor,
-//         note,
-//         transactionDate: transactionDate || new Date().toISOString(),
-//         transaction_type: transactionType,  // New field added here
-//       };
-//       const res = await axios.post(TRANSACTIONS_API_URL, newTransaction, {
-//         headers: { Authorization: `Bearer ${token}` },
-//       });
-//       setTransactions([res.data, ...transactions]);
-//       // Clear the form fields
-//       setAmount('');
-//       setCategory('');
-//       setVendor('');
-//       setNote('');
-//       setTransactionDate('');
-//     } catch (error) {
-//       console.error('Error creating transaction:', error);
-//     }
-//   };
-
-//   return (
-//     <div className="p-6">
-//       <h1 className="text-2xl font-bold mb-4">Manage Transactions</h1>
-//       <form onSubmit={handleSubmit} className="mb-6 bg-white p-4 rounded shadow">
-//         <div className="mb-4">
-//           <label className="block mb-1">Amount</label>
-//           <input
-//             type="number"
-//             value={amount}
-//             onChange={(e) => setAmount(e.target.value)}
-//             className="p-2 border rounded w-full"
-//             required
-//           />
-//         </div>
-//         <div className="mb-4">
-//           <label className="block mb-1">Transaction Type</label>
-//           <select
-//             value={transactionType}
-//             onChange={(e) => setTransactionType(e.target.value as 'debit' | 'credit')}
-//             className="p-2 border rounded w-full"
-//           >
-//             <option value="debit">Debit (Expense)</option>
-//             <option value="credit">Credit (Income)</option>
-//           </select>
-//         </div>
-//         <div className="mb-4">
-//           <label className="block mb-1">Category</label>
-//           <input
-//             type="text"
-//             value={category}
-//             onChange={(e) => setCategory(e.target.value)}
-//             className="p-2 border rounded w-full"
-//             required
-//           />
-//         </div>
-//         <div className="mb-4">
-//           <label className="block mb-1">Vendor (optional)</label>
-//           <input
-//             type="text"
-//             value={vendor}
-//             onChange={(e) => setVendor(e.target.value)}
-//             className="p-2 border rounded w-full"
-//           />
-//         </div>
-//         <div className="mb-4">
-//           <label className="block mb-1">Note (optional)</label>
-//           <textarea
-//             value={note}
-//             onChange={(e) => setNote(e.target.value)}
-//             className="p-2 border rounded w-full"
-//           ></textarea>
-//         </div>
-//         <div className="mb-4">
-//           <label className="block mb-1">Transaction Date</label>
-//           <input
-//             type="datetime-local"
-//             value={transactionDate}
-//             onChange={(e) => setTransactionDate(e.target.value)}
-//             className="p-2 border rounded w-full"
-//           />
-//         </div>
-//         <button type="submit" className="bg-blue-500 text-white p-2 rounded">
-//           Add Transaction
-//         </button>
-//       </form>
-//       <h2 className="text-xl font-bold mb-2">Transaction History</h2>
-//       <ul>
-//         {transactions.map((t) => (
-//           <li key={t.transaction_id} className="border-b py-2">
-//             <p>
-//               <strong>Amount:</strong> {t.amount}
-//               {` | `}
-//               <strong>Category:</strong> {t.category}
-//             </p>
-//             <p>
-//               <strong>Type:</strong>{' '}
-//               {t.transaction_type === 'credit' ? 'Credit (Income)' : 'Debit (Expense)'}
-//             </p>
-//             {t.vendor && <p><strong>Vendor:</strong> {t.vendor}</p>}
-//             {t.note && <p><strong>Note:</strong> {t.note}</p>}
-//             <p>
-//               <strong>Date:</strong> {new Date(t.transaction_date).toLocaleString()}
-//             </p>
-//           </li>
-//         ))}
-//       </ul>
-//     </div>
-//   );
-// };
-
-// export default TransactionsPage;
-
+// frontend/src/pages/TransactionsPage.tsx
 "use client"
 
 import type React from "react"
 import { useState, useEffect } from "react"
 import Sidebar from "../components/Sidebar"
+import { fetchTransactions, createTransaction, updateTransaction, deleteTransaction } from "../services/transactionService"
+import type { Transaction } from "../services/transactionService"
 import OutgoingTxnIcon from "../components/icons/OutgoingTxnIcon"
 import IncomingTxnIcon from "../components/icons/IncomingTxnIcon"
 
-interface Transaction {
-  transaction_id: number
-  amount: number
-  category: string
-  transaction_type: "credit" | "debit"
-  vendor?: string
-  note?: string
-  transaction_date: string
-  payment_method?: string
-}
+
 
 interface Summary {
   netWorth: number
@@ -255,53 +90,36 @@ const CheckIcon: React.FC<{ size?: number; className?: string }> = ({ size = 18,
 )
 
 const TransactionsPage: React.FC = () => {
-  const [transactions, setTransactions] = useState<Transaction[]>([
-    {
-      transaction_id: 1,
-      amount: 120,
-      category: "Food and Drink",
-      transaction_type: "debit",
-      vendor: "Starbucks",
-      transaction_date: "2023-04-15T10:30:00Z",
-      payment_method: "Credit Card",
-    },
-    {
-      transaction_id: 2,
-      amount: 1500,
-      category: "Income",
-      transaction_type: "credit",
-      vendor: "Salary",
-      transaction_date: "2023-04-10T09:00:00Z",
-      payment_method: "Bank Transfer",
-    },
-    {
-      transaction_id: 3,
-      amount: 85,
-      category: "Shopping",
-      transaction_type: "debit",
-      vendor: "Amazon",
-      transaction_date: "2023-04-08T14:20:00Z",
-      payment_method: "Debit Card",
-    },
-    {
-      transaction_id: 4,
-      amount: 45,
-      category: "Transport",
-      transaction_type: "debit",
-      vendor: "Uber",
-      transaction_date: "2023-04-15T18:45:00Z",
-      payment_method: "Credit Card",
-    },
-    {
-      transaction_id: 5,
-      amount: 200,
-      category: "Bills and Utilities",
-      transaction_type: "debit",
-      vendor: "Electric Company",
-      transaction_date: "2023-04-05T11:15:00Z",
-      payment_method: "Bank Transfer",
-    },
-  ])
+  const [transactions, setTransactions] = useState<Transaction[]>([])
+
+  useEffect(() => {
+    const loadTransactions = async () => {
+      try {
+        const data = await fetchTransactions()
+        setTransactions(data)
+      } catch (err) {
+        console.error("Failed to load transactions:", err)
+      }
+    }
+    loadTransactions()
+  }, [])
+
+
+  useEffect(() => {
+    const loadSummary = async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api/transactions/summary?user_id=1`)
+        const data = await res.json()
+        setSummary(data)
+      } catch (err) {
+        console.error("Failed to load summary", err)
+      }
+    }
+  
+    loadSummary()
+  }, [])
+
+
   const [isAddingTransaction, setIsAddingTransaction] = useState(false)
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
   const [title, setTitle] = useState("")
@@ -312,10 +130,13 @@ const TransactionsPage: React.FC = () => {
   const [datePickerValue, setDatePickerValue] = useState("")
   const [transactionType, setTransactionType] = useState<"debit" | "credit">("debit")
   const [summary, setSummary] = useState<Summary>({
-    netWorth: 140202,
-    income: 12202,
-    expenses: 10000,
+    netWorth: 0,
+    income: 0,
+    expenses: 0,
   })
+
+
+
   // Add a new state variable for tracking invalid amount input
   const [amountError, setAmountError] = useState(false)
   // Add new state variables for field validation errors after the existing state declarations
@@ -382,7 +203,8 @@ const TransactionsPage: React.FC = () => {
     return groups
   }, {})
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Replace the handleSubmit function with this updated version that sorts transactions by date
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     // Check for empty required fields
@@ -403,17 +225,35 @@ const TransactionsPage: React.FC = () => {
 
     try {
       const newTransaction = {
-        transaction_id: Math.floor(Math.random() * 1000),
+        // transaction_id: Math.floor(Math.random() * 1000),
+        // amount: Number.parseFloat(amount),
+        // category,
+        // payment_method: paymentMethod,
+        // transaction_date: transactionDate || new Date().toISOString(),
+        // transaction_type: transactionType,
+        // vendor: title,
+        user_id: 1, // Replace with actual user ID from session
         amount: Number.parseFloat(amount),
-        category,
-        payment_method: paymentMethod,
-        transaction_date: transactionDate || new Date().toISOString(),
         transaction_type: transactionType,
+        category_id: getCategoryId(category),
         vendor: title,
+        description: "",
+        transaction_date: transactionDate || new Date().toISOString(),
+        payment_method: paymentMethod,
       }
 
-      // For preview, just update the state directly
-      setTransactions([newTransaction as Transaction, ...transactions])
+      // // Add the new transaction and sort all transactions by date (newest first)
+      // const updatedTransactions = [...transactions, newTransaction as Transaction].sort((a, b) => {
+      //   return new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime()
+      // })
+
+      const created = await createTransaction(newTransaction)
+      console.log("created", created)
+      const updatedTransactions = [...transactions, created].sort((a, b) =>
+        new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime()
+      )
+
+      setTransactions(updatedTransactions)
       resetForm()
       setIsAddingTransaction(false)
     } catch (error) {
@@ -439,12 +279,45 @@ const TransactionsPage: React.FC = () => {
     })
   }
 
-  const handleDelete = (id: number) => {
-    // For preview, just update the state directly
-    setTransactions(transactions.filter((t) => t.transaction_id !== id))
+  // const handleDelete = (id: number) => {
+  //   // For preview, just update the state directly
+  //   setTransactions(transactions.filter((t) => t.transaction_id !== id))
+  // }
+  const handleDelete = async (id: number) => {
+    try {
+      await deleteTransaction(id)
+      setTransactions(transactions.filter((t) => t.transaction_id !== id))
+    } catch (error) {
+      console.error("Failed to delete transaction:", error)
+    }
   }
 
-  const getCategoryClass = (category: string) => {
+  // const getCategoryClass = (category: string) => {
+  //   switch (category.toLowerCase()) {
+  //     case "food and drink":
+  //       return "bg-green-100 text-green-800"
+  //     case "bills and utilities":
+  //       return "bg-blue-100 text-blue-800"
+  //     case "personal":
+  //       return "bg-pink-100 text-pink-800"
+  //     case "income":
+  //       return "bg-lime-100 text-lime-800"
+  //     case "transport":
+  //       return "bg-purple-100 text-purple-800"
+  //     case "shopping":
+  //       return "bg-amber-100 text-amber-800"
+  //     case "entertainment":
+  //       return "bg-orange-100 text-orange-800"
+  //     case "health and fitness":
+  //       return "bg-teal-100 text-teal-800"
+  //     default:
+  //       return "bg-gray-100 text-gray-800"
+  //   }
+  // }
+
+  const getCategoryClass = (category?: string) => {
+    if (!category) return "bg-gray-100 text-gray-800"
+  
     switch (category.toLowerCase()) {
       case "food and drink":
         return "bg-green-100 text-green-800"
@@ -465,6 +338,21 @@ const TransactionsPage: React.FC = () => {
       default:
         return "bg-gray-100 text-gray-800"
     }
+  }
+  
+
+  const getCategoryId = (category: string): number => {
+    const map: Record<string, number> = {
+      "Food and Drink": 1,
+      "Personal": 2,
+      "Income": 3,
+      "Transport": 4,
+      "Shopping": 5,
+      "Entertainment": 6,
+      "Health and Fitness": 7,
+      "Bills and Utilities": 8,
+    }
+    return map[category] || 0
   }
 
   // Format date to show date before month (DD/MM/YYYY)
@@ -514,7 +402,7 @@ const TransactionsPage: React.FC = () => {
     setEditForm({
       title: transaction.vendor || "",
       amount: transaction.amount.toString(),
-      category: transaction.category,
+      category: transaction.category_name,
       paymentMethod: transaction.payment_method || "",
       transactionDate: transaction.transaction_date,
       datePickerValue: formatDateForPicker(transaction.transaction_date),
@@ -544,7 +432,7 @@ const TransactionsPage: React.FC = () => {
     })
   }
 
-  // Save edited transaction
+  // Also update the saveEditedTransaction function to maintain proper sorting
   const saveEditedTransaction = () => {
     if (!editingTransaction) return
 
@@ -569,16 +457,18 @@ const TransactionsPage: React.FC = () => {
         ...editingTransaction,
         vendor: editForm.title,
         amount: Number.parseFloat(editForm.amount),
-        category: editForm.category,
+        category_name: editForm.category,
         payment_method: editForm.paymentMethod,
         transaction_date: editForm.transactionDate || new Date().toISOString(),
         transaction_type: editForm.transactionType,
       }
 
-      // Update the transaction in the state
-      setTransactions(
-        transactions.map((t) => (t.transaction_id === editingTransaction.transaction_id ? updatedTransaction : t)),
-      )
+      // Update the transaction in the state and resort
+      const updatedTransactions = transactions
+        .map((t) => (t.transaction_id === editingTransaction.transaction_id ? updatedTransaction : t))
+        .sort((a, b) => new Date(b.transaction_date).getTime() - new Date(a.transaction_date).getTime())
+
+      setTransactions(updatedTransactions)
 
       // Reset editing state
       setEditingTransaction(null)
@@ -1298,11 +1188,11 @@ const TransactionsPage: React.FC = () => {
                               <div className="whitespace-nowrap">
                                 <span
                                   className={`px-3 py-1 font-bold text-[14.5px] font-inter ${getCategoryClass(
-                                    transaction.category,
+                                    transaction.category_name,
                                   )}`}
                                   style={{ borderRadius: "8.7px" }}
                                 >
-                                  {transaction.category}
+                                  {transaction.category_name}
                                 </span>
                               </div>
                             </div>
@@ -1349,4 +1239,5 @@ const TransactionsPage: React.FC = () => {
 }
 
 export default TransactionsPage
+
 
