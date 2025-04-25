@@ -95,7 +95,7 @@ const ZakatTaxPage: React.FC = () => {
             zakatData.current_assets > 0 ||
             zakatData.cash_savings > 0 ||
             zakatData.total_assets > 0 ||
-          Object.values(zakatData.asset_breakdown).some((value) => (value as number) > 0)
+            Object.values(zakatData.asset_breakdown).some((value) => (value as number) > 0)
 
           setHasZakatData(hasAssets)
 
@@ -147,15 +147,15 @@ const ZakatTaxPage: React.FC = () => {
   }
 
   return (
-    <div className="flex h-screen bg-background-light font-inter">
+    <div className="flex min-h-screen bg-background-light font-inter">
       <Sidebar activePage="zakat-tax" />
 
-      <div className="flex-1 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col overflow-auto">
         <header className="bg-background-light py-3 px-4 border-b">
           <h1 className="text-xl font-semibold text-primary-dark">Zakat & Tax</h1>
         </header>
 
-        <main className="flex-1 p-4 flex flex-col">
+        <main className="flex-1 p-4 flex flex-col overflow-y-auto">
           <div className="max-w-5xl mx-auto w-full">
             {loading ? (
               <div className="flex justify-center items-center h-48">
@@ -173,7 +173,6 @@ const ZakatTaxPage: React.FC = () => {
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Zakat Card */}
                 <div className="flex flex-col gap-4">
                   <div className="bg-white rounded-xl shadow p-4 h-full">
                     <h2 className="text-lg font-bold mb-3">Zakat</h2>
@@ -211,7 +210,6 @@ const ZakatTaxPage: React.FC = () => {
                           <p className="text-xl font-bold">PKR {zakat.total_assets.toLocaleString()}</p>
                         </div>
 
-                        {/* Asset breakdown in vertical layout */}
                         <div className="space-y-2">
                           <div>
                             <p className="text-sm text-gray-600">Gold</p>
@@ -230,7 +228,6 @@ const ZakatTaxPage: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Zakat Payable Card */}
                   <div
                     className={`py-4 px-4 text-white rounded-xl shadow ${hasZakatData ? "bg-primary-dark" : "bg-gray-400"}`}
                   >
@@ -241,7 +238,6 @@ const ZakatTaxPage: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Tax Card */}
                 <div className="flex flex-col gap-4">
                   <div className="bg-white rounded-xl shadow p-4 h-full">
                     <h2 className="text-lg font-bold mb-3">Tax</h2>
@@ -292,7 +288,6 @@ const ZakatTaxPage: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Tax Payable Card */}
                   <div
                     className={`py-4 px-4 text-white rounded-xl shadow ${hasTaxData ? "bg-primary-dark" : "bg-gray-400"}`}
                   >
