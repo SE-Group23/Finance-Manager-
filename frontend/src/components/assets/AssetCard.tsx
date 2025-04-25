@@ -25,7 +25,6 @@ const AssetCard: React.FC<AssetCardProps> = ({
   onEdit,
   onClick,
 }) => {
-  // Calculate percentage change
   const purchaseValue = Number.parseFloat(asset.purchase_value.toString())
   const currentValue = Number.parseFloat(asset.current_value.toString())
   const percentChange = ((currentValue - purchaseValue) / purchaseValue) * 100

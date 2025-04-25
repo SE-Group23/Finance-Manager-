@@ -9,10 +9,8 @@ import {
 
 const router = Router();
 
-// all routes here require a valid JWT
 router.use(requireAuth);
 
-// UC-7 Main and Alternate Flows
 router.post('/', createRecurringPayment);
 router.get('/', getRecurringPayments);
 router.put('/:id', updateRecurringPayment);

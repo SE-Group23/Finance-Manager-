@@ -11,7 +11,6 @@ import {
   CalendarIcon,
   ZakatIcon,
   ChatbotIcon,
-  // SettingsIcon,
   LogoutIcon,
 } from "./icons/sidebar-icons"
 
@@ -46,11 +45,6 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ activePage }) => {
-  // Add a handler for logout button
-  // const handleLogout = () => {
-  //   window.location.href = "/api/auth/logout"
-
-  // }
 
   return (
     <div className="w-[180px] bg-navbar text-white flex flex-col rounded-r-xl overflow-hidden">
@@ -81,17 +75,14 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage }) => {
 
       <div className="mt-auto border-t border-navbar-dark p-4">
         <div className="flex items-center gap-4 mb-2">
-          {/* <Link to="/settings" className="text-white hover:text-gray-200">
-            <SettingsIcon size={18} />
-          </Link> */}
+
           <Link to = "/logout" className="text-white hover:text-gray-200">
+
             <LogoutIcon size={18} />
           </Link>
         </div>
         <div className="text-sm">
 
-          {/* <div className="font-medium">Sam Wheeler</div>
-          <div className="text-white text-opacity-80 text-xs">samwheeler@example.com</div> */}
         </div>
       </div>
     </div>

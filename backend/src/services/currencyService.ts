@@ -11,7 +11,6 @@ interface CurrencyRate {
   value: number;
 }
 
-/** Fetch and store supported currencies */
 export async function syncSupportedCurrencies(): Promise<void> {
   const res = await axios.get(`${BASE_URL}/currencies`, {
     headers: { apikey: CURRENCY_API_KEY }
@@ -44,7 +43,6 @@ export async function syncSupportedCurrencies(): Promise<void> {
   }
 }
 
-/** Fetch and return today's exchange rates */
 export async function getLatestRates(base: string = 'USD', targets: string[] = ['EUR', 'PKR']): Promise<CurrencyRate[]> {
   const res = await axios.get(`${BASE_URL}/latest`, {
     params: {
@@ -61,7 +59,6 @@ export async function getLatestRates(base: string = 'USD', targets: string[] = [
   return result;
 }
 
-/** Fetch and store exchange rates for a given date */
 export async function getHistoricalRates(date: string, base: string = 'USD', targets: string[] = ['PKR', 'EUR']): Promise<void> {
   const res = await axios.get(`${BASE_URL}/historical`, {
     params: {
@@ -87,7 +84,6 @@ export async function getLatestRateToPKR(code: string, date?: string): Promise<n
   const target = code.toUpperCase();
   const base = 'PKR';
 
-  // If no date passed or date is today, use yesterday
   const today = new Date().toISOString().split('T')[0];
   let effectiveDate = date || today;
 
@@ -107,14 +103,13 @@ export async function getLatestRateToPKR(code: string, date?: string): Promise<n
     );
     if (local.rowCount) return local.rows[0].exchange_rate;
   } catch (e: any) {
-    console.error(`[getLatestRateToPKR] Error fetching from local DB: ${e.message}`);
+    
   }
 
   const [rate] = await convertCurrency(1, base, [target], effectiveDate);
   return rate.value;
 }
 
-/** Get exchange rates for a range (charting) */
 export async function getRangeRates(
   base: string,
   targets: string[],
@@ -136,7 +131,6 @@ export async function getRangeRates(
   return res.data.data;
 }
 
-/** Convert amount using today's or historical rates */
 export async function convertCurrency(value: number, base: string, targets: string[], date?: string): Promise<CurrencyRate[]> {
   let result: CurrencyRate[] = [];
 
@@ -164,9 +158,8 @@ export async function convertCurrency(value: number, base: string, targets: stri
     }
 
 
-    console.log(`[convertCurrency] base=${base}, value=${value}, targets=${targets}, converted=`, result);
   } catch (e: any) {
-    console.error(`[convertCurrency] Fallback using /latest failed: ${e.message}`);
+
   }
 
   return result;

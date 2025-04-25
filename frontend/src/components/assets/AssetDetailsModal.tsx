@@ -1,5 +1,3 @@
-//AssetDetailsModal
-
 "use client"
 
 import type React from "react"
@@ -15,17 +13,11 @@ interface AssetDetailsModalProps {
 }
 
 const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ assets, assetType, onClose, onDelete, onEdit }) => {
-  // Calculate total values
+
   const totalCurrentValue = assets.reduce((sum, asset) => sum + Number.parseFloat(asset.current_value.toString()), 0)
   const totalPurchaseValue = assets.reduce((sum, asset) => sum + Number.parseFloat(asset.purchase_value.toString()), 0)
   const totalQuantity = assets.reduce((sum, asset) => sum + Number.parseFloat(asset.quantity.toString()), 0)
 
-  // Calculate overall percentage change
-  const percentChange = ((totalCurrentValue - totalPurchaseValue) / totalPurchaseValue) * 100
-  const formattedPercentChange = percentChange.toFixed(1)
-  const isPositive = percentChange >= 0
-
-  // Get appropriate unit based on asset type
   const getUnit = () => {
     switch (assetType) {
       case "GOLD":
@@ -37,7 +29,6 @@ const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ assets, assetType
     }
   }
 
-  // Get appropriate color based on asset type
   const getAssetColor = () => {
     switch (assetType) {
       case "GOLD":
@@ -75,11 +66,6 @@ const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ assets, assetType
               <p className="text-xl font-bold text-white">${totalPurchaseValue.toFixed(2)}</p>
             </div>
             <div className="bg-dark p-4 rounded-lg">
-              {/* <p className="text-sm text-gray-400">Performance</p>
-              <p className={`text-xl font-bold ${isPositive ? "text-green-500" : "text-red-500"}`}>
-                {isPositive ? "+" : ""}
-                {formattedPercentChange}%
-              </p> */}
             </div>
           </div>
 
@@ -120,18 +106,6 @@ const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ assets, assetType
                     <p className="font-medium text-sm text-gray-400">
                       Value: PKR {Number.parseFloat(asset.current_value.toString()).toFixed(2)}
                     </p>
-                    {/* <p
-                      className={`text-sm ${asset.current_value > asset.purchase_value ? "text-green-500" : "text-red-500"}`}
-                    >
-                      {asset.current_value > asset.purchase_value ? "+" : ""}
-                      {(
-                        ((Number.parseFloat(asset.current_value.toString()) -
-                          Number.parseFloat(asset.purchase_value.toString())) /
-                          Number.parseFloat(asset.purchase_value.toString())) *
-                        100
-                      ).toFixed(1)}
-                      %
-                    </p> */}
                   </div>
                 </div>
                 <div className="flex justify-end mt-2 space-x-2">

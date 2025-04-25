@@ -1,4 +1,3 @@
-// backend/src/controllers/assetController.ts
 import { Request, Response } from 'express';
 import * as svc from '../services/assetService';
 import { GoldUnit, Currency } from '../constants/assets';
@@ -18,12 +17,9 @@ export async function createAsset(req: Request, res: Response) {
     const userId = (req as any).userId;
     const dto = req.body;
 
-    console.log("Incoming asset DTO:", dto);
-    
     const asset = await svc.createAsset(userId, dto);
     res.status(201).json(asset);
   } catch (e:any) {
-    console.error("❌ Error creating asset:", e.message);
     res.status(e.status||500).json({ error: e.message });
   }
 }
@@ -71,8 +67,6 @@ export async function getGoldHistory(req: Request, res: Response) {
     const unit = "tola"
     const currency = "PKR"
 
-    console.log(`[getGoldHistory] unit=${unit}, currency=${currency}`);
-
     res.json(await svc.getGoldHistory(unit, currency));
   } catch (e: any) {
     res.status(e.status || 500).json({ error: e.message });
@@ -92,7 +86,6 @@ export async function getStockHistory(req: Request, res: Response): Promise<void
     const data = await stockService.getHistoricalStockPrices(ticker, from, to, timespan || 'day');
     res.json(data);
   } catch (err: any) {
-    console.error("Error fetching stock history:", err.message);
     res.status(500).json({ error: "Failed to fetch stock history." });
   }
 }

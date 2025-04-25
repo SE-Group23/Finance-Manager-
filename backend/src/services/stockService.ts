@@ -27,7 +27,6 @@ export interface TickerMeta {
 export async function getTickerMeta(ticker: string): Promise<TickerMeta | null> {
   const assetTypeId = await getAssetTypeId(AssetType.STOCK);
 
-  // Look in DB first
   const cached = await pool.query(
     `SELECT ticker, company_name AS name, currency_code AS currency
      FROM asset_metadata
@@ -37,7 +36,6 @@ export async function getTickerMeta(ticker: string): Promise<TickerMeta | null> 
 
   if ((cached.rowCount ?? 0) > 0) return cached.rows[0];
 
-  // Fetch from Polygon if not cached
   const res = await axios.get(API.STOCK.SEARCH_TICKERS, {
     params: {
       ticker,
@@ -51,7 +49,6 @@ export async function getTickerMeta(ticker: string): Promise<TickerMeta | null> 
   const match = res.data.results?.[0];
   if (!match) return null;
 
-  // Insert into asset_metadata
   await pool.query(`
     INSERT INTO asset_metadata (asset_type_id, ticker, company_name, currency_code)
     VALUES ($1, $2, $3, $4)
@@ -77,12 +74,10 @@ function getValidStockDate(acquiredOn: string): string {
   const inputDate = new Date(acquiredOn);
   const today = new Date();
 
-  // Only compare date parts
   inputDate.setHours(0, 0, 0, 0);
   today.setHours(0, 0, 0, 0);
 
   if (inputDate >= today) {
-    // If acquisition date is today or future, fallback to yesterday
     const yesterday = new Date();
     yesterday.setDate(today.getDate() - 1);
     return yesterday.toISOString().split('T')[0];
@@ -93,20 +88,17 @@ function getValidStockDate(acquiredOn: string): string {
 
 export async function getStockCurrentValue(ticker: string, quantity: number, acquisitionDate: string): Promise<number> {
   const priceDate = getValidStockDate(acquisitionDate);
-  console.log(`[getStockCurrentValue] ${ticker} (target date: ${priceDate})`);
 
   try {
-    console.log(`[getStockCurrentValue] Checking DB for ${ticker}...`);
+    
     const existing = await pool.query(
       `SELECT close FROM stock_price_history WHERE ticker = $1 AND price_date = $2`,
       [ticker, priceDate]
     );
     if (existing.rowCount) return existing.rows[0].close * quantity;
   } catch (e: any) {
-    console.error("Error checking DB for stock value:", e.message);
+    
   }
-
-  console.log(`[getStockCurrentValue] Fetching current value from API for ${ticker}...`);
 
   let ret = 0;
   try {
@@ -114,8 +106,7 @@ export async function getStockCurrentValue(ticker: string, quantity: number, acq
     const res = await axios.get(url, { params: { adjusted: true, apiKey: POLYGON_API_KEY } });
 
     const { open, close, high, low, volume } = res.data;
-    console.log(`[getStockCurrentValue] API data for ${ticker} - close: ${close}`);
-
+    
     try {
       await pool.query(
         `INSERT INTO stock_price_history (ticker, price_date, open, high, low, close, volume)
@@ -125,19 +116,17 @@ export async function getStockCurrentValue(ticker: string, quantity: number, acq
         [ticker, priceDate, open, high, low, close, volume]
       );
     } catch (e: any) {
-      console.error("Error inserting stock current value into DB:", e.message);
+      
     }
 
     ret = close * quantity;
   } catch (e: any) {
-    console.error("Error fetching stock current value:", e.message);
+    
   }
 
   return ret;
 }
 
-
-/** Fetch & insert historical prices */
 export async function getHistoricalStockPrices(
   ticker: string,
   from: string,
@@ -175,7 +164,6 @@ export async function getHistoricalStockPrices(
   return points;
 }
 
-/** Helper: fuzzy search from name */
 export async function searchTickerByName(input: string): Promise<TickerMeta[]> {
   const res = await axios.get(API.STOCK.SEARCH_TICKERS, {
     params: {

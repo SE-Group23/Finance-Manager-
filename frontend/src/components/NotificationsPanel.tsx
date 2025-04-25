@@ -19,9 +19,7 @@ export function NotificationsPanel({
     eventAmounts = {},
     paymentsThisMonth,
 }: NotificationsPanelProps) {
-    // Helper function to find payment amount for an event
     const getEventAmount = (event: CalendarEvent): number => {
-        // First check if it's a recurring payment
         if (event.event_type === "recurring_due" || event.event_type === "recurring_payment") {
             const payment = recurringPayments.find((p) => p.payment_name === event.event_title)
             if (payment?.amount) {
@@ -29,7 +27,6 @@ export function NotificationsPanel({
             }
         }
 
-        // Then check the eventAmounts map
         if (eventAmounts && event.event_id && eventAmounts[event.event_id]) {
             return eventAmounts[event.event_id]
         }
@@ -37,7 +34,6 @@ export function NotificationsPanel({
         return 0
     }
 
-    // Find events due today - using direct date comparison
     const today = new Date()
     const todayEvents = urgentEvents.filter((event) => {
         const eventDate = parseISO(event.event_date)
@@ -48,7 +44,6 @@ export function NotificationsPanel({
         )
     })
 
-    // Use provided paymentsThisMonth or calculate it
     const displayPaymentsThisMonth =
         paymentsThisMonth !== undefined
             ? paymentsThisMonth
@@ -67,7 +62,6 @@ export function NotificationsPanel({
         >
             <h2 className="text-xl font-semibold mb-4">Notifications</h2>
 
-            {/* Upcoming payments badge - now showing all events with amounts */}
             <div className="mb-6">
                 <span className="inline-block bg-calendar-urgent text-white text-sm px-3 py-1 rounded-full font-medium">
                     {displayPaymentsThisMonth} payments due
@@ -75,7 +69,6 @@ export function NotificationsPanel({
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Urgent section - showing today's events */}
                 <div>
                     <h3 className="text-sm font-bold uppercase tracking-wider mb-3">Urgent</h3>
                     <div className="space-y-4">
@@ -97,7 +90,6 @@ export function NotificationsPanel({
                     </div>
                 </div>
 
-                {/* This Week section */}
                 <div>
                     <h3 className="text-sm font-bold uppercase tracking-wider mb-3">This Week</h3>
                     <div className="space-y-4">
@@ -119,7 +111,6 @@ export function NotificationsPanel({
                     </div>
                 </div>
 
-                {/* Upcoming section */}
                 <div>
                     <h3 className="text-sm font-bold uppercase tracking-wider mb-3">Upcoming</h3>
                     <div className="space-y-4">

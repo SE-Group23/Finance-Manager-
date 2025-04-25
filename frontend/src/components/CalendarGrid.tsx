@@ -13,10 +13,8 @@ export function CalendarGrid({ currentDate, calendarEvents, onEventClick }: Cale
     const monthEnd = endOfMonth(currentDate)
     const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd })
 
-    // Create array of week days
     const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
-    // Get events for a specific day
     const getEventsForDay = (day: Date) => {
         return calendarEvents.filter((event) => {
             const eventDate = parseISO(event.event_date)
@@ -26,7 +24,6 @@ export function CalendarGrid({ currentDate, calendarEvents, onEventClick }: Cale
 
     return (
         <div className="bg-white rounded-lg overflow-hidden">
-            {/* Week day headers */}
             <div className="grid grid-cols-7 text-center">
                 {weekDays.map((day, index) => (
                     <div key={index} className="py-2 text-sm font-medium text-gray-500">
@@ -35,14 +32,12 @@ export function CalendarGrid({ currentDate, calendarEvents, onEventClick }: Cale
                 ))}
             </div>
 
-            {/* Calendar grid */}
             <div className="grid grid-cols-7 gap-px bg-gray-200">
-                {/* Fill in empty cells for days before the start of month */}
+              
                 {Array.from({ length: getDay(monthStart) }).map((_, index) => (
                     <div key={`empty-start-${index}`} className="bg-gray-50 h-28 p-1" />
                 ))}
 
-                {/* Days of the month */}
                 {daysInMonth.map((day, dayIndex) => {
                     const dayEvents = getEventsForDay(day)
                     const isToday = isSameDay(day, new Date())
@@ -74,7 +69,6 @@ export function CalendarGrid({ currentDate, calendarEvents, onEventClick }: Cale
                     )
                 })}
 
-                {/* Fill in empty cells for days after the end of month */}
                 {Array.from({ length: 6 - getDay(monthEnd) }).map((_, index) => (
                     <div key={`empty-end-${index}`} className="bg-gray-50 h-28 p-1" />
                 ))}

@@ -1,17 +1,11 @@
-// AUTH CONTROLLER
 import { Request, Response, NextFunction, RequestHandler } from 'express';
 import bcrypt from "bcrypt";
 import { pool } from "../db";
 import { generateToken } from "../auth";
 import {sendPasswordResetEmail} from "../utils/mailer"
 import crypto from 'crypto';
-// import validator from 'validator';
 
-/**
- * UC-1: Register
- * Inputs: fullName, email, password
- * Process: Validate inputs, check if email exists, hash password, insert user, simulate sending confirmation email.
- */
+
 export const registerUser: RequestHandler = async (
   req: Request,
   res: Response,
@@ -35,7 +29,6 @@ export const registerUser: RequestHandler = async (
       res.status(400).json({ error: "Please provide a valid email address" });
       return;
     }
-    // Password strength checks
     const passwordIssues: string[] = [];
 
     if (password.length < 8) {
@@ -87,11 +80,6 @@ export const registerUser: RequestHandler = async (
   }
 };
 
-/**
- * UC-2: Login
- * Inputs: email, password
- * Process: Verify credentials and return JWT token.
- */
 export const loginUser: RequestHandler = async (
   req: Request,
   res: Response,
@@ -100,7 +88,6 @@ export const loginUser: RequestHandler = async (
   try {
     const { email, password } = req.body;
 
-    // Check for missing fields
     const missingFields: string[] = [];
     if (!email) missingFields.push("email");
     if (!password) missingFields.push("password");
@@ -109,9 +96,9 @@ export const loginUser: RequestHandler = async (
       const errorMessage = `Please provide ${missingFields.join(", ")}`;
       res.status(400).json({ error: errorMessage });
       return;
+
     }
 
-    // Lookup user
     const result = await pool.query("SELECT * FROM users WHERE email = $1", [
       email,
     ]);
@@ -122,19 +109,17 @@ export const loginUser: RequestHandler = async (
 
     const user = result.rows[0];
 
-    // Check password
     const passwordMatch = await bcrypt.compare(password, user.password_hash);
     if (!passwordMatch) {
       res.status(401).json({ error: "Invalid credentials" });
       return;
     }
 
-    // Update last_login
     await pool.query("UPDATE users SET last_login = NOW() WHERE user_id = $1", [
       user.user_id,
     ]);
 
-    // Generate token
+  
     const token = generateToken(user.user_id);
     res.json({ token, userId: user.user_id });
   } catch (error) {
@@ -143,24 +128,16 @@ export const loginUser: RequestHandler = async (
   }
 };
 
-// Updated forgotPassword and new resetPassword functions for authController.ts
 
-
-/**
- * UC-3: Forgot Password
- * Inputs: email
- * Process: Generate reset token, store it, and send reset link.
- */
 export const forgotPassword: RequestHandler = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-  // console.log("Fuck you!")
+ 
   try {
     const { email } = req.body;
     if (!email) {
       res.status(400).json({ error: 'Please provide your email' });
       return;
     }
-
-    // Email format validation
+    
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       res.status(400).json({ error: 'Please provide a valid email address' });
@@ -169,7 +146,6 @@ export const forgotPassword: RequestHandler = async (req: Request, res: Response
 
     const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     if (result.rows.length === 0) {
-      // Don't reveal that email doesn't exist (for security reasons)
       res.status(200).json({ message: 'If this email exists, a reset link has been sent.' });
       return;
     }
@@ -179,13 +155,11 @@ export const forgotPassword: RequestHandler = async (req: Request, res: Response
     // Generate random reset token
     const resetToken = crypto.randomBytes(32).toString('hex');
     
-    // Hash the token for security
     const hashedToken = crypto
       .createHash('sha256')
       .update(resetToken)
       .digest('hex');
     
-    // Set token expiration (1 hour from now)
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
     
     // Save to database
@@ -211,11 +185,6 @@ export const forgotPassword: RequestHandler = async (req: Request, res: Response
   }
 };
 
-/**
- * UC-4: Reset Password
- * Inputs: userId, token, newPassword
- * Process: Verify token, update password if valid.
- */
 export const resetPassword: RequestHandler = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   console.log("I am here")
   try {

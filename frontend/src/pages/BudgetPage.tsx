@@ -9,7 +9,6 @@ function BudgetPage() {
   const [pageLoading, setPageLoading] = useState(true)
 
   useEffect(() => {
-    // Simulate page loading for a minimum time to show the loading screen
     const pageLoadTimer = setTimeout(() => {
       setPageLoading(false)
     }, 800)

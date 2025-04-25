@@ -13,11 +13,10 @@ interface AssetDistributionProps {
   loading: boolean
 }
 
-// Updated color scheme with more distinct colors for each asset type
 const COLORS = {
-  GOLD: "#f59e0b", // Amber/Gold color
-  STOCK: "#3b82f6", // Blue for stocks
-  CURRENCY: "#10b981", // Green for currency
+  GOLD: "#f59e0b",
+  STOCK: "#3b82f6",
+  CURRENCY: "#10b981", 
 }
 
 const AssetDistribution: React.FC<AssetDistributionProps> = ({ distribution, loading }) => {
@@ -30,21 +29,18 @@ const AssetDistribution: React.FC<AssetDistributionProps> = ({ distribution, loa
     )
   }
 
-  // Format data for the pie chart and ensure consistent case for asset types
   const chartData = distribution.map((item) => ({
-    name: item.asset_type.toUpperCase(), // Ensure uppercase for consistent color mapping
+    name: item.asset_type.toUpperCase(),
     value: item.percentage,
     total: item.total,
     count: item.count,
   }))
 
-  // Get color for asset type
   const getColor = (assetType: string) => {
     const normalizedType = assetType.toUpperCase()
-    return COLORS[normalizedType as keyof typeof COLORS] || "#6b7280" // Default gray if type not found
+    return COLORS[normalizedType as keyof typeof COLORS] || "#6b7280"
   }
 
-  // Custom tooltip formatter
   const customTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload
@@ -69,7 +65,6 @@ const AssetDistribution: React.FC<AssetDistributionProps> = ({ distribution, loa
   return (
     <>
       <div className="flex flex-col md:flex-row items-center">
-        {/* Chart */}
         <div className="w-full md:w-1/2">
           <ResponsiveContainer width="100%" height={220}>
             <PieChart>
@@ -81,7 +76,6 @@ const AssetDistribution: React.FC<AssetDistributionProps> = ({ distribution, loa
                 outerRadius={80}
                 fill="#8884d8"
                 dataKey="value"
-                // label={({ value }) => `${value}%`} // Only show percentage, not the asset type
               >
                 {chartData.map((entry) => (
                   <Cell key={`cell-${entry.name}`} fill={getColor(entry.name)} />
@@ -92,7 +86,6 @@ const AssetDistribution: React.FC<AssetDistributionProps> = ({ distribution, loa
           </ResponsiveContainer>
         </div>
 
-        {/* Legend */}
         <div className="w-full md:w-1/2 grid grid-cols-1 gap-4 mt-4 md:mt-0">
           {chartData.map((item) => (
             <div key={item.name} className="flex items-center justify-between p-3 rounded-lg bg-gray-50">

@@ -33,13 +33,11 @@ export default function AssetPage() {
       const summaryResponse = await getPortfolioSummary()
       setSummary(summaryResponse)
 
-      // Fetch Gold history only if user has gold assets
       if (assetsResponse.some((a) => a.asset_type.toUpperCase() === "GOLD")) {
         const goldData = await getGoldHistory()
         setGoldHistory(goldData)
       }
 
-      // Stock data
       const stockAssets = assetsResponse.filter((a) => a.asset_type.toUpperCase() === "STOCK")
       if (stockAssets.length > 0) {
         const ticker = stockAssets[0].asset_details?.ticker
@@ -74,7 +72,6 @@ export default function AssetPage() {
       const summaryData = await getPortfolioSummary()
       setSummary(summaryData)
 
-      // Refresh other data
       fetchData()
     } catch (error) {
       console.error("Failed to refresh data:", error)
@@ -83,12 +80,10 @@ export default function AssetPage() {
     }
   }
 
-  // Get the latest gold price and calculate percentage change
   const latestGoldPrice = goldHistory.length > 0 ? goldHistory[goldHistory.length - 1]?.price : 0
   const firstGoldPrice = goldHistory.length > 0 ? goldHistory[0]?.price : 0
   const goldPercentChange = firstGoldPrice > 0 ? ((latestGoldPrice - firstGoldPrice) / firstGoldPrice) * 100 : 0
 
-  // Get the latest stock price and calculate percentage change
   const latestStockPrice = stockHistory.length > 0 ? stockHistory[stockHistory.length - 1]?.close : 0
   const firstStockPrice = stockHistory.length > 0 ? stockHistory[0]?.close : 0
   const stockPercentChange = firstStockPrice > 0 ? ((latestStockPrice - firstStockPrice) / firstStockPrice) * 100 : 0
@@ -100,43 +95,31 @@ export default function AssetPage() {
         <div className="p-6 max-w-6xl mx-auto">
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-2xl font-bold text-gray-900">Asset Manager</h1>
-            {/* <div className="flex gap-2">
-              <button
-                onClick={handleRefresh}
-                className="bg-navbar hover:bg-navbar-dark text-white px-3 py-2 text-sm rounded-lg flex items-center gap-1"
-              >
-                <RefreshCw className="h-4 w-4" />
-                Refresh Values
-              </button>
-            </div> */}
           </div>
 
           <div className="border-b border-gray-200 mb-6"></div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-6">
-            {/* Left Column: Nested 2-row grid */}
+           
             <div className="lg:col-span-1 grid grid-rows-[120px_1fr] gap-4 ">
-              {/* Total Asset Value */}
+              
               <div className="bg-white p-6 rounded-2xl shadow flex items-center justify-between">
                 <AssetOverview summary={summary} loading={loading} onRefresh={handleRefresh} />
               </div>
 
-              {/* Asset Distribution */}
               <div className="bg-white p-6 rounded-2xl shadow">
                 <h2 className="text-l font-semibold mb-2 text-gray-500">Asset Distribution</h2>
                 <AssetDistribution distribution={summary?.distribution || []} loading={loading} />
               </div>
             </div>
 
-            {/* Asset List */}
             <div className="bg-navbar text-white p-6 rounded-2xl shadow h-[440px] flex flex-col">
               <AssetList assets={assets} loading={loading} />
             </div>
           </div>
 
-          {/* Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            {/* Gold Rate */}
+            
             <div className="bg-white p-6 rounded-2xl shadow">
               <h2 className="text-l font-semibold mb-4 text-gray-500">Gold Rate</h2>
               {goldHistory.length > 0 ? (
@@ -171,7 +154,7 @@ export default function AssetPage() {
               </div>
             </div>
 
-            {/* Stock Value */}
+       
             <div className="bg-white p-6 rounded-2xl shadow">
               <h2 className="text-l font-semibold mb-4 text-gray-500">
                 Stock Value {selectedStock && `(${selectedStock})`}

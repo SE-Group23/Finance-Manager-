@@ -25,7 +25,6 @@ async function getUserAssets(userId: number): Promise<any[]> {
 
     return result.rows;
   } catch (error) {
-    console.error('❌ Error fetching user assets:', error);
     throw error;
   }
 }
@@ -112,12 +111,10 @@ async function getNisaabThreshold(): Promise<number> {
     }
 
     const goldPricePerTola = parseFloat(rows[0].price);
-    const nisabInTolas = 7.5; // standard nisab in tola
+    const nisabInTolas = 7.5;
 
     return goldPricePerTola * nisabInTolas;
   } catch (error) {
-    console.log("❌ No gold price data found for Nisab calculation");
-    console.error('❌ Error calculating Nisab threshold:', error);
     throw error;
   }
 }
@@ -141,19 +138,16 @@ async function getAnnualIncome(userId: number): Promise<number> {
     const income = parseFloat(rows[0]?.total_income ?? "0");
     return isNaN(income) ? 0 : income;
   } catch (error) {
-    console.error('❌ Error fetching annual income:', error);
     throw error;
   }
 }
 
 export async function getZakatAndTaxSummary(req: Request, res: Response): Promise<void> {
-  console.log("💡 [GET] /api/zakat-tax called");
 
   try {
     const userId = (req as any).userId;
 
     if (!userId) {
-      console.warn("⚠️ No userId found in request");
       res.status(401).json({ success: false, error: "Unauthorized" });
       return;
     }
@@ -173,11 +167,6 @@ export async function getZakatAndTaxSummary(req: Request, res: Response): Promis
     const taxDueDate = new Date(startYear + 1, 6, 31);
     const msInDay = 1000 * 60 * 60 * 24;
     const daysRemaining = Math.max(Math.ceil((taxDueDate.getTime() - now.getTime()) / msInDay), 0);
-
-    console.log("✅ Asset totals:", assetTotals);
-    console.log("✅ Annual income:", annualIncome);
-    console.log("✅ Zakat:", zakatAmount);
-    console.log("✅ Tax:", tax);
 
     res.json({
       success: true,
@@ -220,7 +209,6 @@ export async function getZakatAndTaxSummary(req: Request, res: Response): Promis
     });
 
   } catch (error) {
-    console.error('❌ Error in getZakatAndTaxSummary:', error);
     res.status(500).json({ success: false, error: 'Error retrieving Zakat and Tax summary' });
   }
 }

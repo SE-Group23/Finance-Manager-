@@ -42,7 +42,6 @@ export function EventModal({
     const [frequency, setFrequency] = useState("monthly")
     const [showFrequencyDropdown, setShowFrequencyDropdown] = useState(false)
 
-    // Initialize form with event data if editing
     useEffect(() => {
         if (event) {
             setTitle(event.event_title)
@@ -51,18 +50,15 @@ export function EventModal({
             const isEventRecurring = event.event_type === "recurring_due" || event.event_type === "recurring_payment"
             setIsRecurring(isEventRecurring)
 
-            // Get amount - first check if it's a recurring payment
             let eventAmount = ""
 
             if (isEventRecurring) {
-                // For recurring events, get amount from recurring payments
                 const recurringPayment = recurringPayments.find((p) => p.payment_name === event.event_title)
                 if (recurringPayment?.amount) {
                     eventAmount = recurringPayment.amount.toString()
                 }
             }
 
-            // If not found in recurring payments or not recurring, check eventAmounts
             if (!eventAmount && event.event_id && eventAmounts[event.event_id]) {
                 eventAmount = eventAmounts[event.event_id].toString()
             }
@@ -77,7 +73,6 @@ export function EventModal({
                 recurringPayment: recurringPayments.find((p) => p.payment_name === event.event_title),
             })
         } else {
-            // Default values for new event
             setTitle("")
             setDate(format(new Date(), "yyyy-MM-dd"))
             setAmount("")
@@ -115,13 +110,11 @@ export function EventModal({
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-full max-w-md relative shadow-lg">
-                {/* Close button */}
                 <button onClick={onClose} className="absolute top-4 right-4 text-red-500 hover:text-red-700" aria-label="Close">
                     <X className="h-5 w-5" />
                 </button>
 
                 <form onSubmit={handleSubmit}>
-                    {/* Title input */}
                     <div className="mb-6">
                         <input
                             type="text"
@@ -133,7 +126,6 @@ export function EventModal({
                         />
                     </div>
 
-                    {/* Date input */}
                     <div className="mb-4">
                         <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
                         <input
@@ -145,7 +137,6 @@ export function EventModal({
                         />
                     </div>
 
-                    {/* Amount input */}
                     <div className="mb-6">
                         <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
                         <input
@@ -158,7 +149,6 @@ export function EventModal({
                         />
                     </div>
 
-                    {/* Recurring checkbox */}
                     <div className="mb-4 flex items-center">
                         <input
                             type="checkbox"
@@ -172,7 +162,6 @@ export function EventModal({
                         </label>
                     </div>
 
-                    {/* Frequency dropdown (only shown if recurring) */}
                     {isRecurring && (
                         <div className="mb-6 relative">
                             <label className="block text-sm font-medium text-gray-700 mb-1">Frequency</label>
@@ -242,7 +231,6 @@ export function EventModal({
                         </div>
                     )}
 
-                    {/* Action buttons */}
                     <div className="flex justify-between mt-6">
                         {event && (
                             <button
