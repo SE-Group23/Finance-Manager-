@@ -4,11 +4,12 @@ import type React from "react"
 import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import { ArrowUp, ArrowDown, ChevronRight } from "lucide-react"
-import { PieChart as PieChartComponent, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts"
 import Sidebar from "../components/Sidebar"
+import NetWorthCard from "../components/NetWorthCard"
+import ExpenseBarChart from "../components/ExpenseBarChart"
+import BudgetProgressCard from "../components/BudgetProgressCard"
 import LoadingScreen from "../components/LoadingScreen"
 
-// Define types for our data
 interface Transaction {
   transaction_id: number
   amount: number
@@ -55,9 +56,7 @@ const DashboardPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [currentMonth, setCurrentMonth] = useState<string>("")
 
-  // Add console logging to help debug
   useEffect(() => {
-    // Set current month name
     const now = new Date()
     setCurrentMonth(now.toLocaleString("default", { month: "long", year: "numeric" }))
 
@@ -103,10 +102,6 @@ const DashboardPage: React.FC = () => {
     return () => clearTimeout(pageLoadTimer)
   }, [])
 
-  // Colors for the pie chart
-  const COLORS = ["#00C49F", "#0088FE", "#FFBB28", "#FF8042", "#a64dff", "#ff4d4d"]
-
-  // Format currency
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
       style: "currency",
@@ -116,7 +111,6 @@ const DashboardPage: React.FC = () => {
     }).format(amount)
   }
 
-  // Format date
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
     return date.toLocaleDateString("en-US", {
@@ -126,44 +120,9 @@ const DashboardPage: React.FC = () => {
     })
   }
 
-  // Calculate percentage for budget progress
   const calculatePercentage = (spent: number, limit: number) => {
     if (limit === 0) return 0
     return Math.min(Math.round((spent / limit) * 100), 100)
-  }
-
-  // Get current month as YYYY-MM string for comparison
-  const getCurrentMonthString = () => {
-    const now = new Date()
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
-  }
-
-  // Filter budgets for current month only
-  const getCurrentMonthBudgets = () => {
-    if (!dashboardData?.budgets || dashboardData.budgets.length === 0) return []
-
-    const currentMonthStr = getCurrentMonthString()
-    console.log("Current month string for filtering:", currentMonthStr)
-
-    // Log all budgets to debug
-    console.log("All budgets:", dashboardData.budgets)
-
-    return dashboardData.budgets.filter((budget) => {
-      // If month_start is missing, include the budget (fallback)
-      if (!budget.month_start) return true
-
-      // Extract YYYY-MM from the budget's month_start
-      const budgetDate = new Date(budget.month_start)
-      const budgetMonthStr = `${budgetDate.getFullYear()}-${String(budgetDate.getMonth() + 1).padStart(2, "0")}`
-
-      console.log(`Budget ${budget.category_name}: ${budgetMonthStr} vs current ${currentMonthStr}`)
-
-      return budgetMonthStr === currentMonthStr
-    })
-  }
-
-  if (pageLoading) {
-    return <LoadingScreen />
   }
 
   if (loading) {
@@ -178,28 +137,36 @@ const DashboardPage: React.FC = () => {
     )
   }
 
-  // Get current month budgets
   const currentMonthBudgets = dashboardData?.budgets || []
   console.log("Filtered budgets for current month:", currentMonthBudgets)
 
-  // If no data is available yet (new user), show empty state
   const emptyState =
     !dashboardData ||
     (dashboardData.recentTransactions.length === 0 &&
       (!dashboardData.budgets || dashboardData.budgets.length === 0) &&
       (!dashboardData.categoryBreakdown || dashboardData.categoryBreakdown.length === 0))
 
+  const sampleExpenseData = [
+    { category_name: "Food", amount: 2500, percentage: 55 },
+    { category_name: "Rent", amount: 2000, percentage: 45 },
+  ]
+
+  const expenseData =
+    dashboardData?.categoryBreakdown && dashboardData.categoryBreakdown.length > 0
+      ? dashboardData.categoryBreakdown
+      : sampleExpenseData
+
+  const totalExpense = dashboardData?.totalMonthlyExpenses || 4500
+
   return (
     <div className="flex min-h-screen bg-background-light font-inter">
-      {/* Sidebar - Using our shared component */}
       <Sidebar activePage="dashboard" />
 
-      {/* Main content */}
       <div className="flex-1 p-8">
         <h1 className="text-2xl font-bold mb-8">Dashboard</h1>
 
         {emptyState ? (
-          <div className="bg-white rounded-lg shadow p-8 text-center">
+          <div className="bg-white rounded-2xl shadow p-8 text-center">
             <h2 className="text-xl font-semibold mb-4">Welcome to your Finance Dashboard!</h2>
             <p className="mb-6">
               Start by adding transactions and setting up budgets to see your financial overview here.
@@ -215,151 +182,119 @@ const DashboardPage: React.FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Net Cash */}
-            <div className="bg-navbar text-white p-6 rounded-lg shadow">
-              <h2 className="text-lg font-medium mb-4">Net Cash</h2>
-              <div className="text-4xl font-bold mb-4">{formatCurrency(dashboardData?.netCash || 0)}</div>
-              <div className="flex justify-between">
-                <div>
-                  <div className="text-teal-200">Credits</div>
-                  <div className="font-semibold">{formatCurrency(dashboardData?.totalCredit || 0)}</div>
-                </div>
-                <div>
-                  <div className="text-teal-200">Debits</div>
-                  <div className="font-semibold">{formatCurrency(dashboardData?.totalDebit || 0)}</div>
-                </div>
+            <div className="grid grid-cols-1 gap-6">
+              <div className="h-[170px]">
+                <NetWorthCard
+                  netCash={dashboardData?.netCash || 0}
+                  totalCredit={dashboardData?.totalCredit || 0}
+                  totalDebit={dashboardData?.totalDebit || 0}
+                />
               </div>
-            </div>
 
-            {/* Monthly Expense Summary */}
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h2 className="text-lg font-medium mb-4">Monthly Expense Summary ({currentMonth})</h2>
-              <div className="flex items-center justify-center">
-                {dashboardData?.categoryBreakdown && dashboardData.categoryBreakdown.length > 0 ? (
-                  <div className="relative">
-                    <ResponsiveContainer width={200} height={200}>
-                      <PieChartComponent>
-                        <Pie
-                          data={dashboardData.categoryBreakdown}
-                          cx="50%"
-                          cy="50%"
-                          labelLine={false}
-                          outerRadius={80}
-                          fill="#8884d8"
-                          dataKey="amount"
-                        >
-                          {dashboardData.categoryBreakdown.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip formatter={(value) => formatCurrency(Number(value))} />
-                      </PieChartComponent>
-                    </ResponsiveContainer>
-                    <div className="absolute inset-0 flex items-center justify-center flex-col">
-                      <div className="text-2xl font-bold">{formatCurrency(dashboardData.totalMonthlyExpenses)}</div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-gray-500">No expense data available for {currentMonth}</div>
-                )}
+              <div className="h-[170px]">
+                <BudgetProgressCard
+                  totalSpent={dashboardData?.budgetProgress?.totalSpent || 0}
+                  totalBudget={dashboardData?.budgetProgress?.totalBudget || 0}
+                  percentage={dashboardData?.budgetProgress?.percentage || 0}
+                  currentMonth={currentMonth}
+                />
               </div>
-              <div className="mt-4 grid grid-cols-2 gap-2">
-                {dashboardData?.categoryBreakdown?.slice(0, 6).map((category, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <div
-                      className="w-3 h-3 rounded-full"
-                      style={{ backgroundColor: COLORS[index % COLORS.length] }}
-                    ></div>
-                    <span className="text-sm">{category.category_name}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
 
-            {/* Total Budget Spent */}
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h2 className="text-lg font-medium mb-4">Total Budget Spent ({currentMonth})</h2>
-              <div className="h-4 bg-gray-200 rounded-full overflow-hidden mb-2">
-                <div
-                  className="h-full bg-gradient-to-r from-lime-300 to-lime-500"
-                  style={{ width: `${dashboardData?.budgetProgress?.percentage || 0}%` }}
-                ></div>
-              </div>
-              <div className="text-right text-sm text-gray-600">{dashboardData?.budgetProgress?.percentage || 0}%</div>
-              <div className="mt-4 text-sm text-gray-600">
-                <span className="font-medium">{formatCurrency(dashboardData?.budgetProgress?.totalSpent || 0)}</span>{" "}
-                spent of {formatCurrency(dashboardData?.budgetProgress?.totalBudget || 0)} budget
-              </div>
-            </div>
+              <div className="bg-white p-6 rounded-2xl shadow h-[300px] flex flex-col">
+                <h2 className="text-lg font-medium mb-4">Transaction History</h2>
 
-            {/* Transaction History */}
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h2 className="text-lg font-medium mb-4">Transaction History</h2>
-              {dashboardData?.recentTransactions && dashboardData.recentTransactions.length > 0 ? (
-                <div className="space-y-4">
-                  {dashboardData.recentTransactions.map((transaction, index) => (
-                    <div key={transaction.transaction_id} className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="text-center font-medium w-6">{index + 1}</div>
-                        <div>
-                          <div className="font-medium">{transaction.vendor || transaction.category_name}</div>
-                          <div className="text-xs text-gray-500">{formatDate(transaction.transaction_date)}</div>
+                <div className="flex-1 overflow-y-auto">
+                  {dashboardData?.recentTransactions && dashboardData.recentTransactions.length > 0 ? (
+                    <div className="space-y-6">
+                      {dashboardData.recentTransactions.map((transaction, index) => (
+                        <div key={transaction.transaction_id} className="flex items-center justify-between py-2">
+                          <div className="flex items-center gap-4">
+                            <div className="text-center font-medium w-6">{index + 1}</div>
+                            <div>
+                              <div className="font-medium">{transaction.vendor || transaction.category_name}</div>
+                              <div className="text-xs text-gray-500">{formatDate(transaction.transaction_date)}</div>
+                            </div>
+                          </div>
+                          <div
+                            className={`font-medium flex items-center ${
+                              transaction.transaction_type === "credit" ? "text-green-600" : "text-red-600"
+                            }`}
+                          >
+                            {transaction.transaction_type === "credit" ? (
+                              <ArrowUp size={16} className="mr-1" />
+                            ) : (
+                              <ArrowDown size={16} className="mr-1" />
+                            )}
+                            {formatCurrency(transaction.amount)}
+                          </div>
                         </div>
-                      </div>
-                      <div
-                        className={`font-medium flex items-center ${
-                          transaction.transaction_type === "credit" ? "text-green-600" : "text-red-600"
-                        }`}
-                      >
-                        {transaction.transaction_type === "credit" ? (
-                          <ArrowUp size={16} className="mr-1" />
-                        ) : (
-                          <ArrowDown size={16} className="mr-1" />
-                        )}
-                        {formatCurrency(transaction.amount)}
-                      </div>
+                      ))}
                     </div>
-                  ))}
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">No transactions yet</div>
+                  )}
                 </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500">No transactions yet</div>
-              )}
-              <div className="mt-6 text-right">
-                <Link to="/transactions" className="text-navbar hover:text-navbar-dark flex items-center justify-end">
-                  View full Transaction History
-                  <ChevronRight size={16} className="ml-1" />
-                </Link>
+
+                <div className="mt-6 text-right">
+                  <Link
+                    to="/transactions"
+                    className="text-green-600 hover:text-green-700 flex items-center justify-end"
+                  >
+                    View full Transaction History
+                    <ChevronRight size={16} className="ml-1" />
+                  </Link>
+                </div>
               </div>
             </div>
 
-            {/* Budget by Category */}
-            <div className="bg-white p-6 rounded-lg shadow lg:col-span-2">
-              <h2 className="text-lg font-medium mb-4">Budget by Category ({currentMonth})</h2>
-              {dashboardData?.budgets && dashboardData.budgets.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {dashboardData.budgets.map((budget) => (
-                    <div key={budget.budget_id || `budget-${budget.category_name}`}>
-                      <div className="flex justify-between mb-1">
-                        <span className="font-medium">{budget.category_name}</span>
-                        <span className="text-gray-600">{calculatePercentage(budget.spent, budget.budget_limit)}%</span>
-                      </div>
-                      <div className="h-2 bg-gray-200 rounded-full overflow-hidden mb-2">
-                        <div
-                          className="h-full bg-gradient-to-r from-lime-300 to-lime-500"
-                          style={{ width: `${calculatePercentage(budget.spent, budget.budget_limit)}%` }}
-                        ></div>
-                      </div>
+            <div className="grid grid-cols-1 gap-6">
+              <div className="bg-white p-6 rounded-2xl shadow h-[350px]">
+                <h2 className="text-lg font-medium mb-4">Monthly Expense Summary ({currentMonth})</h2>
+                <ExpenseBarChart data={expenseData} totalAmount={totalExpense} />
+              </div>
+
+              <div className="bg-white p-6 rounded-2xl shadow h-[300px] flex flex-col">
+                <h2 className="text-lg font-medium mb-4">Budget by Category ({currentMonth})</h2>
+
+                <div className="flex-1 overflow-y-auto">
+                  {dashboardData?.budgets && dashboardData.budgets.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {dashboardData.budgets.map((budget) => {
+                        const percent = calculatePercentage(budget.spent, budget.budget_limit)
+
+                        return (
+                          <div key={budget.budget_id || `budget-${budget.category_name}`} className="mb-4">
+                            <div className="flex justify-between mb-1">
+                              <span className="font-medium">{budget.category_name}</span>
+                              <span className="text-gray-600">{percent}%</span>
+                            </div>
+                            <div className="h-2 bg-[#e8f8e8] rounded-full mb-2">
+                              <div
+                                style={{
+                                  height: "100%",
+                                  width: percent > 0 ? `${percent}%` : "8px",
+                                  backgroundColor: "#d2ff65",
+                                  borderRadius: "9999px",
+                                  display: "block",
+                                  minWidth: "8px",
+                                }}
+                              ></div>
+                            </div>
+                          </div>
+                        )
+                      })}
                     </div>
-                  ))}
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">No budgets set for {currentMonth}</div>
+                  )}
                 </div>
-              ) : (
-                <div className="text-center py-8 text-gray-500">No budgets set for {currentMonth}</div>
-              )}
-              <div className="mt-6 text-right">
-                <Link to="/budget" className="text-navbar hover:text-navbar-dark flex items-center justify-end">
-                  View full Budget Details
-                  <ChevronRight size={16} className="ml-1" />
-                </Link>
+
+                <div className="mt-6 text-right">
+                  <Link to="/budget" className="text-green-600 hover:text-green-700 flex items-center justify-end">
+                    View full Budget Details
+                    <ChevronRight size={16} className="ml-1" />
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
