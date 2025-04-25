@@ -14,7 +14,6 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ fullScreen = true }) => {
     >
       <div className="relative">
         <div className="w-32 h-32 bg-navbar rounded-full flex items-center justify-center">
-          {/* <DollarSign size={32} className="text-white" /> */}
           <img src="../src/assets/logo.png" alt="Logo" className="w-16 h-16" />
         </div>
         <div className="absolute inset-0 rounded-full border-4 border-t-transparent border-navbar animate-spin"></div>

@@ -9,7 +9,6 @@ import {
 
 const router = Router();
 
-// all calendar endpoints require authentication
 router.use(requireAuth);
 
 router.get('/', getCalendarEvents);

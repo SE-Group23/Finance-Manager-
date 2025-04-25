@@ -7,7 +7,7 @@ import developerImage from "../assets/developer-image.svg";
 import { Eye, EyeOff } from "lucide-react";
 
 const LoginPage: React.FC = () => {
-  const [email, setEmail] = useState(""); // Changed from username to email
+  const [email, setEmail] = useState(""); 
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -24,7 +24,6 @@ const LoginPage: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Using email directly instead of username
       const data = await loginUser(email, password);
       localStorage.setItem("token", data.token);
       localStorage.setItem("userId", data.userId);
@@ -39,7 +38,7 @@ const LoginPage: React.FC = () => {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden">
-      {/* Left side with illustration */}
+      
       <div className="w-1/2 flex flex-col h-full">
         <div className="flex-1 bg-gradient-to-b from-teal-900 to-teal-600 flex items-center justify-center">
           <div className="flex justify-center items-center w-full h-full p-5">
@@ -52,7 +51,6 @@ const LoginPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Right side with login form */}
       <div className="w-1/2 bg-gray-50 flex items-center justify-center h-full">
         <div className="w-full max-w-md px-8">
           <h1 className="text-5xl font-bold mb-12">Welcome Back</h1>

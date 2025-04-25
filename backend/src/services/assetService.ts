@@ -1,4 +1,3 @@
-// backend/src/services/assetService.ts
 import { pool } from '../db';
 import { AssetType, GoldUnit, Currency } from '../constants/assets';
 import * as goldSvc from './goldService';
@@ -11,12 +10,11 @@ export interface CreateAssetDTO {
   purchaseValue: number;
   acquiredOn?:   string;
   assetDetails: {
-    // gold:
     unit?: GoldUnit;
     currency?: Currency;
-    // stock:
+   
     ticker?: string;
-    // currency-holding:
+    
     currencyCode?: string;
   };
 }
@@ -31,9 +29,8 @@ export async function getAssetTypeId(name: AssetType): Promise<number> {
     `SELECT asset_type_id FROM asset_types WHERE asset_type_name=$1`, [name]
   );
   if (sel.rowCount) return sel.rows[0].asset_type_id;
-}  catch (e) {
-  console.error("❌ [getAssetTypeId] SELECT failed")
-}
+  }  catch (e) {
+  }
 
   const ins = await pool.query(
     `INSERT INTO asset_types(asset_type_name) VALUES($1) RETURNING asset_type_id`,
@@ -47,7 +44,6 @@ async function getOrCreateMetadata(dto: CreateAssetDTO): Promise<number> {
 
   try{
     if (dto.assetType === AssetType.GOLD) {
-      console.log("🔍 [GOLD] Looking for metadata with unit =", dto.assetDetails.unit, "currency =", dto.assetDetails.currency);
       const unit = "tola";
       const cur  = "PKR";
       const sel = await pool.query(
@@ -66,22 +62,20 @@ async function getOrCreateMetadata(dto: CreateAssetDTO): Promise<number> {
 
   } catch (e) {
 
-    console.error("❌ [getOrCreateMetadata] Failed to get or create metadata:");
   }
 
   if (dto.assetType === AssetType.STOCK) {
     const ticker = dto.assetDetails.ticker!;
-    // fetch metadata (and cache) via stockSvc
     const meta = await stockSvc.getTickerMeta(ticker);
     if (!meta) throw new Error(`Ticker ${ticker} not found`);
-    // stockSvc already upserts into stock_metadata and asset_metadata
-    // but ensure asset_metadata row exists:
+
     const sel = await pool.query(
       `SELECT metadata_id FROM asset_metadata
        WHERE asset_type_id=$1 AND ticker=$2`,
       [typeId, ticker]
     );
     if (sel.rowCount) return sel.rows[0].metadata_id;
+
     const ins = await pool.query(
       `INSERT INTO asset_metadata(asset_type_id, ticker, company_name, currency_code)
        VALUES($1,$2,$3,$4) RETURNING metadata_id`,
@@ -92,9 +86,7 @@ async function getOrCreateMetadata(dto: CreateAssetDTO): Promise<number> {
 
   if (dto.assetType === AssetType.CURRENCY) {
     const code = dto.assetDetails.currencyCode!;
-    // ensure currency exists in currencies table
     await fxSvc.syncSupportedCurrencies();
-    // metadata row keyed only on currency_code:
     const sel = await pool.query(
       `SELECT metadata_id FROM asset_metadata
        WHERE asset_type_id=$1 AND currency_code=$2`,
@@ -113,31 +105,19 @@ async function getOrCreateMetadata(dto: CreateAssetDTO): Promise<number> {
 }
 
 export async function createAsset(userId: number, dto: CreateAssetDTO) {
-  console.log("📦 [createAsset] Start:", dto.assetType, dto.assetDetails);
 
-  // 1) ensure metadata
-  // const metadataId = await getOrCreateMetadata(dto);
-
-   // Step 1
    let metadataId;
    try {
      metadataId = await getOrCreateMetadata(dto);
-     console.log("✅ [createAsset] metadataId:", metadataId);
    } catch (e) {
-     console.error("❌ [createAsset] getOrCreateMetadata failed:");
      throw e;
    }
  
-
-  // 2) fetch current market price
   let current = dto.purchaseValue;
   try{
     if (dto.assetType === AssetType.GOLD) {
-      // lazy‐cache last 35d history, so next getLatestGoldPrice hits DB first
-      console.log("⛏ [createAsset] Getting gold price...");
       const live = await goldSvc.getLatestGoldPrice("tola", "PKR");
       await goldSvc.ensureRecentGoldHistory("tola", "PKR");
-      console.log("✅ [createAsset] Live gold price:", live);
       current = live * dto.quantity;
     }
     else if (dto.assetType === AssetType.STOCK) {
@@ -147,17 +127,14 @@ export async function createAsset(userId: number, dto: CreateAssetDTO) {
       const code = dto.assetDetails.currencyCode!;
       const date = dto.acquiredOn ? new Date(dto.acquiredOn).toISOString().split("T")[0] : undefined;
 
-      // Try from local DB first, then API
       let converted = await fxSvc.getLatestRateToPKR(code, date);
 
       current = converted * dto.quantity;
     }
   } catch (e) {
-    console.error("❌ [createAsset] Failed to fetch current value:");
     throw e;
   }
 
-  // 3) insert into assets
   let asset;
   try{
     const { rows } = await pool.query(
@@ -170,7 +147,6 @@ export async function createAsset(userId: number, dto: CreateAssetDTO) {
         dto.purchaseValue,
         current,
         dto.acquiredOn ? new Date(dto.acquiredOn) : new Date(),
-        // store value currency for display (for gold it’s PKR, stock metadata has currency, for currency asset store code)
         dto.assetType === AssetType.GOLD
           ? "PKR"
           : dto.assetType === AssetType.STOCK
@@ -179,14 +155,10 @@ export async function createAsset(userId: number, dto: CreateAssetDTO) {
       ]
     );
     asset = rows[0];
-    console.log("✅ [createAsset] Inserted asset:", rows[0]);
   } catch (e) {
-    console.error("❌ [createAsset] Failed to insert asset into DB:");
     throw e;
   }
 
-
-  // 4) record history
   try{
     await pool.query(
       `INSERT INTO asset_history(asset_id,value_date,recorded_value)
@@ -194,10 +166,8 @@ export async function createAsset(userId: number, dto: CreateAssetDTO) {
       ON CONFLICT(asset_id,value_date) DO UPDATE SET recorded_value=EXCLUDED.recorded_value`,
       [asset.asset_id, current]
     );
-    console.log("📈 [createAsset] Asset history recorded.");
     
   } catch (e) {
-    console.warn("⚠️ [createAsset] Failed to insert history:");
   }
 
   return asset;
@@ -205,7 +175,6 @@ export async function createAsset(userId: number, dto: CreateAssetDTO) {
 }
 
 export async function updateAsset(userId: number, dto: UpdateAssetDTO) {
-  // same flow as create, but UPDATE row
   const metadataId = await getOrCreateMetadata(dto);
   let current = dto.purchaseValue;
   if (dto.assetType === AssetType.GOLD) {
@@ -244,13 +213,13 @@ export async function updateAsset(userId: number, dto: UpdateAssetDTO) {
   );
   if (!rowCount) throw Object.assign(new Error('Not found'), { status:404 });
 
-  // history
   await pool.query(
     `INSERT INTO asset_history(asset_id,value_date,recorded_value)
      VALUES($1,CURRENT_DATE,$2)
      ON CONFLICT(asset_id,value_date) DO UPDATE SET recorded_value=EXCLUDED.recorded_value`,
     [dto.assetId, current]
   );
+
   return rows[0];
 }
 
@@ -272,14 +241,12 @@ export async function fetchUserAssets(userId: number) {
      ORDER BY a.acquired_on DESC
   `, [userId]);
 
-  // If converted_value_pkr is already in the DB, no need to recalculate
   return rows;
 }
 
 
 
 export async function refreshAssetValues(userId: number) {
-  // fetch all + re‐compute each via its service
   const assets = await fetchUserAssets(userId);
   await Promise.all(assets.map(async a => {
     let newVal = a.purchase_value;
@@ -288,7 +255,6 @@ export async function refreshAssetValues(userId: number) {
     } else if (a.asset_type===AssetType.STOCK) {
       newVal = await stockSvc.getStockCurrentValue(a.ticker, a.quantity, a.acquiredOn);
     } else {
-      // currency → USD
       const rates = await fxSvc.convertCurrency(a.quantity, a.currency_code, ['USD']);
       newVal = rates.find(r=>r.code==='USD')!.value;
     }
@@ -343,7 +309,6 @@ export async function getPortfolioSummary(userId: number) {
   };
 }
 
-/// expose gold history endpoint
 export async function getGoldHistory(unit: "tola", currency: "PKR") {
   await goldSvc.ensureRecentGoldHistory(unit,currency);
   return goldSvc.getHistoricalGoldPrices(unit,currency);

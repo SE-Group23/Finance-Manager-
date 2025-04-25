@@ -1,5 +1,3 @@
-//Asset List
-
 "use client"
 
 import type React from "react"
@@ -24,7 +22,6 @@ const AssetList: React.FC<AssetListProps> = ({ assets, loading }) => {
   const [formLoading, setFormLoading] = useState(false)
   const [detailsModalType, setDetailsModalType] = useState<string | null>(null)
 
-  // Fix case sensitivity issue by using toUpperCase()
   const goldAssets = assets.filter((asset) => asset.asset_type?.toUpperCase() === "GOLD")
   const stockAssets = assets.filter((asset) => asset.asset_type?.toUpperCase() === "STOCK")
   const currencyAssets = assets.filter((asset) => asset.asset_type?.toUpperCase() === "CURRENCY")
@@ -33,7 +30,6 @@ const AssetList: React.FC<AssetListProps> = ({ assets, loading }) => {
     if (window.confirm("Are you sure you want to delete this asset?")) {
       try {
         await deleteAsset(assetId)
-        // Refresh the page to show updated assets
         window.location.reload()
       } catch (error) {
         console.error("Failed to delete asset:", error)
@@ -44,7 +40,7 @@ const AssetList: React.FC<AssetListProps> = ({ assets, loading }) => {
   const handleEditAsset = (asset: Asset) => {
     setEditingAsset(asset)
     setSelectedAssetType(asset.asset_type?.toUpperCase())
-    setDetailsModalType(null) // Close the details modal when editing
+    setDetailsModalType(null)
   }
 
   const handleCreateAsset = async (assetData: any) => {
@@ -82,7 +78,7 @@ const AssetList: React.FC<AssetListProps> = ({ assets, loading }) => {
     <div>
       <h2 className="text-xl font-semibold mb-4">Asset List</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Gold Assets */}
+
         <div
           className="bg-dark-light rounded-lg p-4 cursor-pointer hover:shadow-md transition-shadow"
           onClick={() => setDetailsModalType("GOLD")}
@@ -106,7 +102,6 @@ const AssetList: React.FC<AssetListProps> = ({ assets, loading }) => {
           )}
         </div>
 
-        {/* Stock Assets */}
         <div
           className="bg-dark-light rounded-lg p-4 cursor-pointer hover:shadow-md transition-shadow"
           onClick={() => setDetailsModalType("STOCK")}
@@ -130,7 +125,6 @@ const AssetList: React.FC<AssetListProps> = ({ assets, loading }) => {
           )}
         </div>
 
-        {/* Currency Assets */}
         <div
           className="bg-dark-light rounded-lg p-4 cursor-pointer hover:shadow-md transition-shadow"
           onClick={() => setDetailsModalType("CURRENCY")}
@@ -154,7 +148,6 @@ const AssetList: React.FC<AssetListProps> = ({ assets, loading }) => {
           )}
         </div>
 
-        {/* Add New Asset */}
         <div
           className="bg-dark-light rounded-lg p-4 cursor-pointer hover:shadow-md transition-shadow flex flex-col items-center justify-center h-40"
           onClick={() => setShowAddForm(true)}
@@ -166,7 +159,6 @@ const AssetList: React.FC<AssetListProps> = ({ assets, loading }) => {
         </div>
       </div>
 
-      {/* Asset Details Modal */}
       {detailsModalType === "GOLD" && goldAssets.length > 0 && (
         <AssetDetailsModal
           assets={goldAssets}
@@ -197,7 +189,6 @@ const AssetList: React.FC<AssetListProps> = ({ assets, loading }) => {
         />
       )}
 
-      {/* Add Asset Type Selection Modal */}
       {showAddForm && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
           <div className="bg-navbar w-full max-w-md rounded-2xl shadow-lg">
@@ -240,7 +231,6 @@ const AssetList: React.FC<AssetListProps> = ({ assets, loading }) => {
         </div>
       )}
 
-      {/* Asset Form Modal */}
       {selectedAssetType && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
           <div className="bg-navbar w-full max-w-md rounded-2xl shadow-lg">

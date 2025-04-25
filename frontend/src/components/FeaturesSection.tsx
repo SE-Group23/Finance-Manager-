@@ -7,19 +7,6 @@ const FeaturesSection: React.FC = () => {
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
           <div className="flex items-center justify-center">
-            {/* <div className="overflow-hidden rounded-lg bg-teal-800 p-6 text-white"> */}
-              {/* <div className="mb-4"> */}
-                {/* <div className="mb-1 text-sm">Saving, Month</div> */}
-                {/* <div className="text-3xl font-bold">$ 1852.00</div> */}
-                {/* <div className="text-sm">Increase of 12% from last month</div> */}
-              {/* </div> */}
-
-              {/* <div className="overflow-hidden rounded-lg bg-primary-dark p-6 text-white"> */}
-                {/* <div className="mb-4">
-                  <div className="mb-1 text-sm">Saving, Month</div>
-                  <div className="text-3xl font-bold">$ 1852.00</div>
-                  <div className="text-sm">Increase of 12% from last month</div>
-                </div> */}
 
                 <div className="mt-6">
                   <img 
@@ -28,8 +15,6 @@ const FeaturesSection: React.FC = () => {
                     className="h-auto w-3/4 mx-auto"
                   />
                 </div>
-              {/* </div> */}
-            {/* </div> */}
           </div>
 
           <div className="flex flex-col justify-center">

@@ -12,7 +12,6 @@ export interface GoldPoint {
 const RAPIDAPI_KEY = getEnv('RAPIDAPI_KEY');
 const RAPIDAPI_HOST = getEnv('RAPIDAPI_HOST');
 
-// Fetch from RapidAPI (Live price)
 async function fetchLive(unit: "tola", currency: "PKR"): Promise<number> {
   try {
     const resp = await axios.get(API.GOLD.LIVE, {
@@ -25,7 +24,6 @@ async function fetchLive(unit: "tola", currency: "PKR"): Promise<number> {
 
     const data = resp.data;
 
-    // Based on your sample: "1 Tola": [...]
     const priceArray = data["1 Tola"];
     if (!Array.isArray(priceArray) || priceArray.length === 0) {
       throw new Error("Missing or invalid price data for 1 Tola");
@@ -36,19 +34,17 @@ async function fetchLive(unit: "tola", currency: "PKR"): Promise<number> {
       throw new Error("Invalid price format");
     }
 
-    console.log("📡 Live price (1 Tola):", price);
     return price;
   } catch (err: any) {
-    console.error("🚨 Gold API failed:", err.response?.data || err.message);
+
     throw new Error("Gold price service temporarily unavailable (rate limit or error).");
   }
 }
 
 
-// Try from DB first, fall back to live fetch
 export async function getLatestGoldPrice(unit: "tola", currency: "PKR"): Promise<number> {
   try {
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    const today = new Date().toISOString().split('T')[0]; 
 
 
     console.log("Date:", today);
@@ -60,14 +56,9 @@ export async function getLatestGoldPrice(unit: "tola", currency: "PKR"): Promise
     );
 
     if (result.rows.length > 0) {
-      console.log(`✅ Gold price cache HIT for ${unit} in ${currency}`);
-      console.log("Result from DB:", result.rows.length, "rows");
       return result.rows[0].price;
-    } else {
-      console.log(`🟡 Cache MISS for ${unit} in ${currency}, calling API`);
-    }
+    } 
 
-    // Fetch from API and store
     const price = await fetchLive(unit, currency);
     await pool.query(
       `INSERT INTO gold_price_history (price_date, unit, currency, price)
@@ -77,17 +68,13 @@ export async function getLatestGoldPrice(unit: "tola", currency: "PKR"): Promise
       [today, unit, currency, price]
     );
 
-    // const price = 0
-
     return price;
   } catch (err: any) {
-    console.error("🚨 Gold API failed:", err.response?.data || err.message);
     throw new Error("Gold price service temporarily unavailable (rate limit or error).");
   }
 
 }
 
-// Fetch 35-day history from RapidAPI
 export async function fetchGoldHistoryFromApi(): Promise<Record<string, number>> {
   const resp = await axios.get<Record<string, number>>(API.GOLD.HISTORY, {
     headers: {
@@ -98,40 +85,37 @@ export async function fetchGoldHistoryFromApi(): Promise<Record<string, number>>
   return resp.data;
 }
 
-// Ensure last 35 days are in DB (only insert missing)
 export async function ensureRecentGoldHistory(unit: "tola", currency: "PKR"): Promise<void> {
   
   try{
-  const { rows } = await pool.query(
-    `SELECT price_date FROM gold_price_history
-     WHERE unit = $1 AND currency = $2
-     AND price_date >= CURRENT_DATE - INTERVAL '25 days'`,
-    [unit, currency]
-  );
+    const { rows } = await pool.query(
+      `SELECT price_date FROM gold_price_history
+      WHERE unit = $1 AND currency = $2
+      AND price_date >= CURRENT_DATE - INTERVAL '25 days'`,
+      [unit, currency]
+    );
 
-  const existingDates = new Set(rows.map(r => r.price_date.toISOString().split('T')[0]));
+    const existingDates = new Set(rows.map(r => r.price_date.toISOString().split('T')[0]));
 
-  const data = await fetchGoldHistoryFromApi();
+    const data = await fetchGoldHistoryFromApi();
 
-  for (const [dateStr, price] of Object.entries(data)) {
-    const isoDate = new Date(dateStr).toISOString().split('T')[0];
-    if (!existingDates.has(isoDate)) {
-      await pool.query(
-        `INSERT INTO gold_price_history (price_date, unit, currency, price)
-         VALUES ($1, $2, $3, $4)
-         ON CONFLICT (price_date, unit, currency)
-         DO UPDATE SET price = EXCLUDED.price`,
-        [isoDate, unit, currency, price]
-      );
+    for (const [dateStr, price] of Object.entries(data)) {
+      const isoDate = new Date(dateStr).toISOString().split('T')[0];
+      if (!existingDates.has(isoDate)) {
+        await pool.query(
+          `INSERT INTO gold_price_history (price_date, unit, currency, price)
+          VALUES ($1, $2, $3, $4)
+          ON CONFLICT (price_date, unit, currency)
+          DO UPDATE SET price = EXCLUDED.price`,
+          [isoDate, unit, currency, price]
+        );
+      }
     }
+  } catch (err: any) {
+    throw new Error("Gold price service temporarily unavailable (rate limit or error)."); 
   }
-} catch (err: any) {
-  console.error("🚨 Gold API failed:", err.response?.data || err.message);
-  throw new Error("Gold price service temporarily unavailable (rate limit or error)."); 
-}
 }
 
-// Utility to return historical data (already stored)
 export async function getHistoricalGoldPrices(unit: "tola", currency: "PKR"): Promise<GoldPoint[]> {
   const result = await pool.query(
     `SELECT price_date, price FROM gold_price_history

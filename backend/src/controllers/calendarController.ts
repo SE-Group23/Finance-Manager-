@@ -1,10 +1,6 @@
 import { Request, Response, NextFunction, RequestHandler } from 'express';
 import { pool } from '../db';
 
-/**
- * GET /api/calendar
- * UC-10 Main Flow Step 2: retrieve all calendar events (recurring reminders + custom deadlines).
- */
 export const getCalendarEvents: RequestHandler = async (req, res) => {
     const userId = (req as any).userId as number;
     try {
@@ -17,15 +13,10 @@ export const getCalendarEvents: RequestHandler = async (req, res) => {
         );
         res.json({ events: rows });
     } catch (err) {
-        console.error('getCalendarEvents error', err);
         res.status(500).json({ error: 'Server error.' });
     }
 };
 
-/**
- * POST /api/calendar
- * UC-10 Alternate: create a new custom financial deadline.
- */
 export const createCalendarEvent: RequestHandler = async (req, res) => {
     const userId = (req as any).userId as number;
     const { event_title, event_date, event_type } = req.body;
@@ -49,22 +40,16 @@ export const createCalendarEvent: RequestHandler = async (req, res) => {
         ]);
         res.status(201).json({ event: rows[0] });
     } catch (err) {
-        console.error('createCalendarEvent error', err);
         res.status(500).json({ error: 'Server error.' });
     }
 };
 
-/**
- * PUT /api/calendar/:id
- * UC-10 Main Flow Step 3 (edit events): update title/date/type of an existing event.
- */
 export const updateCalendarEvent: RequestHandler = async (req, res) => {
     const userId = (req as any).userId as number;
     const eventId = Number(req.params.id);
     const { event_title, event_date, event_type } = req.body;
 
     try {
-        // ensure the event exists and belongs to this user
         const { rows: existing } = await pool.query(
             `SELECT event_title, event_date, event_type
          FROM calendar_events
@@ -76,7 +61,6 @@ export const updateCalendarEvent: RequestHandler = async (req, res) => {
             return;
         }
 
-        // apply updates (fall back to old values when fields are missing)
         const updatedTitle = event_title ?? existing[0].event_title;
         const updatedDate = event_date ?? existing[0].event_date;
         const updatedType = event_type ?? existing[0].event_type;
@@ -98,15 +82,11 @@ export const updateCalendarEvent: RequestHandler = async (req, res) => {
 
         res.json({ event: rows[0] });
     } catch (err) {
-        console.error('updateCalendarEvent error', err);
         res.status(500).json({ error: 'Server error.' });
     }
 };
 
-/**
- * DELETE /api/calendar/:id
- * UC-10 Alternate Flow: remove an event.
- */
+
 export const deleteCalendarEvent: RequestHandler = async (req, res) => {
     const userId = (req as any).userId as number;
     const eventId = Number(req.params.id);
@@ -123,7 +103,6 @@ export const deleteCalendarEvent: RequestHandler = async (req, res) => {
         }
         res.json({ message: 'Deleted.' });
     } catch (err) {
-        console.error('deleteCalendarEvent error', err);
         res.status(500).json({ error: 'Server error.' });
     }
 };

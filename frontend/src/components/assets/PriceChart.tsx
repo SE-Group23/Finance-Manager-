@@ -39,11 +39,9 @@ const PriceChart: React.FC<PriceChartProps> = ({
     )
   }
 
-  // Format dates for better display
   const formattedData = data.map((item) => ({
     ...item,
     [xAxisKey]: new Date(item[xAxisKey]).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-    // Ensure numeric values for chart data
     [dataKey]: Number(item[dataKey]),
     open: item.open ? Number(item.open) : undefined,
     high: item.high ? Number(item.high) : undefined,
@@ -52,7 +50,6 @@ const PriceChart: React.FC<PriceChartProps> = ({
     price: item.price ? Number(item.price) : undefined,
   }))
 
-  // Custom tooltip formatter
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (

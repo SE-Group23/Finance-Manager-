@@ -9,7 +9,7 @@ interface AssetOverviewProps {
   onRefresh: () => void
 }
 
-const AssetOverview: React.FC<AssetOverviewProps> = ({ summary, loading, onRefresh }) => {
+const AssetOverview: React.FC<AssetOverviewProps> = ({ summary, loading }) => {
   if (loading) {
     return (
       <div className="animate-pulse">
@@ -31,13 +31,12 @@ const AssetOverview: React.FC<AssetOverviewProps> = ({ summary, loading, onRefre
 
   return (
     <div className="flex justify-start items-start gap-12">
-    {/* Left: Total Value */}
+
     <div className="flex-grow">
       <h2 className="text-l font-semibold mb-2 text-gray-500">Total Asset Value</h2>
       <div className="text-3xl font-bold">PKR {totalCurrent.toLocaleString()}</div>
     </div>
   
-    {/* Right: Breakdown — indented and inline */}
     <div className="flex flex-col space-y-1 text-sm ml-3">
       <div className="flex justify-between gap-3 text-yellow-500 font-medium">
         <span>Gold</span>

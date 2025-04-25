@@ -27,11 +27,9 @@ const SignUpForm: React.FC = () => {
     try {
       const data = await registerUser(username, email, password)
 
-      // Store token and user ID in localStorage
       localStorage.setItem("token", data.token)
       localStorage.setItem("userId", data.userId)
 
-      // Redirect to dashboard
       navigate("/dashboard")
     } catch (err) {
       console.error("Registration error:", err)

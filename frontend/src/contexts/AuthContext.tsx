@@ -1,6 +1,5 @@
 "use client"
 
-// frontend/src/contexts/AuthContext.tsx
 import type React from "react"
 import { createContext, useContext, useState, useEffect } from "react"
 import { isAuthenticated, getCurrentUserId, logoutUser, isTokenExpired } from "../services/authService"
@@ -30,7 +29,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false)
   const [userId, setUserId] = useState<string | null>(null)
 
-  // Check authentication status on component mount
   useEffect(() => {
     checkAuthStatus()
   }, [])

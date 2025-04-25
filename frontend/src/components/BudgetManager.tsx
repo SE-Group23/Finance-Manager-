@@ -1,16 +1,13 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Edit, X, Plus, Save, Check, Bell, BellOff } from "lucide-react"
+import { Edit, X, Plus, Save, Check, Bell} from "lucide-react"
 import {
   getBudgets,
   setBudgets,
   deleteBudget,
   getCurrentMonthStart,
   calculateBudgetStats,
-  updateMonthlyIncome,
-  updateAlertSettings,
-  type Budget,
   type CategoryLimit,
 } from "../services/budgetService"
 import LoadingScreen from "./LoadingScreen"
@@ -23,14 +20,10 @@ export default function BudgetManagerContent() {
   const [newBudgetAmount, setNewBudgetAmount] = useState<string>("")
   const [showAddCategory, setShowAddCategory] = useState(false)
   const [newCategory, setNewCategory] = useState({ name: "", budget: "" })
-  const [monthlyIncome, setMonthlyIncome] = useState<number>(0)
-  const [editingIncome, setEditingIncome] = useState(false)
-  const [newIncomeAmount, setNewIncomeAmount] = useState<string>("")
-  const [showAlertSettings, setShowAlertSettings] = useState(false)
-  const [alertThreshold, setAlertThreshold] = useState<number>(100)
-  const [formLoading, setFormLoading] = useState(false)
 
-  // Colors for different categories
+  const [alertThreshold, setAlertThreshold] = useState<number>(100)
+  const [setFormLoading] = useState(false)
+
   const categoryColors: Record<string, string> = {
     "Food and Drink": "#8FD14F",
     Personal: "#E88B8B",
@@ -42,13 +35,11 @@ export default function BudgetManagerContent() {
     "Bills and Utilities": "#7CD5F9",
   }
 
-  // Get a color for a category, or generate one if it doesn't exist
   const getCategoryColor = (categoryName: string) => {
     if (categoryColors[categoryName]) {
       return categoryColors[categoryName]
     }
 
-    // Generate a random color if we don't have one predefined
     const letters = "0123456789ABCDEF"
     let color = "#"
     for (let i = 0; i < 6; i++) {
@@ -57,42 +48,35 @@ export default function BudgetManagerContent() {
     return color
   }
 
-  // Fetch budgets from the API
   const fetchBudgets = async () => {
     try {
       setLoading(true)
       const data = await getBudgets()
 
-      // Add color to each budget
       const budgetsWithColor = data.budgets.map((budget: Budget) => ({
         ...budget,
         color: getCategoryColor(budget.category_name),
       }))
 
       setBudgetsState(budgetsWithColor)
-      setMonthlyIncome(data.monthly_income || 0)
       setAlertThreshold(data.alert_threshold || 100)
       setError(null)
     } catch (err) {
-      console.error("Error fetching budgets:", err)
       setError("Failed to load budgets. Please try again later.")
     } finally {
       setLoading(false)
     }
   }
 
-  // Load budgets on component mount
   useEffect(() => {
     fetchBudgets()
   }, [])
 
-  // Handle editing a budget
   const handleEdit = (index: number) => {
     setEditingIndex(index)
     setNewBudgetAmount(budgets[index].budget_limit.toString())
   }
 
-  // Handle saving an edited budget
   const handleSave = async (index: number) => {
     try {
       const budget = budgets[index]
@@ -103,7 +87,6 @@ export default function BudgetManagerContent() {
         return
       }
 
-      // Prepare the category limit for the API
       const categoryLimit: CategoryLimit = {
         category: budget.category_name,
         limit: amount,
@@ -111,7 +94,6 @@ export default function BudgetManagerContent() {
 
       await setBudgets(budget.month_start, [categoryLimit])
 
-      // Update the local state
       const updatedBudgets = [...budgets]
       updatedBudgets[index] = {
         ...budget,
@@ -122,23 +104,19 @@ export default function BudgetManagerContent() {
       setEditingIndex(null)
       setError(null)
     } catch (err) {
-      console.error("Error updating budget:", err)
       setError("Failed to update budget. Please try again.")
     }
   }
 
-  // Handle deleting a budget
   const handleDelete = async (index: number) => {
     try {
       const budget = budgets[index]
       await deleteBudget(budget.budget_id)
 
-      // Update the local state
       const updatedBudgets = budgets.filter((_, i) => i !== index)
       setBudgetsState(updatedBudgets)
       setError(null)
     } catch (err) {
-      console.error("Error deleting budget:", err)
       setError("Failed to delete budget. Please try again.")
     }
   }
@@ -171,7 +149,6 @@ export default function BudgetManagerContent() {
       setShowAddCategory(false)
       setError(null)
     } catch (err) {
-      console.error("Error adding category:", err)
       setError("Failed to add category. Please try again.")
     }
   }
@@ -248,7 +225,6 @@ export default function BudgetManagerContent() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-          {/* This Month */}
           <div className="bg-navbar text-white p-6 rounded-2xl shadow h-80">
           <h2 className="text-xl font-semibold mb-4">This Month</h2>
 
@@ -271,7 +247,6 @@ export default function BudgetManagerContent() {
             </div>
           </div>
 
-          {/* Progress Bar-*/}
           <div className="flex items-center mt-14 mb-4">
             <div className="relative h-6 bg-[#004a42] rounded-full overflow-hidden flex-grow mr-4">
               <div
@@ -297,7 +272,6 @@ export default function BudgetManagerContent() {
           </div>
         </div>
 
-        {/* Summary Card */}
         <div className="bg-white text-white p-6 rounded-2xl shadow h-80">
           <h2 className="text-l font-semibold mb-4 text-gray-500">Summary</h2>
           <div className="flex justify-center mb-4">
@@ -314,7 +288,6 @@ export default function BudgetManagerContent() {
         </div>
       </div>
 
-      {/* Monthly Budget by Category */}
       <div className="bg-white text-white p-6 rounded-2xl shadow mb-6">
         <h2 className="text-l font-semibold mb-4 text-gray-500">Monthly Budget by Category</h2>
 

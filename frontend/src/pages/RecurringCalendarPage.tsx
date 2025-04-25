@@ -560,13 +560,12 @@ export default function RecurringCalendarPage() {
         return uniqueEvents
     }
 
-    // Get amount for an event
     const getEventAmount = (eventId: number): number => {
         if (eventAmounts[eventId]) {
             return eventAmounts[eventId]
         }
 
-        // Check recurring payments
+        
         const event = calendarEvents.find((e) => e.event_id === eventId)
         if (event) {
             const recurringPayment = recurringPayments.find((p) => p.payment_name === event.event_title)
@@ -586,7 +585,6 @@ export default function RecurringCalendarPage() {
         )
     }
 
-    // Calculate payments due this month
     const today = new Date()
     const paymentsThisMonth = calendarEvents.filter((event) => {
         const eventDate = parseISO(event.event_date)
@@ -595,11 +593,10 @@ export default function RecurringCalendarPage() {
     }).length
 
     return (
-        <div className="flex min-h-screen bg-gray-100 font-inter">
-            {/* Sidebar */}
+        <div className="flex min-h-screen bg-background-light font-inter">
+            
             <Sidebar activePage="calendar" />
 
-            {/* Main content */}
             <div className="flex-1 p-8">
                 <div className="flex justify-between items-center mb-4">
                     <h1 className="text-2xl font-bold">Calendar</h1>
@@ -615,12 +612,10 @@ export default function RecurringCalendarPage() {
                 <hr className="mb-6" />
 
                 <div className="grid grid-cols-1 gap-6">
-                    {/* Notifications panel and Calendar */}
                     <div className="grid grid-cols-4 gap-6">
-                        {/* Notifications panel - spans 3 columns */}
                         <div className="col-span-3">
                             <NotificationsPanel
-                                key={refreshKey} // Force re-render when data changes
+                                key={refreshKey} 
                                 urgentEvents={urgentEvents}
                                 thisWeekEvents={thisWeekEvents}
                                 upcomingEvents={upcomingEvents}
@@ -630,7 +625,6 @@ export default function RecurringCalendarPage() {
                             />
                         </div>
 
-                        {/* Add event button - spans 1 column */}
                         <div>
                             <button
                                 onClick={handleAddEvent}
@@ -643,7 +637,6 @@ export default function RecurringCalendarPage() {
                         </div>
                     </div>
 
-                    {/* Calendar section - spans full width */}
                     <div className="mt-6">
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="text-xl font-medium">{format(currentDate, "MMMM yyyy")}</h2>
@@ -657,16 +650,14 @@ export default function RecurringCalendarPage() {
                             </div>
                         </div>
 
-                        {/* Calendar grid */}
                         <div className="grid grid-cols-7 gap-2">
-                            {/* Week day headers */}
+                         
                             {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, index) => (
                                 <div key={index} className="p-2 text-center text-[#FF9F1C] font-medium">
                                     {day}
                                 </div>
                             ))}
 
-                            {/* Calendar days */}
                             {calendarDays.map((day, index) => {
                                 const dayEvents = getEventsForDay(day.date)
                                 const isCurrentDay = isSameDay(day.date, new Date())
@@ -686,14 +677,14 @@ export default function RecurringCalendarPage() {
                                         <div className="mt-1 space-y-1 overflow-y-auto max-h-[60px]">
                                             {dayEvents.map((event, eventIndex) => {
                                                 const eventType = event.event_type
-                                                let bgColor = "bg-calendar-event" // Default color
+                                                let bgColor = "bg-calendar-event"
 
                                                 if (eventType === "recurring_due" || eventType === "recurring_payment") {
-                                                    bgColor = "bg-calendar-event" // Orange for recurring
+                                                    bgColor = "bg-calendar-event" 
                                                 } else if (event.event_title.toLowerCase().includes("fee")) {
-                                                    bgColor = "bg-calendar-event" // Orange for fee deadlines
+                                                    bgColor = "bg-calendar-event" 
                                                 } else if (event.event_title.toLowerCase().includes("groceries")) {
-                                                    bgColor = "bg-calendar-event" // Orange for groceries
+                                                    bgColor = "bg-calendar-event" 
                                                 }
 
                                                 return (
@@ -714,7 +705,6 @@ export default function RecurringCalendarPage() {
                     </div>
                 </div>
 
-                {/* Event Modal */}
                 {isModalOpen && (
                     <EventModal
                         event={selectedEvent}
@@ -727,7 +717,6 @@ export default function RecurringCalendarPage() {
                     />
                 )}
 
-                {/* Delete All Confirmation Modal */}
                 <DeleteAllConfirmationModal
                     isOpen={isDeleteAllModalOpen}
                     onClose={() => setIsDeleteAllModalOpen(false)}
@@ -735,7 +724,6 @@ export default function RecurringCalendarPage() {
                     eventCount={calendarEvents.length}
                 />
 
-                {/* Error message */}
                 {error && (
                     <div className="fixed bottom-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
                         <p>{error}</p>
@@ -745,7 +733,6 @@ export default function RecurringCalendarPage() {
                     </div>
                 )}
 
-                {/* Loading indicator */}
                 {isLoading && (
                     <div className="fixed bottom-4 left-4 bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded">
                         <p>Processing...</p>

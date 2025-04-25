@@ -40,7 +40,7 @@ const TestimonialsSection: React.FC = () => {
             <div className="flex items-center">
               <div className="mr-4 h-10 w-10 overflow-hidden rounded-full bg-gray-200">
                 <img
-                //   src="/placeholder.svg?height=40&width=40"
+               
                   src={reviewer1}  
                   alt="Mike Torello"
                   className="h-full w-full object-cover"
@@ -53,7 +53,6 @@ const TestimonialsSection: React.FC = () => {
             </div>
           </div>
 
-          {/* Testimonial 2 */}
           <div className="rounded-lg border border-gray-200 bg-teal-800 p-6 text-white shadow-sm">
             <div className="mb-4 text-green-400">
               <svg
@@ -75,7 +74,7 @@ const TestimonialsSection: React.FC = () => {
             <div className="flex items-center">
               <div className="mr-4 h-10 w-10 overflow-hidden rounded-full bg-teal-700">
                 <img
-                //   src="/placeholder.svg?height=40&width=40"
+               
                   src={reviewer2}
                   alt="Namwar Rauf"
                   className="h-full w-full object-cover"
@@ -88,7 +87,6 @@ const TestimonialsSection: React.FC = () => {
             </div>
           </div>
 
-          {/* Testimonial 3 */}
           <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
             <div className="mb-4 text-green-600">
               <svg
@@ -112,7 +110,7 @@ const TestimonialsSection: React.FC = () => {
             <div className="flex items-center">
               <div className="mr-4 h-10 w-10 overflow-hidden rounded-full bg-gray-200">
                 <img
-                //   src="/placeholder.svg?height=40&width=40"
+                
                   src={reviewer3}
                   alt="Thomas Magnum"
                   className="h-full w-full object-cover"
