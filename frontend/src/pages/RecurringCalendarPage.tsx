@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { format, addMonths, subMonths, parseISO, isSameDay, isAfter } from "date-fns"
+import { format, addMonths, subMonths, parseISO, isSameDay, startOfDay, endOfWeek, isSameMonth } from "date-fns"
 import {
     fetchCalendarEvents,
     createCalendarEvent,
@@ -32,6 +32,10 @@ export default function RecurringCalendarPage() {
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [loading, setLoading] = useState(true)
+    const [eventAmounts, setEventAmounts] = useState<Record<number, number>>({})
+    const [refreshKey, setRefreshKey] = useState(0) // Used to force re-render of components
+    const [isDeleting, setIsDeleting] = useState(false) // Track deletion state
+    const [isProcessing, setIsProcessing] = useState(false) // Track any API operation
 
     // Fetch calendar events and recurring payments
     const fetchData = async () => {
@@ -39,8 +43,38 @@ export default function RecurringCalendarPage() {
         setLoading(true)
         try {
             const [events, payments] = await Promise.all([fetchCalendarEvents(), fetchRecurringPayments()])
-            setCalendarEvents(events)
+
+            // Filter out duplicate events (same title and date)
+            const uniqueEvents: CalendarEvent[] = []
+            const eventMap = new Map<string, CalendarEvent>()
+
+            events.forEach((event) => {
+                const key = `${event.event_title}-${event.event_date}`
+                if (!eventMap.has(key)) {
+                    eventMap.set(key, event)
+                    uniqueEvents.push(event)
+                } else {
+                    // If duplicate exists, keep the one with the lower ID (likely the original)
+                    const existingEvent = eventMap.get(key)!
+                    if (event.event_id < existingEvent.event_id) {
+                        eventMap.set(key, event)
+                        const index = uniqueEvents.findIndex((e) => e.event_id === existingEvent.event_id)
+                        if (index !== -1) {
+                            uniqueEvents[index] = event
+                        }
+                    }
+                }
+            })
+
+            setCalendarEvents(uniqueEvents)
             setRecurringPayments(payments)
+
+            // Initialize event amounts from local storage
+            const storedAmounts = localStorage.getItem("eventAmounts")
+            if (storedAmounts) {
+                setEventAmounts(JSON.parse(storedAmounts))
+            }
+
             setError(null)
         } catch (err) {
             console.error("Error fetching calendar data:", err)
@@ -53,7 +87,7 @@ export default function RecurringCalendarPage() {
 
     useEffect(() => {
         fetchData()
-    }, [])
+    }, [refreshKey]) // Add refreshKey to dependencies to force re-fetch
 
     // Navigate to previous month
     const prevMonth = () => {
@@ -77,6 +111,28 @@ export default function RecurringCalendarPage() {
         setIsModalOpen(true)
     }
 
+    // Helper function to save event amount to local storage
+    const saveEventAmount = (eventId: number, amount: number) => {
+        const updatedAmounts = { ...eventAmounts, [eventId]: amount }
+        setEventAmounts(updatedAmounts)
+        localStorage.setItem("eventAmounts", JSON.stringify(updatedAmounts))
+    }
+
+    // Check if an event with the same title and date already exists
+    const eventExists = (title: string, date: string, excludeEventId?: number) => {
+        return calendarEvents.some(
+            (event) =>
+                event.event_title === title &&
+                isSameDay(parseISO(event.event_date), parseISO(date)) &&
+                (excludeEventId === undefined || event.event_id !== excludeEventId),
+        )
+    }
+
+    // Find all events with the same title (for recurring events)
+    const findEventsByTitle = (title: string) => {
+        return calendarEvents.filter((event) => event.event_title === title)
+    }
+
     // Handle saving a new or updated event
     const handleSaveEvent = async (eventData: {
         event_id?: number
@@ -87,69 +143,186 @@ export default function RecurringCalendarPage() {
         frequency?: string
         amount?: number
     }) => {
+        if (isProcessing) return // Prevent multiple operations
+
+        setIsProcessing(true)
         try {
             setIsLoading(true)
-            setLoading(true)
+
+            let savedEventId: number | undefined
 
             if (eventData.isRecurring) {
                 // Handle recurring payment
                 const recurringData = {
-                    amount: eventData.amount || 0,
+                    amount: eventData.amount !== undefined ? eventData.amount : 0,
                     payment_name: eventData.event_title,
                     frequency: eventData.frequency || "monthly",
                     next_due_date: eventData.event_date,
                 }
 
+                console.log("Creating/updating recurring payment:", recurringData)
+
                 if (selectedEvent?.event_id) {
                     // Find the corresponding recurring payment
                     const recurringPayment = recurringPayments.find((p) => p.payment_name === selectedEvent.event_title)
 
+                    // Check if we're changing the title
+                    const isTitleChanged = selectedEvent.event_title !== eventData.event_title
+
                     if (recurringPayment) {
+                        // Update existing recurring payment
                         await updateRecurringPayment(recurringPayment.recurring_id, recurringData)
+
+                        // If title changed, update all related events
+                        if (isTitleChanged) {
+                            const relatedEvents = findEventsByTitle(selectedEvent.event_title)
+                            for (const event of relatedEvents) {
+                                await updateCalendarEvent(event.event_id, {
+                                    event_title: eventData.event_title,
+                                    event_type: "recurring_due",
+                                })
+                            }
+                        } else {
+                            // Just update the current event
+                            await updateCalendarEvent(selectedEvent.event_id, {
+                                event_title: eventData.event_title,
+                                event_date: eventData.event_date,
+                                event_type: "recurring_due",
+                            })
+                        }
+
+                        savedEventId = selectedEvent.event_id
                     } else {
-                        await createRecurringPayment(recurringData)
+                        // Create new recurring payment for existing event
+                        const newRecurringPayment = await createRecurringPayment(recurringData)
+                        console.log("Created new recurring payment:", newRecurringPayment)
+
+                        // Update the event type
+                        await updateCalendarEvent(selectedEvent.event_id, {
+                            event_title: eventData.event_title,
+                            event_date: eventData.event_date,
+                            event_type: "recurring_due",
+                        })
+
+                        savedEventId = selectedEvent.event_id
                     }
                 } else {
-                    await createRecurringPayment(recurringData)
+                    // Check if an event with the same title and date already exists
+                    if (!eventExists(eventData.event_title, eventData.event_date)) {
+                        // Create new recurring payment - this will automatically create a calendar event
+                        // in the backend, so we don't need to create one here
+                        const newRecurringPayment = await createRecurringPayment(recurringData)
+                        console.log("Created new recurring payment:", newRecurringPayment)
+
+                        // Wait a moment for the backend to create the event
+                        await new Promise((resolve) => setTimeout(resolve, 500))
+
+                        // Fetch the latest events to get the newly created event
+                        const events = await fetchCalendarEvents()
+
+                        // Find the event that was just created
+                        const newEvent = events.find(
+                            (e) =>
+                                e.event_title === eventData.event_title &&
+                                isSameDay(parseISO(e.event_date), parseISO(eventData.event_date)),
+                        )
+
+                        if (newEvent) {
+                            savedEventId = newEvent.event_id
+                            console.log("Found automatically created event:", newEvent)
+                        } else {
+                            // If for some reason the event wasn't created automatically, create it manually
+                            console.log("No automatically created event found, creating manually")
+                            const manualEvent = await createCalendarEvent({
+                                event_title: eventData.event_title,
+                                event_date: eventData.event_date,
+                                event_type: "recurring_due",
+                            })
+                            savedEventId = manualEvent.event_id
+                        }
+                    } else {
+                        console.log("Event already exists, not creating duplicate")
+                        setError("An event with this title and date already exists.")
+                        setIsLoading(false)
+                        setIsProcessing(false)
+                        return
+                    }
                 }
             } else {
                 // Handle one-time event
                 if (selectedEvent?.event_id) {
+                    // Check if this was previously a recurring event
+                    const wasRecurring =
+                        selectedEvent.event_type === "recurring_due" || selectedEvent.event_type === "recurring_payment"
+
+                    if (wasRecurring) {
+                        // Find and delete the recurring payment
+                        const recurringPayment = recurringPayments.find((p) => p.payment_name === selectedEvent.event_title)
+                        if (recurringPayment) {
+                            await deleteRecurringPayment(recurringPayment.recurring_id)
+                            console.log(`Deleted recurring payment with ID ${recurringPayment.recurring_id}`)
+                        }
+                    }
+
+                    // Update existing event
                     await updateCalendarEvent(selectedEvent.event_id, {
                         event_title: eventData.event_title,
                         event_date: eventData.event_date,
                         event_type: eventData.event_type,
                     })
+                    savedEventId = selectedEvent.event_id
                 } else {
-                    await createCalendarEvent({
-                        event_title: eventData.event_title,
-                        event_date: eventData.event_date,
-                        event_type: eventData.event_type,
-                    })
+                    // Check if an event with the same title and date already exists
+                    if (!eventExists(eventData.event_title, eventData.event_date)) {
+                        // Create new event
+                        const newEvent = await createCalendarEvent({
+                            event_title: eventData.event_title,
+                            event_date: eventData.event_date,
+                            event_type: eventData.event_type,
+                        })
+                        savedEventId = newEvent.event_id
+                    } else {
+                        console.log("Event already exists, not creating duplicate")
+                        setError("An event with this title and date already exists.")
+                        setIsLoading(false)
+                        setIsProcessing(false)
+                        return
+                    }
                 }
             }
 
-            // Refresh data
-            await fetchData()
+            // Save amount for all events (recurring and non-recurring)
+            if (savedEventId && eventData.amount !== undefined) {
+                saveEventAmount(savedEventId, eventData.amount)
+            }
 
+            // Close modal first to improve perceived performance
             setIsModalOpen(false)
             setSelectedEvent(null)
+
+            // Force refresh of data and components
+            await fetchData()
+            setRefreshKey((prevKey) => prevKey + 1)
         } catch (err) {
             console.error("Error saving event:", err)
             setError("Failed to save event. Please try again.")
         } finally {
             setIsLoading(false)
-            setLoading(false)
+            setIsProcessing(false)
         }
     }
 
     // Handle deleting an event
     const handleDeleteEvent = async () => {
-        if (!selectedEvent) return
+        if (!selectedEvent || isDeleting || isProcessing) return
 
+        setIsDeleting(true) // Prevent multiple delete attempts
+        setIsProcessing(true)
         try {
             setIsLoading(true)
-            setLoading(true)
+
+            // Close modal first to improve perceived performance
+            setIsModalOpen(false)
 
             // Check if this is a recurring event
             const isRecurringEvent =
@@ -157,73 +330,138 @@ export default function RecurringCalendarPage() {
             const recurringPayment = recurringPayments.find((p) => p.payment_name === selectedEvent.event_title)
 
             if (isRecurringEvent && recurringPayment) {
-                // Delete the recurring payment source
-                await deleteRecurringPayment(recurringPayment.recurring_id)
+                // Delete the recurring payment source first
+                try {
+                    await deleteRecurringPayment(recurringPayment.recurring_id)
+                    console.log(`Deleted recurring payment with ID ${recurringPayment.recurring_id}`)
+                } catch (err) {
+                    console.error(`Error deleting recurring payment ${recurringPayment.recurring_id}:`, err)
+                    throw err // Re-throw to handle in the outer catch
+                }
 
-                // Delete all future instances of this recurring event
-                const eventDate = parseISO(selectedEvent.event_date)
-                const today = new Date()
-
-                // Find all instances of this recurring event that are today or in the future
+                // Find all instances of this recurring event
                 const relatedEvents = calendarEvents.filter(
                     (event) =>
                         (event.event_type === "recurring_due" || event.event_type === "recurring_payment") &&
-                        event.event_title === selectedEvent.event_title &&
-                        isAfter(parseISO(event.event_date), today),
+                        event.event_title === selectedEvent.event_title,
                 )
 
+                console.log(`Found ${relatedEvents.length} related events to delete`)
+
                 // Delete each instance
-                await Promise.all(relatedEvents.map((event) => deleteCalendarEvent(event.event_id)))
+                for (const event of relatedEvents) {
+                    try {
+                        await deleteCalendarEvent(event.event_id)
+                        console.log(`Deleted calendar event with ID ${event.event_id}`)
+
+                        // Remove amount from storage if exists
+                        if (event.event_id && eventAmounts[event.event_id]) {
+                            const updatedAmounts = { ...eventAmounts }
+                            delete updatedAmounts[event.event_id]
+                            setEventAmounts(updatedAmounts)
+                            localStorage.setItem("eventAmounts", JSON.stringify(updatedAmounts))
+                        }
+                    } catch (err) {
+                        console.error(`Error deleting event ${event.event_id}:`, err)
+                        // Continue with other deletions even if one fails
+                    }
+                }
             } else {
                 // Delete a single non-recurring event
-                await deleteCalendarEvent(selectedEvent.event_id)
+                try {
+                    await deleteCalendarEvent(selectedEvent.event_id)
+                    console.log(`Deleted calendar event with ID ${selectedEvent.event_id}`)
+
+                    // Remove amount from storage if exists
+                    if (selectedEvent.event_id && eventAmounts[selectedEvent.event_id]) {
+                        const updatedAmounts = { ...eventAmounts }
+                        delete updatedAmounts[selectedEvent.event_id]
+                        setEventAmounts(updatedAmounts)
+                        localStorage.setItem("eventAmounts", JSON.stringify(updatedAmounts))
+                    }
+                } catch (err) {
+                    console.error(`Error deleting event ${selectedEvent.event_id}:`, err)
+                    throw err // Re-throw to handle in the outer catch
+                }
             }
 
             // Refresh data
             await fetchData()
+            setRefreshKey((prevKey) => prevKey + 1)
 
-            setIsModalOpen(false)
             setSelectedEvent(null)
         } catch (err) {
-            console.error("Error deleting event:", err)
+            console.error("Error in delete process:", err)
             setError("Failed to delete event. Please try again.")
         } finally {
             setIsLoading(false)
-            setLoading(false)
+            setIsDeleting(false) // Reset deleting state
+            setIsProcessing(false)
         }
     }
 
     // Handle deleting all events
     const handleDeleteAllEvents = async () => {
+        if (isDeleting || isProcessing) return
+
+        setIsDeleting(true) // Prevent multiple delete attempts
+        setIsProcessing(true)
         try {
             setIsLoading(true)
-            setLoading(true)
 
-            // Delete all recurring payments
-            await Promise.all(recurringPayments.map((payment) => deleteRecurringPayment(payment.recurring_id)))
+            // Close modal first to improve perceived performance
+            setIsDeleteAllModalOpen(false)
 
-            // Delete all calendar events
-            await Promise.all(calendarEvents.map((event) => deleteCalendarEvent(event.event_id)))
+            // Delete all recurring payments first
+            if (recurringPayments.length > 0) {
+                for (const payment of recurringPayments) {
+                    try {
+                        await deleteRecurringPayment(payment.recurring_id)
+                        console.log(`Deleted recurring payment with ID ${payment.recurring_id}`)
+                    } catch (err) {
+                        console.error(`Error deleting recurring payment ${payment.recurring_id}:`, err)
+                        // Continue with other deletions even if one fails
+                    }
+                }
+            }
+
+            // Then delete all calendar events
+            if (calendarEvents.length > 0) {
+                for (const event of calendarEvents) {
+                    try {
+                        await deleteCalendarEvent(event.event_id)
+                        console.log(`Deleted calendar event with ID ${event.event_id}`)
+                    } catch (err) {
+                        console.error(`Error deleting event ${event.event_id}:`, err)
+                        // Continue with other deletions even if one fails
+                    }
+                }
+            }
+
+            // Clear all event amounts
+            setEventAmounts({})
+            localStorage.removeItem("eventAmounts")
 
             // Refresh data
             await fetchData()
+            setRefreshKey((prevKey) => prevKey + 1)
 
-            setIsDeleteAllModalOpen(false)
             setError(null)
         } catch (err) {
             console.error("Error deleting all events:", err)
             setError("Failed to delete all events. Please try again.")
         } finally {
             setIsLoading(false)
-            setLoading(false)
+            setIsDeleting(false) // Reset deleting state
+            setIsProcessing(false)
         }
     }
 
-    // Get urgent events (due in the next 7 days)
+    // Get urgent events (due today or in the next 7 days)
     const urgentEvents = calendarEvents.filter((event) => {
         const eventDate = parseISO(event.event_date)
-        const today = new Date()
-        const sevenDaysFromNow = new Date()
+        const today = startOfDay(new Date()) // Use startOfDay to ignore time component
+        const sevenDaysFromNow = new Date(today)
         sevenDaysFromNow.setDate(today.getDate() + 7)
 
         return eventDate >= today && eventDate <= sevenDaysFromNow
@@ -232,36 +470,21 @@ export default function RecurringCalendarPage() {
     // Get this week's events
     const thisWeekEvents = calendarEvents.filter((event) => {
         const eventDate = parseISO(event.event_date)
-        const today = new Date()
-        const endOfWeek = new Date()
-        endOfWeek.setDate(today.getDate() + (7 - today.getDay()))
+        const today = startOfDay(new Date())
+        const weekEnd = endOfWeek(today)
 
-        return eventDate >= today && eventDate <= endOfWeek
+        return eventDate >= today && eventDate <= weekEnd
     })
 
     // Get upcoming events (beyond this week but within next 6 months)
     const upcomingEvents = calendarEvents.filter((event) => {
         const eventDate = parseISO(event.event_date)
-        const today = new Date()
-        const endOfWeek = new Date()
-        endOfWeek.setDate(today.getDate() + (7 - today.getDay()))
+        const today = startOfDay(new Date())
+        const weekEnd = endOfWeek(today)
         const sixMonthsFromNow = addMonths(today, 6)
 
-        return eventDate > endOfWeek && eventDate <= sixMonthsFromNow
+        return eventDate > weekEnd && eventDate <= sixMonthsFromNow
     })
-
-    // Count upcoming payments (within next 6 months)
-    const upcomingPayments = calendarEvents.filter((event) => {
-        const eventDate = parseISO(event.event_date)
-        const today = new Date()
-        const sixMonthsFromNow = addMonths(today, 6)
-
-        return (
-            (event.event_type === "recurring_due" || event.event_type === "recurring_payment") &&
-            eventDate >= today &&
-            eventDate <= sixMonthsFromNow
-        )
-    }).length
 
     // Generate calendar days
     const generateCalendarDays = () => {
@@ -317,10 +540,42 @@ export default function RecurringCalendarPage() {
 
     // Get events for a specific day
     const getEventsForDay = (day: Date) => {
-        return calendarEvents.filter((event) => {
-            const eventDate = parseISO(event.event_date)
-            return isSameDay(eventDate, day)
-        })
+        // Filter out duplicate events (same title and date)
+        const uniqueEvents: CalendarEvent[] = []
+        const eventMap = new Map<string, CalendarEvent>()
+
+        calendarEvents
+            .filter((event) => {
+                const eventDate = parseISO(event.event_date)
+                return isSameDay(eventDate, day)
+            })
+            .forEach((event) => {
+                const key = `${event.event_title}-${event.event_date}`
+                if (!eventMap.has(key)) {
+                    eventMap.set(key, event)
+                    uniqueEvents.push(event)
+                }
+            })
+
+        return uniqueEvents
+    }
+
+    // Get amount for an event
+    const getEventAmount = (eventId: number): number => {
+        if (eventAmounts[eventId]) {
+            return eventAmounts[eventId]
+        }
+
+        // Check recurring payments
+        const event = calendarEvents.find((e) => e.event_id === eventId)
+        if (event) {
+            const recurringPayment = recurringPayments.find((p) => p.payment_name === event.event_title)
+            if (recurringPayment?.amount) {
+                return recurringPayment.amount
+            }
+        }
+
+        return 0
     }
 
     if (loading) {
@@ -331,18 +586,27 @@ export default function RecurringCalendarPage() {
         )
     }
 
+    // Calculate payments due this month
+    const today = new Date()
+    const paymentsThisMonth = calendarEvents.filter((event) => {
+        const eventDate = parseISO(event.event_date)
+        const amount = getEventAmount(event.event_id)
+        return isSameMonth(eventDate, today) && amount > 0
+    }).length
+
     return (
-        <div className="flex min-h-screen bg-background-light font-inter">
+        <div className="flex min-h-screen bg-gray-100 font-inter">
             {/* Sidebar */}
             <Sidebar activePage="calendar" />
 
             {/* Main content */}
             <div className="flex-1 p-8">
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex justify-between items-center mb-4">
                     <h1 className="text-2xl font-bold">Calendar</h1>
                     <button
                         onClick={() => setIsDeleteAllModalOpen(true)}
                         className="flex items-center px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                        disabled={isDeleting || isProcessing}
                     >
                         <Trash2 className="h-4 w-4 mr-2" />
                         Delete All Events
@@ -350,88 +614,103 @@ export default function RecurringCalendarPage() {
                 </div>
                 <hr className="mb-6" />
 
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-                    {/* Notifications panel */}
-                    <div className="lg:col-span-3">
-                        <NotificationsPanel
-                            urgentEvents={urgentEvents}
-                            thisWeekEvents={thisWeekEvents}
-                            upcomingEvents={upcomingEvents}
-                            upcomingPayments={upcomingPayments}
-                        />
+                <div className="grid grid-cols-1 gap-6">
+                    {/* Notifications panel and Calendar */}
+                    <div className="grid grid-cols-4 gap-6">
+                        {/* Notifications panel - spans 3 columns */}
+                        <div className="col-span-3">
+                            <NotificationsPanel
+                                key={refreshKey} // Force re-render when data changes
+                                urgentEvents={urgentEvents}
+                                thisWeekEvents={thisWeekEvents}
+                                upcomingEvents={upcomingEvents}
+                                recurringPayments={recurringPayments}
+                                eventAmounts={eventAmounts}
+                                paymentsThisMonth={paymentsThisMonth}
+                            />
+                        </div>
 
-                        {/* Calendar section */}
-                        <div className="bg-white p-6 rounded-lg shadow mt-6">
-                            {/* Calendar header */}
-                            <div className="flex items-center justify-between mb-4">
-                                <h2 className="text-xl font-medium">{format(currentDate, "MMMM yyyy")}</h2>
-                                <div className="flex space-x-2">
-                                    <button onClick={prevMonth} className="p-1" aria-label="Previous month">
-                                        <ChevronLeft className="h-5 w-5" />
-                                    </button>
-                                    <button onClick={nextMonth} className="p-1" aria-label="Next month">
-                                        <ChevronRight className="h-5 w-5" />
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Calendar grid */}
-                            <div className="grid grid-cols-7 gap-px">
-                                {/* Week day headers */}
-                                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, index) => (
-                                    <div key={index} className="p-2 text-center text-gray-500 font-medium">
-                                        {day}
-                                    </div>
-                                ))}
-
-                                {/* Calendar days */}
-                                {calendarDays.map((day, index) => {
-                                    const dayEvents = getEventsForDay(day.date)
-                                    const isToday = isSameDay(day.date, new Date())
-                                    const dayNumber = day.date.getDate()
-
-                                    return (
-                                        <div
-                                            key={index}
-                                            className={`h-24 p-1 ${day.isCurrentMonth ? "bg-gray-200" : "bg-gray-100"
-                                                } relative ${isToday ? "bg-yellow-50" : ""}`}
-                                        >
-                                            <div
-                                                className={`text-sm p-1 ${isToday ? "bg-yellow-300 rounded-full h-7 w-7 flex items-center justify-center" : ""
-                                                    }`}
-                                            >
-                                                {dayNumber}
-                                            </div>
-                                            <div className="mt-1 space-y-1 overflow-y-auto max-h-[60px]">
-                                                {dayEvents.map((event, eventIndex) => (
-                                                    <div
-                                                        key={eventIndex}
-                                                        onClick={() => handleEventClick(event)}
-                                                        className={`text-xs p-1 rounded truncate cursor-pointer ${event.event_type === "recurring_due" || event.event_type === "recurring_payment"
-                                                                ? "bg-orange-200 hover:bg-orange-300"
-                                                                : "bg-yellow-200 hover:bg-yellow-300"
-                                                            }`}
-                                                    >
-                                                        {event.event_title}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )
-                                })}
-                            </div>
+                        {/* Add event button - spans 1 column */}
+                        <div>
+                            <button
+                                onClick={handleAddEvent}
+                                className="h-40 w-full bg-calendar-highlight hover:bg-opacity-90 rounded-lg flex flex-col items-center justify-center transition-colors"
+                                disabled={isDeleting || isProcessing}
+                            >
+                                <Plus className="h-12 w-12 text-black mb-2" />
+                                <span className="text-lg font-medium">Add event</span>
+                            </button>
                         </div>
                     </div>
 
-                    {/* Add event button */}
-                    <div>
-                        <button
-                            onClick={handleAddEvent}
-                            className="h-40 w-full bg-chatbot-highlight hover:bg-[#d9f07d] rounded-lg flex flex-col items-center justify-center transition-colors"
-                        >
-                            <Plus className="h-12 w-12 text-black mb-2" />
-                            <span className="text-lg font-medium">Add event</span>
-                        </button>
+                    {/* Calendar section - spans full width */}
+                    <div className="mt-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h2 className="text-xl font-medium">{format(currentDate, "MMMM yyyy")}</h2>
+                            <div className="flex space-x-2">
+                                <button onClick={prevMonth} className="p-1" aria-label="Previous month">
+                                    <ChevronLeft className="h-5 w-5" />
+                                </button>
+                                <button onClick={nextMonth} className="p-1" aria-label="Next month">
+                                    <ChevronRight className="h-5 w-5" />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Calendar grid */}
+                        <div className="grid grid-cols-7 gap-2">
+                            {/* Week day headers */}
+                            {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day, index) => (
+                                <div key={index} className="p-2 text-center text-[#FF9F1C] font-medium">
+                                    {day}
+                                </div>
+                            ))}
+
+                            {/* Calendar days */}
+                            {calendarDays.map((day, index) => {
+                                const dayEvents = getEventsForDay(day.date)
+                                const isCurrentDay = isSameDay(day.date, new Date())
+                                const dayNumber = day.date.getDate()
+
+                                return (
+                                    <div
+                                        key={index}
+                                        className={`h-24 p-2 rounded-md ${isCurrentDay
+                                                ? "bg-calendar-highlight"
+                                                : day.isCurrentMonth
+                                                    ? "bg-calendar-mint"
+                                                    : "bg-gray-100 opacity-70"
+                                            } relative`}
+                                    >
+                                        <div className="text-sm font-medium">{dayNumber}</div>
+                                        <div className="mt-1 space-y-1 overflow-y-auto max-h-[60px]">
+                                            {dayEvents.map((event, eventIndex) => {
+                                                const eventType = event.event_type
+                                                let bgColor = "bg-calendar-event" // Default color
+
+                                                if (eventType === "recurring_due" || eventType === "recurring_payment") {
+                                                    bgColor = "bg-calendar-event" // Orange for recurring
+                                                } else if (event.event_title.toLowerCase().includes("fee")) {
+                                                    bgColor = "bg-calendar-event" // Orange for fee deadlines
+                                                } else if (event.event_title.toLowerCase().includes("groceries")) {
+                                                    bgColor = "bg-calendar-event" // Orange for groceries
+                                                }
+
+                                                return (
+                                                    <div
+                                                        key={eventIndex}
+                                                        onClick={() => handleEventClick(event)}
+                                                        className={`text-xs p-1 px-2 rounded-md truncate cursor-pointer ${bgColor}`}
+                                                    >
+                                                        {event.event_title}
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    </div>
+                                )
+                            })}
+                        </div>
                     </div>
                 </div>
 
@@ -443,6 +722,8 @@ export default function RecurringCalendarPage() {
                         onClose={() => setIsModalOpen(false)}
                         onSave={handleSaveEvent}
                         onDelete={handleDeleteEvent}
+                        eventAmounts={eventAmounts}
+                        recurringPayments={recurringPayments}
                     />
                 )}
 
@@ -461,6 +742,13 @@ export default function RecurringCalendarPage() {
                         <button className="absolute top-0 right-0 p-2" onClick={() => setError(null)}>
                             &times;
                         </button>
+                    </div>
+                )}
+
+                {/* Loading indicator */}
+                {isLoading && (
+                    <div className="fixed bottom-4 left-4 bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded">
+                        <p>Processing...</p>
                     </div>
                 )}
             </div>
