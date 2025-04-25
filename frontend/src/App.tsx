@@ -13,6 +13,11 @@ import LandingPage from "./pages/LandingPage"
 import ProtectedRoute from "./components/ProtectedRoute"
 import { AuthProvider } from "./contexts/AuthContext"
 import LogoutPage from "./pages/LogoutPage"
+import ZakatTaxPage from "./pages/ZakatTaxPage"
+
+import RecurringCalendarPage from "./pages/RecurringCalendarPage"
+import AssetsPage from "./pages/AssetPage"
+
 
 const App: React.FC = () => {
   return (
@@ -26,8 +31,16 @@ const App: React.FC = () => {
           <Route path="/about" element={<AboutUsPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/logout" element={<LogoutPage />} />
+          
+          <Route
+            path="/assets"
+            element={
+              <ProtectedRoute>
+                <AssetsPage />
+              </ProtectedRoute>
+            }
+          />
 
-          {/* Protected routes */}
           <Route
             path="/dashboard"
             element={
@@ -60,7 +73,24 @@ const App: React.FC = () => {
               </ProtectedRoute>
             }
           />
+          
+          <Route
+            path="/zakat-tax"
+            element={
+              <ProtectedRoute>
+                <ZakatTaxPage />
+              </ProtectedRoute>
+            }
+          />
 
+          <Route
+            path="/calendar"
+            element={
+              <ProtectedRoute>
+                <RecurringCalendarPage />
+              </ProtectedRoute>
+            }
+          />
           {/* Fallback route */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

@@ -8,6 +8,7 @@ import Sidebar from "../components/Sidebar"
 import NetWorthCard from "../components/NetWorthCard"
 import ExpenseBarChart from "../components/ExpenseBarChart"
 import BudgetProgressCard from "../components/BudgetProgressCard"
+import LoadingScreen from "../components/LoadingScreen"
 
 interface Transaction {
   transaction_id: number
@@ -51,12 +52,18 @@ interface DashboardData {
 const DashboardPage: React.FC = () => {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
+  const [pageLoading, setPageLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
   const [currentMonth, setCurrentMonth] = useState<string>("")
 
   useEffect(() => {
     const now = new Date()
     setCurrentMonth(now.toLocaleString("default", { month: "long", year: "numeric" }))
+
+    // Simulate page loading for a minimum time to show the loading screen
+    const pageLoadTimer = setTimeout(() => {
+      setPageLoading(false)
+    }, 800)
 
     const fetchDashboardData = async () => {
       try {
@@ -91,6 +98,8 @@ const DashboardPage: React.FC = () => {
     }
 
     fetchDashboardData()
+
+    return () => clearTimeout(pageLoadTimer)
   }, [])
 
   const formatCurrency = (amount: number) => {
@@ -117,11 +126,7 @@ const DashboardPage: React.FC = () => {
   }
 
   if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-xl">Loading dashboard...</div>
-      </div>
-    )
+    return <LoadingScreen />
   }
 
   if (error) {

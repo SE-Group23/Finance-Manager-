@@ -4,7 +4,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Reset some base styles that might be conflicting */
 :root {
   font-family: "Inter", system-ui, sans-serif;
   line-height: 1.5;
@@ -14,7 +13,7 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
+} 
 
 body {
   margin: 0;
@@ -25,12 +24,10 @@ body {
   color: #000000;
 }
 
-/* Remove default button styles that might conflict with Tailwind */
 button {
   font-family: inherit;
 }
 
-/* Force light mode for all users */
 :root {
   color-scheme: light;
 }
