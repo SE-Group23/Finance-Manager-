@@ -14,60 +14,78 @@ export function NotificationsPanel({
     upcomingEvents,
     upcomingPayments,
 }: NotificationsPanelProps) {
+    // Calculate how many events to show and how many are remaining within the 6-month window
+    const eventsToShow = upcomingEvents.slice(0, 2)
+    const remainingEventsCount = upcomingEvents.length - 2
+
     return (
-        <div className="bg-[#0a3a43] text-white rounded-lg p-6">
+        <div className="bg-white rounded-lg shadow-md p-6">
             <h2 className="text-xl font-semibold mb-4">Notifications</h2>
 
             {/* Upcoming payments badge */}
-            <div className="mb-4">
-                <span className="inline-block bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                    {upcomingPayments} upcoming payments
+            <div className="mb-6">
+                <span className="inline-block bg-red-500 text-white text-sm px-3 py-1 rounded-full font-medium">
+                    {upcomingPayments} upcoming payments in next 6 months
                 </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Urgent section */}
-                <div>
-                    <h3 className="text-sm font-medium mb-2">Urgent</h3>
+                <div className="bg-red-50 p-4 rounded-lg">
+                    <h3 className="text-sm font-bold text-red-700 uppercase tracking-wider mb-3">Urgent</h3>
                     <div className="space-y-3">
                         {urgentEvents.length > 0 ? (
-                            urgentEvents.slice(0, 2).map((event, index) => (
-                                <div key={index} className="border-l-2 border-red-500 pl-3">
-                                    <h4 className="font-semibold">{event.event_title}</h4>
-                                    <p className="text-sm text-gray-300">{format(parseISO(event.event_date), "dd/MM/yy")}</p>
+                            urgentEvents.slice(0, 3).map((event, index) => (
+                                <div key={index} className="border-l-3 border-red-500 pl-3 py-1">
+                                    <h4 className="font-semibold text-gray-800">{event.event_title}</h4>
+                                    <p className="text-sm text-gray-600">{format(parseISO(event.event_date), "dd MMM yyyy")}</p>
                                 </div>
                             ))
                         ) : (
-                            <p className="text-sm text-gray-300">No urgent events</p>
+                            <p className="text-sm text-gray-600 italic">No urgent events</p>
                         )}
                     </div>
                 </div>
 
                 {/* This Week section */}
-                <div>
-                    <h3 className="text-sm font-medium mb-2">This Week</h3>
+                <div className="bg-blue-50 p-4 rounded-lg">
+                    <h3 className="text-sm font-bold text-blue-700 uppercase tracking-wider mb-3">This Week</h3>
                     <div className="space-y-3">
                         {thisWeekEvents.length > 0 ? (
-                            thisWeekEvents.slice(0, 2).map((event, index) => (
-                                <div key={index} className="border-l-2 border-red-500 pl-3">
-                                    <h4 className="font-semibold">{event.event_title}</h4>
-                                    <p className="text-sm text-gray-300">{format(parseISO(event.event_date), "dd/MM/yy")}</p>
+                            thisWeekEvents.slice(0, 3).map((event, index) => (
+                                <div key={index} className="border-l-3 border-blue-500 pl-3 py-1">
+                                    <h4 className="font-semibold text-gray-800">{event.event_title}</h4>
+                                    <p className="text-sm text-gray-600">{format(parseISO(event.event_date), "dd MMM yyyy")}</p>
                                 </div>
                             ))
                         ) : (
-                            <p className="text-sm text-gray-300">No events this week</p>
+                            <p className="text-sm text-gray-600 italic">No events this week</p>
                         )}
                     </div>
                 </div>
 
                 {/* Upcoming section */}
-                <div>
-                    <h3 className="text-sm font-medium mb-2">Upcoming</h3>
-                    {upcomingEvents.length > 0 ? (
-                        <p className="text-sm text-gray-300">{upcomingEvents.length} events coming up</p>
-                    ) : (
-                        <p className="text-sm text-gray-300">No events found</p>
-                    )}
+                <div className="bg-green-50 p-4 rounded-lg">
+                    <h3 className="text-sm font-bold text-green-700 uppercase tracking-wider mb-3">Upcoming</h3>
+                    <div className="space-y-3">
+                        {upcomingEvents.length > 0 ? (
+                            <>
+                                {eventsToShow.map((event, index) => (
+                                    <div key={index} className="border-l-3 border-green-500 pl-3 py-1">
+                                        <h4 className="font-semibold text-gray-800">{event.event_title}</h4>
+                                        <p className="text-sm text-gray-600">{format(parseISO(event.event_date), "dd MMM yyyy")}</p>
+                                    </div>
+                                ))}
+                                {remainingEventsCount > 0 && (
+                                    <p className="text-sm text-gray-600 font-medium">
+                                        +{remainingEventsCount} more events in next 6 months
+                                    </p>
+                                )}
+                            </>
+                        ) : (
+                            <p className="text-sm text-gray-600 italic">No upcoming events</p>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

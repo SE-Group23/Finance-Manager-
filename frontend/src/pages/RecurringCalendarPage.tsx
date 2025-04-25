@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { format, addMonths, subMonths, parseISO, isSameDay } from "date-fns"
+import { format, addMonths, subMonths, parseISO, isSameDay, isAfter } from "date-fns"
 import {
     fetchCalendarEvents,
     createCalendarEvent,
@@ -17,38 +17,41 @@ import {
     type RecurringPayment,
 } from "../services/recurringService"
 import { EventModal } from "../components/EventModal"
+import { DeleteAllConfirmationModal } from "../components/DeleteAllConfirmationModal"
 import Sidebar from "../components/Sidebar"
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react"
+import { ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react"
+import { NotificationsPanel } from "../components/NotificationsPanel"
 
 export default function RecurringCalendarPage() {
     const [currentDate, setCurrentDate] = useState(new Date())
     const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([])
     const [recurringPayments, setRecurringPayments] = useState<RecurringPayment[]>([])
     const [isModalOpen, setIsModalOpen] = useState(false)
+    const [isDeleteAllModalOpen, setIsDeleteAllModalOpen] = useState(false)
     const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
     const [loading, setLoading] = useState(true)
 
     // Fetch calendar events and recurring payments
-    useEffect(() => {
-        const fetchData = async () => {
-            setIsLoading(true)
-            setLoading(true)
-            try {
-                const [events, payments] = await Promise.all([fetchCalendarEvents(), fetchRecurringPayments()])
-                setCalendarEvents(events)
-                setRecurringPayments(payments)
-                setError(null)
-            } catch (err) {
-                console.error("Error fetching calendar data:", err)
-                setError("Failed to load calendar data. Please try again.")
-            } finally {
-                setIsLoading(false)
-                setLoading(false)
-            }
+    const fetchData = async () => {
+        setIsLoading(true)
+        setLoading(true)
+        try {
+            const [events, payments] = await Promise.all([fetchCalendarEvents(), fetchRecurringPayments()])
+            setCalendarEvents(events)
+            setRecurringPayments(payments)
+            setError(null)
+        } catch (err) {
+            console.error("Error fetching calendar data:", err)
+            setError("Failed to load calendar data. Please try again.")
+        } finally {
+            setIsLoading(false)
+            setLoading(false)
         }
+    }
 
+    useEffect(() => {
         fetchData()
     }, [])
 
@@ -127,9 +130,7 @@ export default function RecurringCalendarPage() {
             }
 
             // Refresh data
-            const [events, payments] = await Promise.all([fetchCalendarEvents(), fetchRecurringPayments()])
-            setCalendarEvents(events)
-            setRecurringPayments(payments)
+            await fetchData()
 
             setIsModalOpen(false)
             setSelectedEvent(null)
@@ -151,24 +152,67 @@ export default function RecurringCalendarPage() {
             setLoading(true)
 
             // Check if this is a recurring event
+            const isRecurringEvent =
+                selectedEvent.event_type === "recurring_due" || selectedEvent.event_type === "recurring_payment"
             const recurringPayment = recurringPayments.find((p) => p.payment_name === selectedEvent.event_title)
 
-            if (recurringPayment && selectedEvent.event_type === "recurring_due") {
+            if (isRecurringEvent && recurringPayment) {
+                // Delete the recurring payment source
                 await deleteRecurringPayment(recurringPayment.recurring_id)
+
+                // Delete all future instances of this recurring event
+                const eventDate = parseISO(selectedEvent.event_date)
+                const today = new Date()
+
+                // Find all instances of this recurring event that are today or in the future
+                const relatedEvents = calendarEvents.filter(
+                    (event) =>
+                        (event.event_type === "recurring_due" || event.event_type === "recurring_payment") &&
+                        event.event_title === selectedEvent.event_title &&
+                        isAfter(parseISO(event.event_date), today),
+                )
+
+                // Delete each instance
+                await Promise.all(relatedEvents.map((event) => deleteCalendarEvent(event.event_id)))
             } else {
+                // Delete a single non-recurring event
                 await deleteCalendarEvent(selectedEvent.event_id)
             }
 
             // Refresh data
-            const [events, payments] = await Promise.all([fetchCalendarEvents(), fetchRecurringPayments()])
-            setCalendarEvents(events)
-            setRecurringPayments(payments)
+            await fetchData()
 
             setIsModalOpen(false)
             setSelectedEvent(null)
         } catch (err) {
             console.error("Error deleting event:", err)
             setError("Failed to delete event. Please try again.")
+        } finally {
+            setIsLoading(false)
+            setLoading(false)
+        }
+    }
+
+    // Handle deleting all events
+    const handleDeleteAllEvents = async () => {
+        try {
+            setIsLoading(true)
+            setLoading(true)
+
+            // Delete all recurring payments
+            await Promise.all(recurringPayments.map((payment) => deleteRecurringPayment(payment.recurring_id)))
+
+            // Delete all calendar events
+            await Promise.all(calendarEvents.map((event) => deleteCalendarEvent(event.event_id)))
+
+            // Refresh data
+            await fetchData()
+
+            setIsDeleteAllModalOpen(false)
+            setError(null)
+        } catch (err) {
+            console.error("Error deleting all events:", err)
+            setError("Failed to delete all events. Please try again.")
         } finally {
             setIsLoading(false)
             setLoading(false)
@@ -195,20 +239,29 @@ export default function RecurringCalendarPage() {
         return eventDate >= today && eventDate <= endOfWeek
     })
 
-    // Get upcoming events (beyond this week)
+    // Get upcoming events (beyond this week but within next 6 months)
     const upcomingEvents = calendarEvents.filter((event) => {
         const eventDate = parseISO(event.event_date)
         const today = new Date()
         const endOfWeek = new Date()
         endOfWeek.setDate(today.getDate() + (7 - today.getDay()))
+        const sixMonthsFromNow = addMonths(today, 6)
 
-        return eventDate > endOfWeek
+        return eventDate > endOfWeek && eventDate <= sixMonthsFromNow
     })
 
-    // Count upcoming payments
-    const upcomingPayments = calendarEvents.filter(
-        (event) => event.event_type === "recurring_due" || event.event_type === "recurring_payment",
-    ).length
+    // Count upcoming payments (within next 6 months)
+    const upcomingPayments = calendarEvents.filter((event) => {
+        const eventDate = parseISO(event.event_date)
+        const today = new Date()
+        const sixMonthsFromNow = addMonths(today, 6)
+
+        return (
+            (event.event_type === "recurring_due" || event.event_type === "recurring_payment") &&
+            eventDate >= today &&
+            eventDate <= sixMonthsFromNow
+        )
+    }).length
 
     // Generate calendar days
     const generateCalendarDays = () => {
@@ -285,63 +338,30 @@ export default function RecurringCalendarPage() {
 
             {/* Main content */}
             <div className="flex-1 p-8">
-                <h1 className="text-2xl font-bold mb-6">Calendar</h1>
+                <div className="flex justify-between items-center mb-6">
+                    <h1 className="text-2xl font-bold">Calendar</h1>
+                    <button
+                        onClick={() => setIsDeleteAllModalOpen(true)}
+                        className="flex items-center px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                    >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete All Events
+                    </button>
+                </div>
                 <hr className="mb-6" />
 
                 <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
                     {/* Notifications panel */}
                     <div className="lg:col-span-3">
-                        <div className="bg-white p-6 rounded-lg shadow mb-6">
-                            <h2 className="text-lg font-medium mb-4">Notifications</h2>
-
-                            <div className="mb-4">
-                                <span className="inline-block bg-red-500 text-white text-xs px-2 py-1 rounded-full">
-                                    {upcomingPayments} upcoming payments
-                                </span>
-                            </div>
-
-                            <div className="grid grid-cols-3 gap-6">
-                                <div>
-                                    <h3 className="text-sm font-medium mb-2">Urgent</h3>
-                                    {urgentEvents.length > 0 ? (
-                                        urgentEvents.slice(0, 2).map((event, index) => (
-                                            <div key={index} className="border-l-2 border-red-500 pl-3 mb-2">
-                                                <h4 className="font-semibold">{event.event_title}</h4>
-                                                <p className="text-sm text-gray-500">{format(parseISO(event.event_date), "dd/MM/yy")}</p>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <p className="text-sm text-gray-500">No urgent events</p>
-                                    )}
-                                </div>
-
-                                <div>
-                                    <h3 className="text-sm font-medium mb-2">This Week</h3>
-                                    {thisWeekEvents.length > 0 ? (
-                                        thisWeekEvents.slice(0, 2).map((event, index) => (
-                                            <div key={index} className="border-l-2 border-red-500 pl-3 mb-2">
-                                                <h4 className="font-semibold">{event.event_title}</h4>
-                                                <p className="text-sm text-gray-500">{format(parseISO(event.event_date), "dd/MM/yy")}</p>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <p className="text-sm text-gray-500">No events this week</p>
-                                    )}
-                                </div>
-
-                                <div>
-                                    <h3 className="text-sm font-medium mb-2">Upcoming</h3>
-                                    {upcomingEvents.length > 0 ? (
-                                        <p className="text-sm text-gray-500">{upcomingEvents.length} events found</p>
-                                    ) : (
-                                        <p className="text-sm text-gray-500">No events found</p>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
+                        <NotificationsPanel
+                            urgentEvents={urgentEvents}
+                            thisWeekEvents={thisWeekEvents}
+                            upcomingEvents={upcomingEvents}
+                            upcomingPayments={upcomingPayments}
+                        />
 
                         {/* Calendar section */}
-                        <div className="bg-white p-6 rounded-lg shadow">
+                        <div className="bg-white p-6 rounded-lg shadow mt-6">
                             {/* Calendar header */}
                             <div className="flex items-center justify-between mb-4">
                                 <h2 className="text-xl font-medium">{format(currentDate, "MMMM yyyy")}</h2>
@@ -425,6 +445,14 @@ export default function RecurringCalendarPage() {
                         onDelete={handleDeleteEvent}
                     />
                 )}
+
+                {/* Delete All Confirmation Modal */}
+                <DeleteAllConfirmationModal
+                    isOpen={isDeleteAllModalOpen}
+                    onClose={() => setIsDeleteAllModalOpen(false)}
+                    onConfirm={handleDeleteAllEvents}
+                    eventCount={calendarEvents.length}
+                />
 
                 {/* Error message */}
                 {error && (
