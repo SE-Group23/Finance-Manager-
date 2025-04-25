@@ -6,6 +6,7 @@ import { Link } from "react-router-dom"
 import { ArrowUp, ArrowDown, ChevronRight } from "lucide-react"
 import { PieChart as PieChartComponent, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts"
 import Sidebar from "../components/Sidebar"
+import LoadingScreen from "../components/LoadingScreen"
 
 // Define types for our data
 interface Transaction {
@@ -50,6 +51,7 @@ interface DashboardData {
 const DashboardPage: React.FC = () => {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
+  const [pageLoading, setPageLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
   const [currentMonth, setCurrentMonth] = useState<string>("")
 
@@ -58,6 +60,11 @@ const DashboardPage: React.FC = () => {
     // Set current month name
     const now = new Date()
     setCurrentMonth(now.toLocaleString("default", { month: "long", year: "numeric" }))
+
+    // Simulate page loading for a minimum time to show the loading screen
+    const pageLoadTimer = setTimeout(() => {
+      setPageLoading(false)
+    }, 800)
 
     const fetchDashboardData = async () => {
       try {
@@ -92,6 +99,8 @@ const DashboardPage: React.FC = () => {
     }
 
     fetchDashboardData()
+
+    return () => clearTimeout(pageLoadTimer)
   }, [])
 
   // Colors for the pie chart
@@ -153,12 +162,12 @@ const DashboardPage: React.FC = () => {
     })
   }
 
+  if (pageLoading) {
+    return <LoadingScreen />
+  }
+
   if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="text-xl">Loading dashboard...</div>
-      </div>
-    )
+    return <LoadingScreen />
   }
 
   if (error) {

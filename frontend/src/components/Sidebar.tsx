@@ -81,9 +81,9 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage }) => {
 
       <div className="mt-auto border-t border-navbar-dark p-4">
         <div className="flex items-center gap-4 mb-2">
-          <Link to="/settings" className="text-white hover:text-gray-200">
+          {/* <Link to="/settings" className="text-white hover:text-gray-200">
             <SettingsIcon size={18} />
-          </Link>
+          </Link> */}
           <button onClick={handleLogout} className="text-white hover:text-gray-200">
             <LogoutIcon size={18} />
           </button>
