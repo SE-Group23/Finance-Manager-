@@ -165,7 +165,6 @@ module.exports = {
       letterSpacing: {
         tighter: "-0.02em",
       },
-    },
     plugins: [],
 }
 
