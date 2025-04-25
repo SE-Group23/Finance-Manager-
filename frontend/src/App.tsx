@@ -17,6 +17,8 @@ import ZakatTaxPage from "./pages/ZakatTaxPage"
 
 import RecurringCalendarPage from "./pages/RecurringCalendarPage"
 import AssetsPage from "./pages/AssetPage"
+import ForgetPassword from "./pages/ForgotPassword"
+import ResetPassword from "./pages/ResetPassword"
 
 
 const App: React.FC = () => {
@@ -31,6 +33,8 @@ const App: React.FC = () => {
           <Route path="/about" element={<AboutUsPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/logout" element={<LogoutPage />} />
+          <Route path="/forgot-password" element={<ForgetPassword />} />
+          <Route path="/reset-password/:userId/:token" element={<ResetPassword />} />
           
           <Route
             path="/assets"

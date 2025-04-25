@@ -14,19 +14,33 @@ const ContactPage: React.FC = () => {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitSuccess, setSubmitSuccess] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
-    
-    // Simulate form submission
-    setTimeout(() => {
-      setIsSubmitting(false)
+    setSubmitError(null)
+    try {
+      const apiUrl = `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api/contact/submit`;
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to send message');
+      }
+      
       setSubmitSuccess(true)
       setFormData({
         name: "",
@@ -39,7 +53,11 @@ const ContactPage: React.FC = () => {
       setTimeout(() => {
         setSubmitSuccess(false)
       }, 5000)
-    }, 1500)
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : 'An error occurred');
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -120,6 +138,12 @@ const ContactPage: React.FC = () => {
                 </div>
               )}
               
+              {submitError && (
+                <div className="bg-red-500/20 border border-red-500 text-white p-4 rounded-md mb-6">
+                  {submitError}
+                </div>
+              )}
+              
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium mb-1">
@@ -132,7 +156,7 @@ const ContactPage: React.FC = () => {
                     value={formData.name}
                     onChange={handleChange}
                     required
-                    className="w-full p-3 bg-white/5 border-b border-teal-300 focus:outline-none focus:border-green-400 text-white"
+                    className="w-full p-3 bg-white/5 border-b border-teal-300 focus:outline-none focus:border-green-400 text-black"  // Changed text-white to text-black
                     placeholder="John Doe"
                   />
                 </div>
@@ -148,7 +172,7 @@ const ContactPage: React.FC = () => {
                     value={formData.email}
                     onChange={handleChange}
                     required
-                    className="w-full p-3 bg-white/5 border-b border-teal-300 focus:outline-none focus:border-green-400 text-white"
+                    className="w-full p-3 bg-white/5 border-b border-teal-300 focus:outline-none focus:border-green-400 text-black"  // Changed text-white to text-black
                     placeholder="john@example.com"
                   />
                 </div>
@@ -164,7 +188,7 @@ const ContactPage: React.FC = () => {
                     value={formData.subject}
                     onChange={handleChange}
                     required
-                    className="w-full p-3 bg-white/5 border-b border-teal-300 focus:outline-none focus:border-green-400 text-white"
+                    className="w-full p-3 bg-white/5 border-b border-teal-300 focus:outline-none focus:border-green-400 text-black"  // Changed text-white to text-black
                     placeholder="How can we help?"
                   />
                 </div>
@@ -180,7 +204,7 @@ const ContactPage: React.FC = () => {
                     value={formData.message}
                     onChange={handleChange}
                     required
-                    className="w-full p-3 bg-white/5 border-b border-teal-300 focus:outline-none focus:border-green-400 text-white"
+                    className="w-full p-3 bg-white/5 border-b border-teal-300 focus:outline-none focus:border-green-400 text-black"  // Changed text-white to text-black
                     placeholder="Your message here..."
                   />
                 </div>

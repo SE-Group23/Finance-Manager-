@@ -14,14 +14,16 @@
     "@types/express": "^5.0.1",
     "@types/node": "^22.13.13",
     "@types/pg": "^8.11.11",
+    "axios": "^1.9.0",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
+    "nodemailer": "^6.10.1",
     "nodemon": "^3.1.9",
-    "openai": "^3.2.1",
+    "openai": "^4.96.0",
     "pg": "^8.14.1",
     "redis": "^4.7.0",
     "ts-node": "^10.9.2",
@@ -31,6 +33,7 @@
     "@types/bcrypt": "^5.0.2",
     "@types/bcryptjs": "^2.4.6",
     "@types/cors": "^2.8.17",
-    "@types/jsonwebtoken": "^9.0.9"
+    "@types/jsonwebtoken": "^9.0.9",
+    "@types/nodemailer": "^6.4.17"
   }
 }

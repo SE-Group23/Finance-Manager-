@@ -10,6 +10,7 @@ import dashboardRoutes from './src/routes/dashboardRoutes';
 import zakatTaxRoutes from './src/routes/zakatTaxRoutes';
 import recurringRoutes from './src/routes/recurringRoutes';
 import calendarRoutes from './src/routes/calendarRoutes';
+import contactRoutes from './src/routes/contactRoutes';
 
 import assetRoutes from './src/routes/assetRoutes';
 import type { Request, Response } from "express"
@@ -25,12 +26,13 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/budgets', budgetRoutes);
-app.use('/api/chatbot', chatbotRoutes);
+// app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/zakat-tax', zakatTaxRoutes);
 app.use('/api/recurring-payments', recurringRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/assets',   assetRoutes);  
+app.use('/api/contact', contactRoutes);
 
 app.get("/", (req: Request, res: Response) => {
   res.json({ message: "API is running..." });
