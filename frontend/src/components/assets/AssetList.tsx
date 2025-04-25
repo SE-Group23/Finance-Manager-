@@ -1,3 +1,5 @@
+//Asset List
+
 "use client"
 
 import type React from "react"
@@ -5,8 +7,10 @@ import { useState } from "react"
 import type { Asset } from "../../types/asset"
 import AssetCard from "./AssetCard"
 import AssetForm from "./AssetForm"
+import AssetDetailsModal from "./AssetDetailsModal"
 import LoadingScreen from "../LoadingScreen"
 import { Plus } from "lucide-react"
+import { createAsset, deleteAsset, updateAsset } from "../../services/assetService"
 
 interface AssetListProps {
   assets: Asset[]
@@ -15,19 +19,49 @@ interface AssetListProps {
 
 const AssetList: React.FC<AssetListProps> = ({ assets, loading }) => {
   const [showAddForm, setShowAddForm] = useState(false)
-  const [expandedAssetType, setExpandedAssetType] = useState<string | null>(null)
   const [selectedAssetType, setSelectedAssetType] = useState<string | null>(null)
+  const [editingAsset, setEditingAsset] = useState<Asset | null>(null)
   const [formLoading, setFormLoading] = useState(false)
+  const [detailsModalType, setDetailsModalType] = useState<string | null>(null)
 
-  const goldAssets = assets.filter((asset) => asset.asset_type === "GOLD")
-  const stockAssets = assets.filter((asset) => asset.asset_type === "STOCK")
-  const currencyAssets = assets.filter((asset) => asset.asset_type === "CURRENCY")
+  // Fix case sensitivity issue by using toUpperCase()
+  const goldAssets = assets.filter((asset) => asset.asset_type?.toUpperCase() === "GOLD")
+  const stockAssets = assets.filter((asset) => asset.asset_type?.toUpperCase() === "STOCK")
+  const currencyAssets = assets.filter((asset) => asset.asset_type?.toUpperCase() === "CURRENCY")
 
-  const toggleExpand = (assetType: string) => {
-    if (expandedAssetType === assetType) {
-      setExpandedAssetType(null)
-    } else {
-      setExpandedAssetType(assetType)
+  const handleDeleteAsset = async (assetId: number) => {
+    if (window.confirm("Are you sure you want to delete this asset?")) {
+      try {
+        await deleteAsset(assetId)
+        // Refresh the page to show updated assets
+        window.location.reload()
+      } catch (error) {
+        console.error("Failed to delete asset:", error)
+      }
+    }
+  }
+
+  const handleEditAsset = (asset: Asset) => {
+    setEditingAsset(asset)
+    setSelectedAssetType(asset.asset_type?.toUpperCase())
+    setDetailsModalType(null) // Close the details modal when editing
+  }
+
+  const handleCreateAsset = async (assetData: any) => {
+    try {
+      await createAsset(assetData)
+    } catch (error) {
+      console.error("Failed to create asset:", error)
+      throw error
+    }
+  }
+
+  const handleUpdateAsset = async (assetId: string, assetData: any) => {
+    try {
+      await updateAsset(Number.parseInt(assetId), assetData)
+    } catch (error) {
+      console.error("Failed to update asset:", error)
+      throw error
     }
   }
 
@@ -47,20 +81,22 @@ const AssetList: React.FC<AssetListProps> = ({ assets, loading }) => {
   return (
     <div>
       <h2 className="text-xl font-semibold mb-4">Asset List</h2>
-      <div className="grid grid-cols-2 gap-4-auto max-h-64">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Gold Assets */}
         <div
           className="bg-dark-light rounded-lg p-4 cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => toggleExpand("GOLD")}
+          onClick={() => setDetailsModalType("GOLD")}
         >
           {goldAssets.length > 0 ? (
             <AssetCard
               asset={goldAssets[0]}
-              expanded={expandedAssetType === "GOLD"}
               assetType="GOLD"
               totalValue={goldAssets.reduce((sum, asset) => sum + asset.current_value, 0)}
               totalQuantity={goldAssets.reduce((sum, asset) => sum + asset.quantity, 0)}
               unit="g"
+              onDelete={handleDeleteAsset}
+              onEdit={handleEditAsset}
+              onClick={() => setDetailsModalType("GOLD")}
             />
           ) : (
             <div className="flex flex-col items-center justify-center h-32">
@@ -68,52 +104,23 @@ const AssetList: React.FC<AssetListProps> = ({ assets, loading }) => {
               <p className="text-gray-300">No gold assets</p>
             </div>
           )}
-
-          {expandedAssetType === "GOLD" && (
-            <div className="mt-4 space-y-4">
-              {goldAssets.map((asset) => (
-                <div key={asset.asset_id} className="p-3 bg-dark rounded-md shadow-sm">
-                  <div className="flex justify-between">
-                    <div>
-                      <p className="font-medium text-white">{asset.asset_details.name || "Gold"}</p>
-                      <p className="text-sm text-gray-300">
-                        {asset.quantity}
-                        {asset.asset_details.unit} - Purchased: {new Date(asset.acquired_on).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium text-white">${asset.current_value.toLocaleString()}</p>
-                      <p className="text-sm text-gray-300">Bought: ${asset.purchase_value.toLocaleString()}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {/* <button
-                className="w-full py-2 px-4 bg-secondary text-dark font-medium rounded-md hover:bg-secondary-dark"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setSelectedAssetType("GOLD")
-                }}
-              >
-                Add Gold Asset
-              </button> */}
-            </div>
-          )}
         </div>
 
         {/* Stock Assets */}
         <div
           className="bg-dark-light rounded-lg p-4 cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => toggleExpand("STOCK")}
+          onClick={() => setDetailsModalType("STOCK")}
         >
           {stockAssets.length > 0 ? (
             <AssetCard
               asset={stockAssets[0]}
-              expanded={expandedAssetType === "STOCK"}
               assetType="STOCK"
               totalValue={stockAssets.reduce((sum, asset) => sum + asset.current_value, 0)}
               totalQuantity={stockAssets.reduce((sum, asset) => sum + asset.quantity, 0)}
               unit="shares"
+              onDelete={handleDeleteAsset}
+              onEdit={handleEditAsset}
+              onClick={() => setDetailsModalType("STOCK")}
             />
           ) : (
             <div className="flex flex-col items-center justify-center h-32">
@@ -121,90 +128,28 @@ const AssetList: React.FC<AssetListProps> = ({ assets, loading }) => {
               <p className="text-gray-300">No stock assets</p>
             </div>
           )}
-
-          {expandedAssetType === "STOCK" && (
-            <div className="mt-4 space-y-4">
-              {stockAssets.map((asset) => (
-                <div key={asset.asset_id} className="p-3 bg-dark rounded-md shadow-sm">
-                  <div className="flex justify-between">
-                    <div>
-                      <p className="font-medium text-white">
-                        {asset.asset_details.ticker} - {asset.asset_details.name}
-                      </p>
-                      <p className="text-sm text-gray-300">
-                        {asset.quantity} shares - Purchased: {new Date(asset.acquired_on).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium text-white">${asset.current_value.toLocaleString()}</p>
-                      <p className="text-sm text-gray-300">Bought: ${asset.purchase_value.toLocaleString()}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {/* <button
-                className="w-full py-2 px-4 bg-secondary text-dark font-medium rounded-md hover:bg-secondary-dark"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setSelectedAssetType("STOCK")
-                }}
-              >
-                Add Stock Asset
-              </button> */}
-            </div>
-          )}
         </div>
 
         {/* Currency Assets */}
         <div
           className="bg-dark-light rounded-lg p-4 cursor-pointer hover:shadow-md transition-shadow"
-          onClick={() => toggleExpand("CURRENCY")}
+          onClick={() => setDetailsModalType("CURRENCY")}
         >
           {currencyAssets.length > 0 ? (
             <AssetCard
               asset={currencyAssets[0]}
-              expanded={expandedAssetType === "CURRENCY"}
               assetType="CURRENCY"
               totalValue={currencyAssets.reduce((sum, asset) => sum + asset.current_value, 0)}
               totalQuantity={0}
               unit=""
+              onDelete={handleDeleteAsset}
+              onEdit={handleEditAsset}
+              onClick={() => setDetailsModalType("CURRENCY")}
             />
           ) : (
             <div className="flex flex-col items-center justify-center h-32">
               <h3 className="text-xl font-semibold text-white">Currency</h3>
               <p className="text-gray-300">No currency assets</p>
-            </div>
-          )}
-
-          {expandedAssetType === "CURRENCY" && (
-            <div className="mt-4 space-y-4">
-              {currencyAssets.map((asset) => (
-                <div key={asset.asset_id} className="p-3 bg-dark rounded-md shadow-sm">
-                  <div className="flex justify-between">
-                    <div>
-                      <p className="font-medium text-white">
-                        {asset.asset_details.name || asset.asset_details.currency}
-                      </p>
-                      <p className="text-sm text-gray-300">
-                        Purchased: {new Date(asset.acquired_on).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="font-medium text-white">${asset.current_value.toLocaleString()}</p>
-                      <p className="text-sm text-gray-300">Bought: ${asset.purchase_value.toLocaleString()}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {/* <button
-                className="w-full py-2 px-4 bg-secondary text-dark font-medium rounded-md hover:bg-secondary-dark"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setSelectedAssetType("CURRENCY")
-                }}
-              >
-                Add Currency Asset
-              </button> */}
             </div>
           )}
         </div>
@@ -221,6 +166,38 @@ const AssetList: React.FC<AssetListProps> = ({ assets, loading }) => {
         </div>
       </div>
 
+      {/* Asset Details Modal */}
+      {detailsModalType === "GOLD" && goldAssets.length > 0 && (
+        <AssetDetailsModal
+          assets={goldAssets}
+          assetType="GOLD"
+          onClose={() => setDetailsModalType(null)}
+          onDelete={handleDeleteAsset}
+          onEdit={handleEditAsset}
+        />
+      )}
+
+      {detailsModalType === "STOCK" && stockAssets.length > 0 && (
+        <AssetDetailsModal
+          assets={stockAssets}
+          assetType="STOCK"
+          onClose={() => setDetailsModalType(null)}
+          onDelete={handleDeleteAsset}
+          onEdit={handleEditAsset}
+        />
+      )}
+
+      {detailsModalType === "CURRENCY" && currencyAssets.length > 0 && (
+        <AssetDetailsModal
+          assets={currencyAssets}
+          assetType="CURRENCY"
+          onClose={() => setDetailsModalType(null)}
+          onDelete={handleDeleteAsset}
+          onEdit={handleEditAsset}
+        />
+      )}
+
+      {/* Add Asset Type Selection Modal */}
       {showAddForm && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
           <div className="bg-navbar w-full max-w-md rounded-2xl shadow-lg">
@@ -263,6 +240,7 @@ const AssetList: React.FC<AssetListProps> = ({ assets, loading }) => {
         </div>
       )}
 
+      {/* Asset Form Modal */}
       {selectedAssetType && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
           <div className="bg-navbar w-full max-w-md rounded-2xl shadow-lg">
@@ -274,10 +252,13 @@ const AssetList: React.FC<AssetListProps> = ({ assets, loading }) => {
               <div className="p-6">
                 <AssetForm
                   assetType={selectedAssetType}
+                  asset={editingAsset}
                   onClose={() => {
                     setSelectedAssetType(null)
-                    setExpandedAssetType(null)
+                    setEditingAsset(null)
                   }}
+                  createAsset={handleCreateAsset}
+                  updateAsset={handleUpdateAsset}
                   onSubmitStart={() => setFormLoading(true)}
                   onSubmitEnd={() => setFormLoading(false)}
                 />

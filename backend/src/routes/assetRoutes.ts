@@ -10,6 +10,7 @@ import {
   deleteAsset,
   refreshAssetValues,
   getGoldHistory,
+  getStockHistory
 } from '../controllers/assetController';
 
 const router = Router();
@@ -34,6 +35,8 @@ router.post('/refresh', requireAuth, refreshAssetValues);
 
 // GET: historical gold prices (last 35 days)
 router.get('/history/gold', requireAuth, getGoldHistory);
+
+router.get('/history/stock/:ticker', requireAuth, getStockHistory);
 
 
 export default router;

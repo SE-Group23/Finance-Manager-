@@ -26,10 +26,15 @@ export interface UpdateAssetDTO extends CreateAssetDTO {
 }
 
 export async function getAssetTypeId(name: AssetType): Promise<number> {
+  try{
   const sel = await pool.query(
     `SELECT asset_type_id FROM asset_types WHERE asset_type_name=$1`, [name]
   );
   if (sel.rowCount) return sel.rows[0].asset_type_id;
+}  catch (e) {
+  console.error("❌ [getAssetTypeId] SELECT failed")
+}
+
   const ins = await pool.query(
     `INSERT INTO asset_types(asset_type_name) VALUES($1) RETURNING asset_type_id`,
     [name]
@@ -40,21 +45,28 @@ export async function getAssetTypeId(name: AssetType): Promise<number> {
 async function getOrCreateMetadata(dto: CreateAssetDTO): Promise<number> {
   const typeId = await getAssetTypeId(dto.assetType);
 
-  if (dto.assetType === AssetType.GOLD) {
-    const unit = dto.assetDetails.unit!;
-    const cur  = dto.assetDetails.currency!;
-    const sel = await pool.query(
-      `SELECT metadata_id FROM asset_metadata
-       WHERE asset_type_id=$1 AND unit=$2 AND currency_code=$3`,
-      [typeId, unit, cur]
-    );
-    if (sel.rowCount) return sel.rows[0].metadata_id;
-    const ins = await pool.query(
-      `INSERT INTO asset_metadata(asset_type_id, unit, currency_code)
-       VALUES($1,$2,$3) RETURNING metadata_id`,
-      [typeId, unit, cur]
-    );
-    return ins.rows[0].metadata_id;
+  try{
+    if (dto.assetType === AssetType.GOLD) {
+      console.log("🔍 [GOLD] Looking for metadata with unit =", dto.assetDetails.unit, "currency =", dto.assetDetails.currency);
+      const unit = "tola";
+      const cur  = "PKR";
+      const sel = await pool.query(
+        `SELECT metadata_id FROM asset_metadata
+        WHERE asset_type_id=$1 AND unit=$2 AND currency_code=$3`,
+        [typeId, unit, cur]
+      );
+      if (sel.rowCount) return sel.rows[0].metadata_id;
+      const ins = await pool.query(
+        `INSERT INTO asset_metadata(asset_type_id, unit, currency_code)
+        VALUES($1,$2,$3) RETURNING metadata_id`,
+        [typeId, unit, cur]
+      );
+      return ins.rows[0].metadata_id;
+    }
+
+  } catch (e) {
+
+    console.error("❌ [getOrCreateMetadata] Failed to get or create metadata:");
   }
 
   if (dto.assetType === AssetType.STOCK) {
@@ -101,56 +113,91 @@ async function getOrCreateMetadata(dto: CreateAssetDTO): Promise<number> {
 }
 
 export async function createAsset(userId: number, dto: CreateAssetDTO) {
+  console.log("📦 [createAsset] Start:", dto.assetType, dto.assetDetails);
+
   // 1) ensure metadata
-  const metadataId = await getOrCreateMetadata(dto);
+  // const metadataId = await getOrCreateMetadata(dto);
+
+   // Step 1
+   let metadataId;
+   try {
+     metadataId = await getOrCreateMetadata(dto);
+     console.log("✅ [createAsset] metadataId:", metadataId);
+   } catch (e) {
+     console.error("❌ [createAsset] getOrCreateMetadata failed:");
+     throw e;
+   }
+ 
 
   // 2) fetch current market price
   let current = dto.purchaseValue;
-  if (dto.assetType === AssetType.GOLD) {
-    // lazy‐cache last 35d history, so next getLatestGoldPrice hits DB first
-    await goldSvc.ensureRecentGoldHistory(dto.assetDetails.unit!, dto.assetDetails.currency!);
-    const live = await goldSvc.getLatestGoldPrice(dto.assetDetails.unit!, dto.assetDetails.currency!);
-    current = live * dto.quantity;
-  }
-  else if (dto.assetType === AssetType.STOCK) {
-    current = await stockSvc.getStockCurrentValue(dto.assetDetails.ticker!, dto.quantity);
-  }
-  else if (dto.assetType === AssetType.CURRENCY) {
-    // just 1:1 to USD or convert purchaseValue currency→USD
-    const rates = await fxSvc.convertCurrency(dto.quantity, dto.assetDetails.currencyCode!, ['USD']);
-    current = rates.find(r => r.code === 'USD')!.value;
+  try{
+    if (dto.assetType === AssetType.GOLD) {
+      // lazy‐cache last 35d history, so next getLatestGoldPrice hits DB first
+      console.log("⛏ [createAsset] Getting gold price...");
+      const live = await goldSvc.getLatestGoldPrice("tola", "PKR");
+      await goldSvc.ensureRecentGoldHistory("tola", "PKR");
+      console.log("✅ [createAsset] Live gold price:", live);
+      current = live * dto.quantity;
+    }
+    else if (dto.assetType === AssetType.STOCK) {
+      current = await stockSvc.getStockCurrentValue(dto.assetDetails.ticker!, dto.quantity);
+    }
+    else if (dto.assetType === AssetType.CURRENCY) {
+      // just 1:1 to USD or convert purchaseValue currency→USD
+      const rates = await fxSvc.convertCurrency(dto.quantity, dto.assetDetails.currencyCode!, ['USD']);
+      current = rates.find(r => r.code === 'USD')!.value;
+    }
+  } catch (e) {
+    console.error("❌ [createAsset] Failed to fetch current value:");
+    throw e;
   }
 
   // 3) insert into assets
-  const { rows } = await pool.query(
-    `INSERT INTO assets(user_id,metadata_id,quantity,purchase_value,current_value,acquired_on,value_currency)
-     VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
-    [
-      userId,
-      metadataId,
-      dto.quantity,
-      dto.purchaseValue,
-      current,
-      dto.acquiredOn ? new Date(dto.acquiredOn) : new Date(),
-      // store value currency for display (for gold it’s PKR, stock metadata has currency, for currency asset store code)
-      dto.assetType === AssetType.GOLD
-        ? dto.assetDetails.currency
-        : dto.assetType === AssetType.STOCK
-          ? (await stockSvc.getTickerMeta(dto.assetDetails.ticker!))!.currency
-          : dto.assetDetails.currencyCode
-    ]
-  );
-  const asset = rows[0];
+  let asset;
+  try{
+    const { rows } = await pool.query(
+      `INSERT INTO assets(user_id,metadata_id,quantity,purchase_value,current_value,acquired_on,value_currency)
+      VALUES($1,$2,$3,$4,$5,$6,$7) RETURNING *`,
+      [
+        userId,
+        metadataId,
+        dto.quantity,
+        dto.purchaseValue,
+        current,
+        dto.acquiredOn ? new Date(dto.acquiredOn) : new Date(),
+        // store value currency for display (for gold it’s PKR, stock metadata has currency, for currency asset store code)
+        dto.assetType === AssetType.GOLD
+          ? "PKR"
+          : dto.assetType === AssetType.STOCK
+            ? (await stockSvc.getTickerMeta(dto.assetDetails.ticker!))!.currency
+            : dto.assetDetails.currencyCode
+      ]
+    );
+    asset = rows[0];
+    console.log("✅ [createAsset] Inserted asset:", rows[0]);
+  } catch (e) {
+    console.error("❌ [createAsset] Failed to insert asset into DB:");
+    throw e;
+  }
+
 
   // 4) record history
-  await pool.query(
-    `INSERT INTO asset_history(asset_id,value_date,recorded_value)
-     VALUES($1,CURRENT_DATE,$2)
-     ON CONFLICT(asset_id,value_date) DO UPDATE SET recorded_value=EXCLUDED.recorded_value`,
-    [asset.asset_id, current]
-  );
+  try{
+    await pool.query(
+      `INSERT INTO asset_history(asset_id,value_date,recorded_value)
+      VALUES($1,CURRENT_DATE,$2)
+      ON CONFLICT(asset_id,value_date) DO UPDATE SET recorded_value=EXCLUDED.recorded_value`,
+      [asset.asset_id, current]
+    );
+    console.log("📈 [createAsset] Asset history recorded.");
+    
+  } catch (e) {
+    console.warn("⚠️ [createAsset] Failed to insert history:");
+  }
 
   return asset;
+  
 }
 
 export async function updateAsset(userId: number, dto: UpdateAssetDTO) {
@@ -158,8 +205,8 @@ export async function updateAsset(userId: number, dto: UpdateAssetDTO) {
   const metadataId = await getOrCreateMetadata(dto);
   let current = dto.purchaseValue;
   if (dto.assetType === AssetType.GOLD) {
-    await goldSvc.ensureRecentGoldHistory(dto.assetDetails.unit!, dto.assetDetails.currency!);
-    const live = await goldSvc.getLatestGoldPrice(dto.assetDetails.unit!, dto.assetDetails.currency!);
+    await goldSvc.ensureRecentGoldHistory("tola", "PKR");
+    const live = await goldSvc.getLatestGoldPrice("tola", "PKR");
     current = live * dto.quantity;
   }
   else if (dto.assetType === AssetType.STOCK) {
@@ -183,7 +230,7 @@ export async function updateAsset(userId: number, dto: UpdateAssetDTO) {
       current,
       dto.acquiredOn ? new Date(dto.acquiredOn) : new Date(),
       dto.assetType===AssetType.GOLD
-        ? dto.assetDetails.currency
+        ? "PKR"
         : dto.assetType===AssetType.STOCK
           ? (await stockSvc.getTickerMeta(dto.assetDetails.ticker!))!.currency
           : dto.assetDetails.currencyCode,
@@ -229,7 +276,7 @@ export async function refreshAssetValues(userId: number) {
   await Promise.all(assets.map(async a => {
     let newVal = a.purchase_value;
     if (a.asset_type===AssetType.GOLD) {
-      newVal = (await goldSvc.getLatestGoldPrice(a.unit, a.currency)) * a.quantity;
+      newVal = (await goldSvc.getLatestGoldPrice("tola", "PKR")) * a.quantity;
     } else if (a.asset_type===AssetType.STOCK) {
       newVal = await stockSvc.getStockCurrentValue(a.ticker, a.quantity);
     } else {
@@ -289,7 +336,7 @@ export async function getPortfolioSummary(userId: number) {
 }
 
 /// expose gold history endpoint
-export async function getGoldHistory(unit: GoldUnit, currency: Currency) {
+export async function getGoldHistory(unit: "tola", currency: "PKR") {
   await goldSvc.ensureRecentGoldHistory(unit,currency);
   return goldSvc.getHistoricalGoldPrices(unit,currency);
 }

@@ -1,13 +1,13 @@
 export enum AssetType {
-  GOLD = "GOLD",
-  STOCK = "STOCK",
-  CURRENCY = "CURRENCY",
+  GOLD     = 'gold',
+  STOCK    = 'stock',
+  CURRENCY = 'currency',
 }
 
 export enum GoldUnit {
-  GRAM = "GRAM",
-  OUNCE = "OUNCE",
-  TOLA = "TOLA",
+  GRAM  = 'gram',
+  TOLA  = 'tola',
+  OUNCE = 'ounce',
 }
 
 export enum Currency {

@@ -8,45 +8,78 @@ import PriceChart from "../components//assets/PriceChart"
 import Sidebar from "../components/Sidebar"
 import AssetDistribution from "../components/assets/AssetDistribution"
 
+import { 
+  getUserAssets, 
+  getPortfolioSummary, 
+  getGoldHistory,
+  refreshAssetValues ,
+  getStockHistory
+} from "../services/assetService";
+
 export default function AssetPage() {
   const [assets, setAssets] = useState<any[]>([])
   const [summary, setSummary] = useState<any>(null)
   const [goldHistory, setGoldHistory] = useState<any[]>([])
   const [stockHistory, setStockHistory] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-
   const fetchData = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const assetsResponse = await fetch("/api/assets")
-      const assetsData = await assetsResponse.json()
-      setAssets(assetsData)
-
-      const summaryResponse = await fetch("/api/assets/summary")
-      const summaryData = await summaryResponse.json()
-      setSummary(summaryData)
-
-      const goldResponse = await fetch("/api/gold")
-      const goldData = await goldResponse.json()
-      setGoldHistory(goldData)
-
-      const stockResponse = await fetch("/api/stock")
-      const stockData = await stockResponse.json()
-      setStockHistory(stockData)
+      const assetsResponse = await getUserAssets();
+      setAssets(assetsResponse);
+  
+      const summaryResponse = await getPortfolioSummary();
+      setSummary(summaryResponse);
+  
+      // Fetch Gold history only if user has gold assets
+      if (assetsResponse.some(a => a.asset_type === "GOLD")) {
+        const goldData = await getGoldHistory();
+        setGoldHistory(goldData);
+      }
+  
+      // Stock data
+      const stockAssets = assetsResponse.filter(a => a.asset_type === "STOCK");
+      if (stockAssets.length > 0) {
+        const ticker = stockAssets[0].asset_details?.ticker;
+        const today = new Date();
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setMonth(today.getMonth() - 1);
+        const from = oneMonthAgo.toISOString().split('T')[0];
+        const to = today.toISOString().split('T')[0];
+  
+        const stockData = await getStockHistory(ticker, from, to);
+        setStockHistory(stockData);
+      }
     } catch (error) {
-      console.error("Failed to fetch data:", error)
+      console.error("Failed to fetch data:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
+  
 
   useEffect(() => {
     fetchData()
   }, [])
 
-  const handleRefresh = () => {
-    fetchData()
+  // In AssetPage.tsx, add this function:
+const handleRefresh = async () => {
+  setLoading(true);
+  try {
+    const refreshedAssets = await refreshAssetValues();
+    setAssets(refreshedAssets);
+    
+    const summaryData = await getPortfolioSummary();
+    setSummary(summaryData);
+    
+    // Refresh other data
+    fetchData();
+  } catch (error) {
+    console.error("Failed to refresh data:", error);
+  } finally {
+    setLoading(false);
   }
+};
 
   return (
     <div className="flex h-screen">
