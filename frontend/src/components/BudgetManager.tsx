@@ -13,6 +13,7 @@ import {
   type Budget,
   type CategoryLimit,
 } from "../services/budgetService"
+import LoadingScreen from "./LoadingScreen"
 
 export default function BudgetManagerContent() {
   const [budgets, setBudgetsState] = useState<Budget[]>([])
@@ -27,6 +28,7 @@ export default function BudgetManagerContent() {
   const [newIncomeAmount, setNewIncomeAmount] = useState<string>("")
   const [showAlertSettings, setShowAlertSettings] = useState(false)
   const [alertThreshold, setAlertThreshold] = useState<number>(100)
+  const [formLoading, setFormLoading] = useState(false)
 
   // Colors for different categories
   const categoryColors: Record<string, string> = {
@@ -140,8 +142,7 @@ export default function BudgetManagerContent() {
       setError("Failed to delete budget. Please try again.")
     }
   }
-
-  // Handle adding a new category
+  
   const handleAddCategory = async () => {
     try {
       if (!newCategory.name.trim()) {
@@ -155,7 +156,8 @@ export default function BudgetManagerContent() {
         return
       }
 
-      // Prepare the category limit for the API
+      setFormLoading(true)
+
       const categoryLimit: CategoryLimit = {
         category: newCategory.name,
         limit: amount,
@@ -163,10 +165,8 @@ export default function BudgetManagerContent() {
 
       await setBudgets(getCurrentMonthStart(), [categoryLimit])
 
-      // Refresh budgets from the server
       await fetchBudgets()
 
-      // Reset form
       setNewCategory({ name: "", budget: "" })
       setShowAddCategory(false)
       setError(null)
@@ -176,53 +176,10 @@ export default function BudgetManagerContent() {
     }
   }
 
-  // Handle editing monthly income
-  const handleEditIncome = () => {
-    setEditingIncome(true)
-    setNewIncomeAmount(monthlyIncome.toString())
-  }
-
-  // Handle saving monthly income
-  const handleSaveIncome = async () => {
-    try {
-      const amount = Number.parseFloat(newIncomeAmount)
-      if (isNaN(amount) || amount < 0) {
-        setError("Please enter a valid income amount.")
-        return
-      }
-
-      await updateMonthlyIncome(amount)
-      setMonthlyIncome(amount)
-      setEditingIncome(false)
-      setError(null)
-    } catch (err) {
-      console.error("Error updating income:", err)
-      setError("Failed to update income. Please try again.")
-    }
-  }
-
-  // Handle saving alert settings
-  const handleSaveAlertSettings = async () => {
-    try {
-      if (alertThreshold < 0 || alertThreshold > 200) {
-        setError("Please enter a valid threshold between 0 and 200.")
-        return
-      }
-
-      await updateAlertSettings(alertThreshold)
-      setShowAlertSettings(false)
-      setError(null)
-    } catch (err) {
-      // console.error("Error updating alert settings:", err)
-      // setError("Failed to update alert settings. Please try again.")
-    }
-  }
-
-  // Calculate budget statistics
   const { totalBudget, totalSpent, remainingBudget, spentPercentage } = calculateBudgetStats(budgets)
 
   if (loading) {
-    return <div className="p-6 text-center">Loading budget data...</div>
+    return <LoadingScreen fullScreen={false} />
   }
 
   return (
@@ -231,15 +188,8 @@ export default function BudgetManagerContent() {
         <h1 className="text-2xl font-bold text-gray-900">Budget Manager</h1>
         <div className="flex gap-2">
           <button
-            onClick={() => setShowAlertSettings(true)}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
-          >
-            <Bell className="h-4 w-4" />
-            Alert Settings
-          </button>
-          <button
             onClick={() => setShowAddCategory(true)}
-            className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+            className="bg-navbar hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
           >
             <Plus className="h-4 w-4" />
             Add Category
@@ -251,47 +201,8 @@ export default function BudgetManagerContent() {
 
       {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">{error}</div>}
 
-      {/* Alert Settings Form */}
-      {showAlertSettings && (
-        <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-gray-900">Alert Settings</h2>
-            <button onClick={() => setShowAlertSettings(false)} className="text-gray-500 hover:text-gray-700">
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-
-          <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">Alert Threshold (% of budget limit)</label>
-            <input
-              type="number"
-              value={alertThreshold}
-              onChange={(e) => setAlertThreshold(Number(e.target.value))}
-              className="w-full p-2 border border-gray-300 rounded-md"
-              min="0"
-              max="200"
-              step="1"
-            />
-            <p className="text-sm text-gray-500 mt-1">
-              You will be alerted when spending reaches {alertThreshold}% of your budget limit.
-            </p>
-          </div>
-
-          <div className="flex justify-end">
-            <button
-              onClick={handleSaveAlertSettings}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
-            >
-              <Check className="h-4 w-4" />
-              Save Settings
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Add Category Form */}
       {showAddCategory && (
-        <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
+        <div className="bg-white text-black p-6 rounded-2xl shadow mb-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-gray-900">Add New Budget Category</h2>
             <button onClick={() => setShowAddCategory(false)} className="text-gray-500 hover:text-gray-700">
@@ -327,7 +238,7 @@ export default function BudgetManagerContent() {
           <div className="flex justify-end">
             <button
               onClick={handleAddCategory}
-              className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+              className="bg-navbar hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
             >
               <Check className="h-4 w-4" />
               Save Category
@@ -336,42 +247,9 @@ export default function BudgetManagerContent() {
         </div>
       )}
 
-      {/* Monthly Income Card
-      <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-900">Monthly Income</h2>
-          {!editingIncome ? (
-            <button onClick={handleEditIncome} className="text-gray-500 hover:text-gray-700">
-              <Edit className="h-5 w-5" />
-            </button>
-          ) : (
-            <button onClick={handleSaveIncome} className="text-green-500 hover:text-green-600">
-              <Save className="h-5 w-5" />
-            </button>
-          )}
-        </div>
-
-        {editingIncome ? (
-          <div className="flex items-center">
-            <span className="text-gray-700 mr-2">$</span>
-            <input
-              type="number"
-              value={newIncomeAmount}
-              onChange={(e) => setNewIncomeAmount(e.target.value)}
-              className="w-full p-2 border border-gray-300 rounded-md"
-              min="0"
-              step="0.01"
-            />
-          </div>
-        ) : (
-          <div className="text-3xl font-bold text-gray-900">${monthlyIncome.toLocaleString()}</div>
-        )}
-        <p className="text-sm text-gray-500 mt-1">Your monthly income helps calculate your overall budget health.</p>
-      </div> */}
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        {/* This Month Card */}
-        <div className="lg:col-span-2 bg-[#003c36] text-black p-6 rounded-lg">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* This Month */}
+          <div className="bg-navbar text-white p-6 rounded-2xl shadow h-80">
           <h2 className="text-xl font-semibold mb-4">This Month</h2>
 
           <div className="flex flex-wrap justify-between mb-4">
@@ -380,7 +258,7 @@ export default function BudgetManagerContent() {
               <div className="text-4xl font-bold">${remainingBudget.toLocaleString()}</div>
             </div>
             <div className="text-right">
-              <div className="flex gap-8">
+              <div className="flex gap-8 mt-2.5">
                 <div>
                   <div className="text-sm text-black-300">Total</div>
                   <div className="text-xl font-semibold">${totalBudget.toLocaleString()}</div>
@@ -393,35 +271,39 @@ export default function BudgetManagerContent() {
             </div>
           </div>
 
-          {/* Progress Bar */}
-          <div className="relative h-4 bg-[#004a42] rounded-full overflow-hidden mb-2">
-            <div
-              className={`absolute top-0 left-0 h-full ${
-                spentPercentage >= alertThreshold ? "bg-red-500" : "bg-gradient-to-r from-yellow-300 to-green-400"
-              }`}
-              style={{ width: `${spentPercentage}%` }}
-            ></div>
-          </div>
-          <div className="flex justify-between items-center">
-            <div>
-              {spentPercentage >= alertThreshold && (
-                <div className="flex items-center text-red-300">
-                  <Bell className="h-4 w-4 mr-1" />
-                  Alert: Spending exceeds {alertThreshold}% of budget
-                </div>
-              )}
+          {/* Progress Bar-*/}
+          <div className="flex items-center mt-14 mb-4">
+            <div className="relative h-6 bg-[#004a42] rounded-full overflow-hidden flex-grow mr-4">
+              <div
+                className={`absolute top-0 left-0 h-full ${
+                  spentPercentage >= alertThreshold ? "bg-red-500" : "bg-gradient-to-r from-yellow-300 to-green-400"
+                }`}
+                style={{ width: `${spentPercentage}%` }}
+              ></div>
+              <div 
+                className="absolute top-0 right-0 h-full bg-white" 
+                style={{ width: `${100 - spentPercentage}%` }}
+              ></div>
             </div>
-            <div className="text-xl font-semibold">{spentPercentage}%</div>
+            <div className="text-xl font-semibold whitespace-nowrap">{spentPercentage}%</div>
+          </div>
+          <div>
+            {spentPercentage >= alertThreshold && (
+              <div className="flex items-center text-red-300">
+                <Bell className="h-4 w-4 mr-1" />
+                Alert: Spending exceeds {alertThreshold}% of budget
+              </div>
+            )}
           </div>
         </div>
 
         {/* Summary Card */}
-        <div className="bg-white p-6 rounded-lg shadow-sm">
-          <h2 className="text-xl font-semibold mb-4 text-gray-900">Summary</h2>
+        <div className="bg-white text-white p-6 rounded-2xl shadow h-80">
+          <h2 className="text-l font-semibold mb-4 text-gray-500">Summary</h2>
           <div className="flex justify-center mb-4">
             <DonutChart categories={budgets} />
           </div>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-5 gap-0.2">
             {budgets.map((category, index) => (
               <div key={index} className="flex items-center gap-2 text-sm text-gray-900">
                 <div className="w-3 h-3 rounded-full" style={{ backgroundColor: category.color }}></div>
@@ -433,17 +315,17 @@ export default function BudgetManagerContent() {
       </div>
 
       {/* Monthly Budget by Category */}
-      <div className="bg-white p-6 rounded-lg shadow-sm mb-6">
-        <h2 className="text-xl font-semibold mb-4 text-gray-900">Monthly Budget by Category</h2>
+      <div className="bg-white text-white p-6 rounded-2xl shadow mb-6">
+        <h2 className="text-l font-semibold mb-4 text-gray-500">Monthly Budget by Category</h2>
 
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="text-left text-gray-500 border-b">
                 <th className="pb-2">Name</th>
-                <th className="pb-2">Used</th>
-                <th className="pb-2"></th>
-                <th className="pb-2 text-right">Remaining</th>
+                <th className="pb-2 text-center">Used</th>
+                <th className="pb-2 text-center">% Used</th>
+                <th className="pb-2 text-center">Remaining</th>
                 <th className="pb-2 text-center">Alerts</th>
                 <th className="pb-2"></th>
               </tr>
@@ -485,16 +367,12 @@ export default function BudgetManagerContent() {
                       </div>
                     </td>
                     <td className="py-4 text-center text-gray-900">{percentUsed}%</td>
-                    <td className={`py-4 text-right font-bold ${isOverBudget ? "text-red-500" : "text-gray-900"}`}>
+                    <td className={`py-4 text-center font-bold ${isOverBudget ? "text-red-500" : "text-gray-900"}`}>
                       {isOverBudget ? "-" : ""}${Math.abs(remaining)}
-                      {isOverBudget && <span className="ml-2 text-red-500 text-sm">Limit exceeded!</span>}
+                      
                     </td>
                     <td className="py-4 text-center">
-                      {/* {category.alert ? (
-                        <Bell className="h-4 w-4 text-blue-500 mx-auto" />
-                      ) : (
-                        <BellOff className="h-4 w-4 text-gray-400 mx-auto" />
-                      )} */}
+                      {isOverBudget && <span className="ml-2 text-red-500 text-sm">Limit exceeded!</span>}
                     </td>
                     <td className="py-4 text-right">
                       <div className="flex justify-end gap-2">
@@ -527,16 +405,13 @@ export default function BudgetManagerContent() {
 }
 
 function DonutChart({ categories }: { categories: any[] }) {
-  // SVG donut chart
   const size = 180
   const strokeWidth = 30
   const radius = (size - strokeWidth) / 2
   const circumference = 2 * Math.PI * radius
 
-  // Calculate total used for percentages
   const totalUsed = categories.reduce((sum, category) => sum + category.spent, 0)
 
-  // Calculate stroke dasharray and dashoffset for each segment
   let accumulatedPercentage = 0
   const segments = categories.map((category) => {
     const percentage = totalUsed > 0 ? category.spent / totalUsed : 0

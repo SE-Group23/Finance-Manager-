@@ -5,7 +5,7 @@ import { requireAuth } from '../middleware/requireAuth';
 
 const router = express.Router();
 
-// Apply authentication middleware to all dashboard routes
+// authentication middleware to all dashboard routes
 router.use(requireAuth);
 
 // Get dashboard data
