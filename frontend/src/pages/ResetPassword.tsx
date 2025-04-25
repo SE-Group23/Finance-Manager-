@@ -62,7 +62,8 @@ const ResetPassword: React.FC = () => {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:5000/api/auth/reset-password", {
+      const API_BASE_URL = `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}`;
+      const res = await fetch(`${API_BASE_URL}/api/auth/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, token, newPassword }),

@@ -1,22 +1,22 @@
-import { Request, Response } from 'express';
+// src/controllers/contactController.ts
+import { Request, Response, RequestHandler } from 'express';
 import { sendContactFormEmail } from '../utils/mailer';
-import { RequestHandler } from 'react-router-dom';
 
-export const submitContactForm = async (req: Request, res: Response) => {
+// Explicitly typing it as RequestHandler
+export const submitContactForm: RequestHandler = async (req: Request, res: Response): Promise<void> => {
   try {
     const { name, email, subject, message } = req.body;
 
-    // Validate inputs
     if (!name || !email || !subject || !message) {
-      return res.status(400).json({ message: 'All fields are required' });
+      res.status(400).json({ message: 'All fields are required' });
+      return; // Explicitly return here
     }
 
-    // Send email
     await sendContactFormEmail(name, email, subject, message);
 
-    return res.status(200).json({ message: 'Email sent successfully' });
+    res.status(200).json({ message: 'Email sent successfully' });
   } catch (error) {
-    console.error('Error sending contact form email:', error);
-    return res.status(500).json({ message: 'Failed to send email' });
+    console.error('Email Error:', error);
+    res.status(500).json({ message: 'Failed to send email' });
   }
 };

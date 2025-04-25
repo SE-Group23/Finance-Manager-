@@ -26,7 +26,8 @@ const ContactPage: React.FC = () => {
     setIsSubmitting(true)
     setSubmitError(null)
     try {
-      const response = await fetch('http://localhost:5000/api/contact/submit', {
+      const apiUrl = `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api/contact/submit`;
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -155,7 +156,7 @@ const ContactPage: React.FC = () => {
                     value={formData.name}
                     onChange={handleChange}
                     required
-                    className="w-full p-3 bg-white/5 border-b border-teal-300 focus:outline-none focus:border-green-400 text-white"
+                    className="w-full p-3 bg-white/5 border-b border-teal-300 focus:outline-none focus:border-green-400 text-black"  // Changed text-white to text-black
                     placeholder="John Doe"
                   />
                 </div>
@@ -171,7 +172,7 @@ const ContactPage: React.FC = () => {
                     value={formData.email}
                     onChange={handleChange}
                     required
-                    className="w-full p-3 bg-white/5 border-b border-teal-300 focus:outline-none focus:border-green-400 text-white"
+                    className="w-full p-3 bg-white/5 border-b border-teal-300 focus:outline-none focus:border-green-400 text-black"  // Changed text-white to text-black
                     placeholder="john@example.com"
                   />
                 </div>
@@ -187,7 +188,7 @@ const ContactPage: React.FC = () => {
                     value={formData.subject}
                     onChange={handleChange}
                     required
-                    className="w-full p-3 bg-white/5 border-b border-teal-300 focus:outline-none focus:border-green-400 text-white"
+                    className="w-full p-3 bg-white/5 border-b border-teal-300 focus:outline-none focus:border-green-400 text-black"  // Changed text-white to text-black
                     placeholder="How can we help?"
                   />
                 </div>
@@ -203,7 +204,7 @@ const ContactPage: React.FC = () => {
                     value={formData.message}
                     onChange={handleChange}
                     required
-                    className="w-full p-3 bg-white/5 border-b border-teal-300 focus:outline-none focus:border-green-400 text-white"
+                    className="w-full p-3 bg-white/5 border-b border-teal-300 focus:outline-none focus:border-green-400 text-black"  // Changed text-white to text-black
                     placeholder="Your message here..."
                   />
                 </div>
