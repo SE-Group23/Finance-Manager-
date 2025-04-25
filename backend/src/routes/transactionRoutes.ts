@@ -1,16 +1,16 @@
 // backend/src/routes/transactionRoutes.ts
 import { Router } from 'express';
 import { requireAuth } from '../middleware/requireAuth';
-import { 
-    createTransaction, 
-    getTransactions, 
-    getTransactionById, 
+import {
+    createTransaction,
+    getTransactions,
+    getTransactionById,
     getTransactionsByDateRange,
-    getTransactionsByType,  
-    updateTransaction, 
+    getTransactionsByType,
+    updateTransaction,
     deleteTransaction,
     getUserCategories
-  } from '../controllers/transactionController';
+} from '../controllers/transactionController';
 
 const router = Router();
 

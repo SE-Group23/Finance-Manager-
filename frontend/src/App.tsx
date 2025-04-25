@@ -13,6 +13,7 @@ import LandingPage from "./pages/LandingPage"
 import ProtectedRoute from "./components/ProtectedRoute"
 import { AuthProvider } from "./contexts/AuthContext"
 import LogoutPage from "./pages/LogoutPage"
+import RecurringCalendarPage from "./pages/RecurringCalendarPage"
 import AssetsPage from "./pages/AssetPage"
 
 const App: React.FC = () => {
@@ -69,7 +70,14 @@ const App: React.FC = () => {
               </ProtectedRoute>
             }
           />
-
+          <Route
+            path="/calendar"
+            element={
+              <ProtectedRoute>
+                <RecurringCalendarPage />
+              </ProtectedRoute>
+            }
+          />
           {/* Fallback route */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

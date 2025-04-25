@@ -10,8 +10,12 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fullcalendar/daygrid": "^6.1.17",
+    "@fullcalendar/interaction": "^6.1.17",
+    "@fullcalendar/react": "^6.1.17",
     "@reduxjs/toolkit": "^2.7.0",
     "axios": "^1.8.4",
+    "date-fns": "^4.1.0",
     "lucide-react": "^0.487.0",
     "path": "^0.12.7",
     "react": "^19.0.0",
