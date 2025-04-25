@@ -30,10 +30,14 @@ const LoginPage: React.FC = () => {
       navigate("/dashboard");
     } catch (err) {
       console.error("Login error:", err);
-      setError("Invalid email or password. Please try again.");
+      setError("Invalid email or password.");
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleForgotPassword = () => {
+    navigate("/forgot-password");
   };
 
   return (
@@ -45,7 +49,7 @@ const LoginPage: React.FC = () => {
             <img
               src={developerImage || "/placeholder.svg"}
               alt="Developer illustration"
-              className="max-w-full max-h-[80%] object-contain"
+              className="max-w-full max-h-80 object-contain"
             />
           </div>
         </div>
@@ -77,7 +81,7 @@ const LoginPage: React.FC = () => {
               />
             </div>
 
-            <div className="mb-10 relative">
+            <div className="mb-6 relative">
               <label htmlFor="password" className="block text-sm font-medium mb-1">
                 Password
               </label>
@@ -96,6 +100,17 @@ const LoginPage: React.FC = () => {
                 className="absolute right-3 top-9 text-gray-400 focus:outline-none"
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
+
+            {/* Forgot Password Link */}
+            <div className="flex justify-end mb-6">
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                className="text-sm text-green-600 hover:text-green-800 hover:underline"
+              >
+                Forgot Password?
               </button>
             </div>
 

@@ -1,22 +1,20 @@
-"use client"
 
 import type React from "react"
-import { useEffect } from "react"
-import { Navigate } from "react-router-dom"
-import { useAuth } from "../contexts/AuthContext"
 
-const LogoutPage: React.FC = () => {
-  const { logout } = useAuth()
+import { useEffect } from "react"
+import { useNavigate } from "react-router-dom"
+import { logoutUser } from "../services/authService"
+
+const LogoutPage = () => {
+  const navigate = useNavigate()
 
   useEffect(() => {
-    const performLogout = async () => {
-      await logout()
-    }
+    logoutUser()
+    console.log("Logging out...")
+    navigate("/login", { replace: true })
+  }, [navigate])
 
-    performLogout()
-  }, [logout])
-
-  return <Navigate to="/login" replace />
+  return null
 }
 
 export default LogoutPage

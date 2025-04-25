@@ -53,7 +53,13 @@ export function NotificationsPanel({
             }).length
 
     return (
-        <div className="bg-calendar-teal text-white rounded-lg p-6">
+        <div
+            className="text-white p-6"
+            style={{
+                background: "linear-gradient(to right, #004052, #006e5f)",
+                borderRadius: "inherit",
+            }}
+        >
             <h2 className="text-xl font-semibold mb-4">Notifications</h2>
 
             <div className="mb-6">

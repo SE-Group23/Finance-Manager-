@@ -602,7 +602,7 @@ export default function RecurringCalendarPage() {
                     <h1 className="text-2xl font-bold">Calendar</h1>
                     <button
                         onClick={() => setIsDeleteAllModalOpen(true)}
-                        className="flex items-center px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                        className="flex items-center px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
                         disabled={isDeleting || isProcessing}
                     >
                         <Trash2 className="h-4 w-4 mr-2" />
@@ -614,37 +614,43 @@ export default function RecurringCalendarPage() {
                 <div className="grid grid-cols-1 gap-6">
                     <div className="grid grid-cols-4 gap-6">
                         <div className="col-span-3">
-                            <NotificationsPanel
-                                key={refreshKey} 
-                                urgentEvents={urgentEvents}
-                                thisWeekEvents={thisWeekEvents}
-                                upcomingEvents={upcomingEvents}
-                                recurringPayments={recurringPayments}
-                                eventAmounts={eventAmounts}
-                                paymentsThisMonth={paymentsThisMonth}
-                            />
+
+                            <div className="rounded-2xl overflow-hidden shadow-lg">
+                                <NotificationsPanel
+                                    key={refreshKey} 
+                                    urgentEvents={urgentEvents}
+                                    thisWeekEvents={thisWeekEvents}
+                                    upcomingEvents={upcomingEvents}
+                                    recurringPayments={recurringPayments}
+                                    eventAmounts={eventAmounts}
+                                    paymentsThisMonth={paymentsThisMonth}
+                                />
+                            </div>
+
                         </div>
 
                         <div>
                             <button
                                 onClick={handleAddEvent}
-                                className="h-40 w-full bg-calendar-highlight hover:bg-opacity-90 rounded-lg flex flex-col items-center justify-center transition-colors"
+                                className="h-40 w-full rounded-2xl flex flex-col items-center justify-center transition-colors shadow-lg bg-gradient-to-r from-calendar-highlight to-calendar-highlightHover"
                                 disabled={isDeleting || isProcessing}
                             >
                                 <Plus className="h-12 w-12 text-black mb-2" />
-                                <span className="text-lg font-medium">Add event</span>
+                                <span className="text-lg font-medium text-black">Add event</span>
                             </button>
                         </div>
                     </div>
 
-                    <div className="mt-6">
+
+                    <div className="mt-6 bg-white rounded-2xl p-6 shadow-lg">
+
                         <div className="flex items-center justify-between mb-4">
                             <h2 className="text-xl font-medium">{format(currentDate, "MMMM yyyy")}</h2>
                             <div className="flex space-x-2">
-                                <button onClick={prevMonth} className="p-1" aria-label="Previous month">
+                                <button onClick={prevMonth} className="p-1 rounded-full hover:bg-gray-100" aria-label="Previous month">
                                     <ChevronLeft className="h-5 w-5" />
                                 </button>
-                                <button onClick={nextMonth} className="p-1" aria-label="Next month">
+                                <button onClick={nextMonth} className="p-1 rounded-full hover:bg-gray-100" aria-label="Next month">
                                     <ChevronRight className="h-5 w-5" />
                                 </button>
                             </div>
@@ -667,36 +673,29 @@ export default function RecurringCalendarPage() {
                                     <div
                                         key={index}
                                         className={`h-24 p-2 rounded-md ${isCurrentDay
-                                                ? "bg-calendar-highlight"
+                                                ? "bg-calendar-highlight" 
                                                 : day.isCurrentMonth
-                                                    ? "bg-calendar-mint"
+                                                    ? "bg-gray-50"
                                                     : "bg-gray-100 opacity-70"
                                             } relative`}
                                     >
-                                        <div className="text-sm font-medium">{dayNumber}</div>
+                                        <div
+                                            className={`text-sm font-medium ${isCurrentDay ? "bg-calendar-highlight rounded-full h-6 w-6 flex items-center justify-center" : ""}`}
+                                        >
+                                            {dayNumber}
+                                        </div>
                                         <div className="mt-1 space-y-1 overflow-y-auto max-h-[60px]">
-                                            {dayEvents.map((event, eventIndex) => {
-                                                const eventType = event.event_type
-                                                let bgColor = "bg-calendar-event"
 
-                                                if (eventType === "recurring_due" || eventType === "recurring_payment") {
-                                                    bgColor = "bg-calendar-event" 
-                                                } else if (event.event_title.toLowerCase().includes("fee")) {
-                                                    bgColor = "bg-calendar-event" 
-                                                } else if (event.event_title.toLowerCase().includes("groceries")) {
-                                                    bgColor = "bg-calendar-event" 
-                                                }
+                                            {dayEvents.map((event, eventIndex) => (
+                                                <div
+                                                    key={eventIndex}
+                                                    onClick={() => handleEventClick(event)}
+                                                    className="text-xs p-1 px-2 rounded-md truncate cursor-pointer bg-calendar-event hover:bg-calendar-eventHover"
+                                                >
+                                                    {event.event_title}
+                                                </div>
+                                            ))}
 
-                                                return (
-                                                    <div
-                                                        key={eventIndex}
-                                                        onClick={() => handleEventClick(event)}
-                                                        className={`text-xs p-1 px-2 rounded-md truncate cursor-pointer ${bgColor}`}
-                                                    >
-                                                        {event.event_title}
-                                                    </div>
-                                                )
-                                            })}
                                         </div>
                                     </div>
                                 )
@@ -725,7 +724,7 @@ export default function RecurringCalendarPage() {
                 />
 
                 {error && (
-                    <div className="fixed bottom-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+                    <div className="fixed bottom-4 right-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg">
                         <p>{error}</p>
                         <button className="absolute top-0 right-0 p-2" onClick={() => setError(null)}>
                             &times;
@@ -734,7 +733,7 @@ export default function RecurringCalendarPage() {
                 )}
 
                 {isLoading && (
-                    <div className="fixed bottom-4 left-4 bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded">
+                    <div className="fixed bottom-4 left-4 bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded-lg">
                         <p>Processing...</p>
                     </div>
                 )}
