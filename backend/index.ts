@@ -7,6 +7,7 @@ import transactionRoutes from './src/routes/transactionRoutes';
 import budgetRoutes from './src/routes/budgetRoutes';
 import chatbotRoutes from './src/routes/chatbotRoutes';
 import dashboardRoutes from './src/routes/dashboardRoutes';
+import zakatTaxRoutes from './src/routes/zakatTaxRoutes';
 import recurringRoutes from './src/routes/recurringRoutes';
 import calendarRoutes from './src/routes/calendarRoutes';
 
@@ -26,6 +27,7 @@ app.use('/api/transactions', transactionRoutes);
 app.use('/api/budgets', budgetRoutes);
 app.use('/api/chatbot', chatbotRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/zakat-tax', zakatTaxRoutes);
 app.use('/api/recurring-payments', recurringRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/assets',   assetRoutes);  

@@ -13,8 +13,11 @@ import LandingPage from "./pages/LandingPage"
 import ProtectedRoute from "./components/ProtectedRoute"
 import { AuthProvider } from "./contexts/AuthContext"
 import LogoutPage from "./pages/LogoutPage"
+import ZakatTaxPage from "./pages/ZakatTaxPage"
+
 import RecurringCalendarPage from "./pages/RecurringCalendarPage"
 import AssetsPage from "./pages/AssetPage"
+
 
 const App: React.FC = () => {
   return (
@@ -70,6 +73,16 @@ const App: React.FC = () => {
               </ProtectedRoute>
             }
           />
+          
+          <Route
+            path="/zakat-tax"
+            element={
+              <ProtectedRoute>
+                <ZakatTaxPage />
+              </ProtectedRoute>
+            }
+          />
+
           <Route
             path="/calendar"
             element={
