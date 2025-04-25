@@ -1,95 +1,69 @@
-// //frontend/src/services/transactionService.ts
-
 import axios from "axios"
 
 const API_URL = `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api/transactions`
 
-
 export interface Transaction {
-    transaction_id: number
-    user_id: number
-    amount: number
-    transaction_type: "credit" | "debit"
-    vendor?: string
-    description?: string
-    transaction_date: string
-    payment_method?: string
-    category_id: number
-    category_name: string
-  }
-
-export interface NewTransaction {
-  user_id: number
+  transaction_id: number
   amount: number
+  category: string
   transaction_type: "credit" | "debit"
-  category_id: number
   vendor?: string
-  description?: string
-  payment_method?: string
+  note?: string
   transaction_date: string
 }
 
-// Fetch all transactions
-export async function fetchTransactions() {
-  const token = localStorage.getItem("token")
-
-  const response = await axios.get(API_URL, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
-
-  return response.data as Transaction[]
+export interface TransactionInput {
+  amount: number
+  category: string
+  vendor?: string
+  note?: string
+  transactionDate?: string
+  transaction_type: "credit" | "debit"
 }
 
-// Fetch a single transaction
-export async function fetchTransactionById(transactionId: number) {
+export const getTransactions = async (): Promise<Transaction[]> => {
   const token = localStorage.getItem("token")
-
-  const response = await axios.get(`${API_URL}/${transactionId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
-
-  return response.data as Transaction
+  try {
+    const response = await axios.get(API_URL, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    return response.data
+  } catch (error) {
+    throw error
+  }
 }
 
-// Create
-export async function createTransaction(transactionData: NewTransaction) {
+export const createTransaction = async (transaction: TransactionInput): Promise<Transaction> => {
   const token = localStorage.getItem("token")
-
-  const response = await axios.post(API_URL, transactionData, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
-
-  return response.data as Transaction
+  try {
+    const response = await axios.post(API_URL, transaction, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    return response.data
+  } catch (error) {
+    throw error
+  }
 }
 
-// Update
-export async function updateTransaction(transactionId: number, transactionData: NewTransaction) {
+export const updateTransaction = async (id: number, transaction: TransactionInput): Promise<Transaction> => {
   const token = localStorage.getItem("token")
-
-  const response = await axios.put(`${API_URL}/${transactionId}`, transactionData, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
-
-  return response.data as Transaction
+  try {
+    const response = await axios.put(`${API_URL}/${id}`, transaction, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    return response.data
+  } catch (error) {
+    throw error
+  }
 }
 
-// Delete
-export async function deleteTransaction(transactionId: number) {
+export const deleteTransaction = async (id: number): Promise<void> => {
   const token = localStorage.getItem("token")
-
-  const response = await axios.delete(`${API_URL}/${transactionId}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  })
-
-  return response.data
+  try {
+    await axios.delete(`${API_URL}/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+  } catch (error) {
+    throw error
+  }
 }

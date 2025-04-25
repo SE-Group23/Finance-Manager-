@@ -1,13 +1,10 @@
 import axios from "axios"
 import type { Asset, PortfolioSummary } from "../types/asset"
 
-// Match the budget service pattern exactly
 const API_URL = `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api/assets`
 
-// Add this at the top of your assetService.ts
 console.log("Asset API URL:", `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api/assets`);
 
-// Get all assets for the user
 export const getUserAssets = async (): Promise<Asset[]> => {
   const token = localStorage.getItem("token")
   const response = await axios.get(API_URL, {
@@ -18,7 +15,6 @@ export const getUserAssets = async (): Promise<Asset[]> => {
   return response.data
 }
 
-// Get portfolio summary
 export const getPortfolioSummary = async (): Promise<PortfolioSummary> => {
   const token = localStorage.getItem("token")
   const response = await axios.get(`${API_URL}/summary`, {
@@ -29,7 +25,6 @@ export const getPortfolioSummary = async (): Promise<PortfolioSummary> => {
   return response.data
 }
 
-// Create a new asset
 export const createAsset = async (assetData: any): Promise<Asset> => {
   const token = localStorage.getItem("token")
   const response = await axios.post(API_URL, assetData, {
@@ -40,7 +35,6 @@ export const createAsset = async (assetData: any): Promise<Asset> => {
   return response.data
 }
 
-// Update an existing asset
 export const updateAsset = async (assetId: number, assetData: any): Promise<Asset> => {
   const token = localStorage.getItem("token")
   const response = await axios.put(`${API_URL}/${assetId}`, assetData, {
@@ -51,7 +45,6 @@ export const updateAsset = async (assetId: number, assetData: any): Promise<Asse
   return response.data
 }
 
-// Delete an asset
 export const deleteAsset = async (assetId: number): Promise<void> => {
   const token = localStorage.getItem("token")
   await axios.delete(`${API_URL}/${assetId}`, {
@@ -61,7 +54,6 @@ export const deleteAsset = async (assetId: number): Promise<void> => {
   })
 }
 
-// Refresh asset values
 export const refreshAssetValues = async (): Promise<Asset[]> => {
   const token = localStorage.getItem("token")
   const response = await axios.post(`${API_URL}/refresh`, {}, {
@@ -72,7 +64,6 @@ export const refreshAssetValues = async (): Promise<Asset[]> => {
   return response.data
 }
 
-// Get gold price history
 export const getGoldHistory = async (): Promise<any[]> => {
   try {
     const token = localStorage.getItem("token");
@@ -88,7 +79,6 @@ export const getGoldHistory = async (): Promise<any[]> => {
   }
 };
 
-// Get stock price history
 export const getStockHistory = async (ticker: string, from: string, to: string, timespan = "day"): Promise<any[]> => {
   try {
     const token = localStorage.getItem("token")
@@ -109,7 +99,6 @@ export const getStockHistory = async (ticker: string, from: string, to: string, 
   }
 }
 
-// Get currency exchange rates
 export const getCurrencyRates = async (baseCurrency: string): Promise<any> => {
   try {
     const token = localStorage.getItem("token")
