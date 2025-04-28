@@ -1,164 +1,71 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect } from "react"
 import { Edit, X, Plus, Save, Check, Bell } from "lucide-react"
-import {
-  getBudgets,
-  setBudgets,
-  deleteBudget,
-  getCurrentMonthStart,
-  calculateBudgetStats,
-  type Budget,
-  type CategoryLimit,
-} from "../services/budgetService"
+import { calculateBudgetStats } from "../services/budgetService"
 import LoadingScreen from "./LoadingScreen"
+import { useAppDispatch, useAppSelector } from "../hooks"
+import {
+  fetchBudgets,
+  saveBudget,
+  removeBudget,
+  addBudgetCategory,
+  setEditingIndex,
+  setNewBudgetAmount,
+  setShowAddCategory,
+  setNewCategory,
+} from "../store/slices/budgetSlice"
 
 export default function BudgetManagerContent() {
-  const [budgets, setBudgetsState] = useState<Budget[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [editingIndex, setEditingIndex] = useState<number | null>(null)
-  const [newBudgetAmount, setNewBudgetAmount] = useState<string>("")
-  const [showAddCategory, setShowAddCategory] = useState(false)
-  const [newCategory, setNewCategory] = useState({ name: "", budget: "" })
-  const [monthlyIncome, setMonthlyIncome] = useState<number>(0)
-
-  const [alertThreshold, setAlertThreshold] = useState<number>(100)
-  const [formLoading, setFormLoading] = useState(false)
-
-  const categoryColors: Record<string, string> = {
-    "Food and Drink": "#8FD14F",
-    Personal: "#E88B8B",
-    Income: "#A0D959",
-    Transport: "#C89BF9",
-    Shopping: "#F0A6E8",
-    Entertainment: "#FFA726",
-    "Health and Fitness": "#80DECD",
-    "Bills and Utilities": "#7CD5F9",
-  }
-
-  const getCategoryColor = (categoryName: string) => {
-    if (categoryColors[categoryName]) {
-      return categoryColors[categoryName]
-    }
-
-    const letters = "0123456789ABCDEF"
-    let color = "#"
-    for (let i = 0; i < 6; i++) {
-      color += letters[Math.floor(Math.random() * 16)]
-    }
-    return color
-  }
-
-  const fetchBudgets = async () => {
-    try {
-      setLoading(true)
-      const data = await getBudgets()
-
-      const budgetsWithColor = data.budgets.map((budget: Budget) => ({
-        ...budget,
-        color: getCategoryColor(budget.category_name),
-      }))
-
-      setBudgetsState(budgetsWithColor)
-      setMonthlyIncome(data.monthly_income || 0)
-      setAlertThreshold(data.alert_threshold || 100)
-      setError(null)
-    } catch (err) {
-      console.error("Error fetching budgets:", err)
-      setError("Failed to load budgets. Please try again later.")
-    } finally {
-      setLoading(false)
-    }
-  }
+  const dispatch = useAppDispatch()
+  const {
+    budgets,
+    loading,
+    error,
+    editingIndex,
+    newBudgetAmount,
+    showAddCategory,
+    newCategory,
+    alertThreshold,
+  } = useAppSelector((state) => state.budgets)
 
   useEffect(() => {
-    fetchBudgets()
-  }, [])
-
+    dispatch(fetchBudgets())
+  }, [dispatch])
 
   const handleEdit = (index: number) => {
-    setEditingIndex(index)
-    setNewBudgetAmount(budgets[index].budget_limit.toString())
+    dispatch(setEditingIndex(index))
   }
 
   const handleSave = async (index: number) => {
-    try {
-      const budget = budgets[index]
-      const amount = Number.parseFloat(newBudgetAmount)
+    const amount = Number.parseFloat(newBudgetAmount)
 
-      if (isNaN(amount) || amount <= 0) {
-        setError("Please enter a valid budget amount greater than zero.")
-        return
-      }
-
-      const categoryLimit: CategoryLimit = {
-        category: budget.category_name,
-        limit: amount,
-      }
-
-      await setBudgets(budget.month_start, [categoryLimit])
-
-      const updatedBudgets = [...budgets]
-      updatedBudgets[index] = {
-        ...budget,
-        budget_limit: amount,
-      }
-
-      setBudgetsState(updatedBudgets)
-      setEditingIndex(null)
-      setError(null)
-    } catch (err) {
-      
-      setError("Failed to update budget. Please try again.")
+    if (isNaN(amount) || amount <= 0) {
+      return
     }
+
+    dispatch(saveBudget({ index, amount, budgets }))
   }
 
   const handleDelete = async (index: number) => {
-    try {
-      const budget = budgets[index]
-      await deleteBudget(budget.budget_id)
-
-      const updatedBudgets = budgets.filter((_, i) => i !== index)
-      setBudgetsState(updatedBudgets)
-      setError(null)
-    } catch (err) {
-      
-      setError("Failed to delete budget. Please try again.")
-    }
+    dispatch(removeBudget({ index, budgets }))
   }
-  
+
   const handleAddCategory = async () => {
-    try {
-      if (!newCategory.name.trim()) {
-        setError("Please enter a category name.")
-        return
-      }
-
-      const amount = Number.parseFloat(newCategory.budget)
-      if (isNaN(amount) || amount <= 0) {
-        setError("Please enter a valid budget amount greater than zero.")
-        return
-      }
-
-      setFormLoading(true)
-
-      const categoryLimit: CategoryLimit = {
-        category: newCategory.name,
-        limit: amount,
-      }
-
-      await setBudgets(getCurrentMonthStart(), [categoryLimit])
-
-      await fetchBudgets()
-
-      setNewCategory({ name: "", budget: "" })
-      setShowAddCategory(false)
-      setError(null)
-    } catch (err) {
-     
-      setError("Failed to add category. Please try again.")
+    if (!newCategory.name.trim()) {
+      return
     }
+
+    const amount = Number.parseFloat(newCategory.budget)
+    if (isNaN(amount) || amount <= 0) {
+      return
+    }
+
+    dispatch(addBudgetCategory({ name: newCategory.name, budget: amount }))
+      .unwrap()
+      .then(() => {
+        dispatch(fetchBudgets())
+      })
   }
 
   const { totalBudget, totalSpent, remainingBudget, spentPercentage } = calculateBudgetStats(budgets)
@@ -173,7 +80,7 @@ export default function BudgetManagerContent() {
         <h1 className="text-2xl font-bold text-gray-900">Budget Manager</h1>
         <div className="flex gap-2">
           <button
-            onClick={() => setShowAddCategory(true)}
+            onClick={() => dispatch(setShowAddCategory(true))}
             className="bg-navbar hover:bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
           >
             <Plus className="h-4 w-4" />
@@ -190,7 +97,7 @@ export default function BudgetManagerContent() {
         <div className="bg-white text-black p-6 rounded-2xl shadow mb-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold text-gray-900">Add New Budget Category</h2>
-            <button onClick={() => setShowAddCategory(false)} className="text-gray-500 hover:text-gray-700">
+            <button onClick={() => dispatch(setShowAddCategory(false))} className="text-gray-500 hover:text-gray-700">
               <X className="h-5 w-5" />
             </button>
           </div>
@@ -201,7 +108,7 @@ export default function BudgetManagerContent() {
               <input
                 type="text"
                 value={newCategory.name}
-                onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
+                onChange={(e) => dispatch(setNewCategory({ ...newCategory, name: e.target.value }))}
                 className="w-full p-2 border border-gray-300 rounded-md"
                 placeholder="e.g., Groceries"
               />
@@ -211,7 +118,7 @@ export default function BudgetManagerContent() {
               <input
                 type="number"
                 value={newCategory.budget}
-                onChange={(e) => setNewCategory({ ...newCategory, budget: e.target.value })}
+                onChange={(e) => dispatch(setNewCategory({ ...newCategory, budget: e.target.value }))}
                 className="w-full p-2 border border-gray-300 rounded-md"
                 placeholder="e.g., 200"
                 min="0"
@@ -233,8 +140,7 @@ export default function BudgetManagerContent() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        
-          <div className="bg-navbar text-white p-6 rounded-2xl shadow h-80">
+        <div className="bg-navbar text-white p-6 rounded-2xl shadow h-80">
           <h2 className="text-xl font-semibold mb-4">This Month</h2>
 
           <div className="flex flex-wrap justify-between mb-4">
@@ -264,8 +170,8 @@ export default function BudgetManagerContent() {
                 }`}
                 style={{ width: `${spentPercentage}%` }}
               ></div>
-              <div 
-                className="absolute top-0 right-0 h-full bg-white" 
+              <div
+                className="absolute top-0 right-0 h-full bg-white"
                 style={{ width: `${100 - spentPercentage}%` }}
               ></div>
             </div>
@@ -297,7 +203,7 @@ export default function BudgetManagerContent() {
         </div>
       </div>
 
-      <div className="bg-white text-white p-6 rounded-2xl shadow mb-6">
+      <div className="bg-white text-black p-6 rounded-2xl shadow mb-6">
         <h2 className="text-l font-semibold mb-4 text-gray-500">Monthly Budget by Category</h2>
 
         <div className="overflow-x-auto">
@@ -338,7 +244,7 @@ export default function BudgetManagerContent() {
                           <input
                             type="number"
                             value={newBudgetAmount}
-                            onChange={(e) => setNewBudgetAmount(e.target.value)}
+                            onChange={(e) => dispatch(setNewBudgetAmount(e.target.value))}
                             className="w-20 p-1 border border-gray-300 rounded"
                             min="0"
                             step="0.01"
@@ -351,7 +257,6 @@ export default function BudgetManagerContent() {
                     <td className="py-4 text-center text-gray-900">{percentUsed}%</td>
                     <td className={`py-4 text-center font-bold ${isOverBudget ? "text-red-500" : "text-gray-900"}`}>
                       {isOverBudget ? "-" : ""}${Math.abs(remaining)}
-                      
                     </td>
                     <td className="py-4 text-center">
                       {isOverBudget && <span className="ml-2 text-red-500 text-sm">Limit exceeded!</span>}

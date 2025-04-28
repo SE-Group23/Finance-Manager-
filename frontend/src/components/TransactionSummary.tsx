@@ -36,7 +36,6 @@ const TransactionSummary: React.FC<TransactionSummaryProps> = ({ transactions })
   }
 
   const formatCurrency = (value: number): string => {
-    
     const amount = Number(value)
 
     if (isNaN(amount)) {

@@ -63,7 +63,6 @@ const TransactionItem: React.FC<TransactionItemProps> = ({ transaction, onEdit, 
         <span className={`px-3 py-1 rounded-md text-sm ${getCategoryColor(transaction.category)}`}>
           {transaction.category}
         </span>
-        <span className="text-gray-600">{transaction.note ? "Meezan Bank" : "Cash"}</span>
         <span className="font-bold">{formatAmount(transaction.amount)}</span>
         <div className="flex space-x-2">
           <button onClick={() => onEdit(transaction)} className="text-gray-500 hover:text-gray-700">
