@@ -3,6 +3,7 @@ import authReducer from "./slices/authSlice"
 import dashboardReducer from "./slices/dashboardSlice"
 import transactionReducer from "./slices/transactionSlice"
 import budgetReducer from "./slices/budgetSlice"
+import assetReducer from "./slices/assetSlice"
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     dashboard: dashboardReducer,
     transactions: transactionReducer,
     budgets: budgetReducer,
+    assets: assetReducer,
   },
   // This will allow us to add more reducers later for other components
 })

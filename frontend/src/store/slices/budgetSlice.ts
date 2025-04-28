@@ -148,7 +148,6 @@ const budgetSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Fetch budgets
       .addCase(fetchBudgets.pending, (state) => {
         state.loading = true
         state.error = null
@@ -168,7 +167,6 @@ const budgetSlice = createSlice({
         state.loading = false
         state.error = action.payload as string
       })
-      // Save budget
       .addCase(saveBudget.pending, (state) => {
         state.formLoading = true
         state.error = null
@@ -183,7 +181,6 @@ const budgetSlice = createSlice({
         state.formLoading = false
         state.error = action.payload as string
       })
-      // Remove budget
       .addCase(removeBudget.pending, (state) => {
         state.formLoading = true
         state.error = null
@@ -210,18 +207,15 @@ const budgetSlice = createSlice({
         state.formLoading = false
         state.error = action.payload as string
       })
-      // Set monthly income
       .addCase(setMonthlyIncome.fulfilled, (state, action) => {
         state.monthlyIncome = action.payload
       })
-      // Set alert threshold
       .addCase(setAlertThreshold.fulfilled, (state, action) => {
         state.alertThreshold = action.payload
       })
   },
 })
 
-// Helper function for category colors
 const categoryColors: Record<string, string> = {
   "Food and Drink": "#8FD14F",
   Personal: "#E88B8B",

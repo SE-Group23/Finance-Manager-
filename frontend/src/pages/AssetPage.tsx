@@ -1,83 +1,23 @@
 "use client"
-
-import { RefreshCw } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import AssetList from "../components/assets/AssetList"
 import AssetOverview from "../components/assets/AssetOverview"
 import PriceChart from "../components/assets/PriceChart"
 import Sidebar from "../components/Sidebar"
 import AssetDistribution from "../components/assets/AssetDistribution"
-
-import {
-  getUserAssets,
-  getPortfolioSummary,
-  getGoldHistory,
-  refreshAssetValues,
-  getStockHistory,
-} from "../services/assetService"
+import { useAppDispatch, useAppSelector } from "../hooks"
+import { fetchAllAssetData, refreshAssets } from "../store/slices/assetSlice"
 
 export default function AssetPage() {
-  const [assets, setAssets] = useState<any[]>([])
-  const [summary, setSummary] = useState<any>(null)
-  const [goldHistory, setGoldHistory] = useState<any[]>([])
-  const [stockHistory, setStockHistory] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [selectedStock, setSelectedStock] = useState<string>("")
-
-  const fetchData = async () => {
-    setLoading(true)
-    try {
-      const assetsResponse = await getUserAssets()
-      setAssets(assetsResponse)
-
-      const summaryResponse = await getPortfolioSummary()
-      setSummary(summaryResponse)
-
-      if (assetsResponse.some((a) => a.asset_type.toUpperCase() === "GOLD")) {
-        const goldData = await getGoldHistory()
-        setGoldHistory(goldData)
-      }
-
-      const stockAssets = assetsResponse.filter((a) => a.asset_type.toUpperCase() === "STOCK")
-      if (stockAssets.length > 0) {
-        const ticker = stockAssets[0].asset_details?.ticker
-        setSelectedStock(ticker)
-
-        const today = new Date()
-        const oneMonthAgo = new Date()
-        oneMonthAgo.setMonth(today.getMonth() - 1)
-        const from = oneMonthAgo.toISOString().split("T")[0]
-        const to = today.toISOString().split("T")[0]
-
-        const stockData = await getStockHistory(ticker, from, to)
-        setStockHistory(stockData)
-      }
-    } catch (error) {
-      console.error("Failed to fetch data:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  const dispatch = useAppDispatch()
+  const { assets, summary, goldHistory, stockHistory, selectedStock, loading } = useAppSelector((state) => state.assets)
 
   useEffect(() => {
-    fetchData()
-  }, [])
+    dispatch(fetchAllAssetData())
+  }, [dispatch])
 
   const handleRefresh = async () => {
-    setLoading(true)
-    try {
-      const refreshedAssets = await refreshAssetValues()
-      setAssets(refreshedAssets)
-
-      const summaryData = await getPortfolioSummary()
-      setSummary(summaryData)
-
-      fetchData()
-    } catch (error) {
-      console.error("Failed to refresh data:", error)
-    } finally {
-      setLoading(false)
-    }
+    dispatch(refreshAssets())
   }
 
   const latestGoldPrice = goldHistory.length > 0 ? goldHistory[goldHistory.length - 1]?.price : 0
@@ -100,9 +40,7 @@ export default function AssetPage() {
           <div className="border-b border-gray-200 mb-6"></div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-6">
-           
             <div className="lg:col-span-1 grid grid-rows-[120px_1fr] gap-4 ">
-              
               <div className="bg-white p-6 rounded-2xl shadow flex items-center justify-between">
                 <AssetOverview summary={summary} loading={loading} onRefresh={handleRefresh} />
               </div>
@@ -119,7 +57,6 @@ export default function AssetPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            
             <div className="bg-white p-6 rounded-2xl shadow">
               <h2 className="text-l font-semibold mb-4 text-gray-500">Gold Rate</h2>
               {goldHistory.length > 0 ? (
@@ -154,7 +91,6 @@ export default function AssetPage() {
               </div>
             </div>
 
-       
             <div className="bg-white p-6 rounded-2xl shadow">
               <h2 className="text-l font-semibold mb-4 text-gray-500">
                 Stock Value {selectedStock && `(${selectedStock})`}

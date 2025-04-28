@@ -1,9 +1,7 @@
-// frontend/src/services/budgetService.ts
 import axios from "axios"
 
 const API_URL = `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api/budgets`
 
-// Types for our budget data
 export interface Budget {
   budget_id: number
   category_id: number
