@@ -103,7 +103,6 @@ const LoginPage: React.FC = () => {
               </button>
             </div>
 
-            {/* Forgot Password Link */}
             <div className="flex justify-end mb-6">
               <button
                 type="button"

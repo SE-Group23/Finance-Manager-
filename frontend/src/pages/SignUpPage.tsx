@@ -21,7 +21,6 @@ const SignUpPage: React.FC = () => {
   const [emailValid, setEmailValid] = useState(true);
   const [passwordValid, setPasswordValid] = useState(true);
 
-  // Email regex pattern (simple and effective)
   const validateEmail = (email: string): boolean => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
@@ -161,7 +160,6 @@ const SignUpPage: React.FC = () => {
               </button>
             </div>
 
-            {/* Password strength indicator */}
             <div className="mb-6 text-sm">
               Strength:{" "}
               <span
