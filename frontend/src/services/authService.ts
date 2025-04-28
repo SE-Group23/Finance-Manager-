@@ -2,9 +2,10 @@ import axios from "axios"
 
 const API_URL = `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api/auth`
 
+// Update axios interceptors to use sessionStorage
 axios.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("token")
+    const token = sessionStorage.getItem("token")
     if (token) {
       config.headers["Authorization"] = `Bearer ${token}`
     }
@@ -19,19 +20,19 @@ export async function registerUser(fullName: string, email: string, password: st
   const response = await axios.post(`${API_URL}/register`, { fullName, email, password })
 
   if (response.data.token) {
-    localStorage.setItem("token", response.data.token)
-    localStorage.setItem("userId", response.data.userId.toString())
+    sessionStorage.setItem("token", response.data.token)
+    sessionStorage.setItem("userId", response.data.userId.toString())
   }
 
-  return response.data 
+  return response.data
 }
 
 export async function loginUser(email: string, password: string) {
   const response = await axios.post(`${API_URL}/login`, { email, password })
 
   if (response.data.token) {
-    localStorage.setItem("token", response.data.token)
-    localStorage.setItem("userId", response.data.userId.toString())
+    sessionStorage.setItem("token", response.data.token)
+    sessionStorage.setItem("userId", response.data.userId.toString())
   }
 
   return response.data
@@ -43,35 +44,34 @@ export async function logoutUser() {
   } catch (error) {
     console.error("Logout error:", error)
   } finally {
-    localStorage.removeItem("token")
-    localStorage.removeItem("userId")
+    sessionStorage.removeItem("token")
+    sessionStorage.removeItem("userId")
   }
 }
 
 export function isAuthenticated() {
-  const token = localStorage.getItem("token")
-  return !!token 
+  const token = sessionStorage.getItem("token")
+  return !!token
 }
 
 export function getCurrentUserId() {
-  return localStorage.getItem("userId")
+  return sessionStorage.getItem("userId")
 }
 
 export function getAuthToken() {
-  return localStorage.getItem("token")
+  return sessionStorage.getItem("token")
 }
 
 export function isTokenExpired() {
-  const token = localStorage.getItem("token")
+  const token = sessionStorage.getItem("token")
   if (!token) return true
 
   try {
-
     const payload = token.split(".")[1]
     const decoded = JSON.parse(atob(payload))
 
     return decoded.exp < Date.now() / 1000
   } catch (error) {
-    return true 
+    return true
   }
 }

@@ -1,6 +1,8 @@
 // frontend/src/App.tsx
 import type React from "react"
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
+import { Provider } from "react-redux"
+import { store } from "./store"
 import SignUpPage from "./pages/SignUpPage"
 import LoginPage from "./pages/LoginPage"
 import DashboardPage from "./pages/DashboardPage"
@@ -11,7 +13,6 @@ import ContactPage from "./pages/ContactPage"
 import ChatbotPage from "./pages/ChatbotPage"
 import LandingPage from "./pages/LandingPage"
 import ProtectedRoute from "./components/ProtectedRoute"
-import { AuthProvider } from "./contexts/AuthContext"
 import LogoutPage from "./pages/LogoutPage"
 import ZakatTaxPage from "./pages/ZakatTaxPage"
 
@@ -20,10 +21,9 @@ import AssetsPage from "./pages/AssetPage"
 import ForgetPassword from "./pages/ForgotPassword"
 import ResetPassword from "./pages/ResetPassword"
 
-
 const App: React.FC = () => {
   return (
-    <AuthProvider>
+    <Provider store={store}>
       <Router>
         <Routes>
           <Route path="/" element={<LandingPage />} />
@@ -34,7 +34,7 @@ const App: React.FC = () => {
           <Route path="/logout" element={<LogoutPage />} />
           <Route path="/forgot-password" element={<ForgetPassword />} />
           <Route path="/reset-password/:userId/:token" element={<ResetPassword />} />
-          
+
           <Route
             path="/assets"
             element={
@@ -76,7 +76,7 @@ const App: React.FC = () => {
               </ProtectedRoute>
             }
           />
-          
+
           <Route
             path="/zakat-tax"
             element={
@@ -97,7 +97,7 @@ const App: React.FC = () => {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
-    </AuthProvider>
+    </Provider>
   )
 }
 

@@ -1,84 +1,80 @@
-"use client";
+"use client"
 
-import type React from "react";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { registerUser } from "../services/authService";
-import { Eye, EyeOff } from "lucide-react";
+import type React from "react"
+import { useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { Eye, EyeOff } from "lucide-react"
+import { useAppDispatch, useAppSelector } from "../hooks"
+import { register, clearError } from "../store/slices/authSlice"
 
 const SignUpPage: React.FC = () => {
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [passwordStrength, setPasswordStrength] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const navigate = useNavigate();
+  const [username, setUsername] = useState("")
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [passwordStrength, setPasswordStrength] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const navigate = useNavigate()
 
-  const togglePasswordVisibility = () => setShowPassword(!showPassword);
+  const dispatch = useAppDispatch()
+  const { loading: isLoading, error } = useAppSelector((state) => state.auth)
 
-  const [emailValid, setEmailValid] = useState(true);
-  const [passwordValid, setPasswordValid] = useState(true);
+  const togglePasswordVisibility = () => setShowPassword(!showPassword)
+
+  const [emailValid, setEmailValid] = useState(true)
+  const [passwordValid, setPasswordValid] = useState(true)
 
   const validateEmail = (email: string): boolean => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  };
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+  }
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newEmail = e.target.value;
-    setEmail(newEmail);
-    setEmailValid(validateEmail(newEmail));
-  };
+    const newEmail = e.target.value
+    setEmail(newEmail)
+    setEmailValid(validateEmail(newEmail))
+  }
 
   const getPasswordStrength = (pwd: string): string => {
-    let strength = 0;
-    if (pwd.length >= 8) strength++;
-    if (/[A-Z]/.test(pwd)) strength++;
-    if (/[0-9]/.test(pwd)) strength++;
-    if (/[^A-Za-z0-9]/.test(pwd)) strength++;
+    let strength = 0
+    if (pwd.length >= 8) strength++
+    if (/[A-Z]/.test(pwd)) strength++
+    if (/[0-9]/.test(pwd)) strength++
+    if (/[^A-Za-z0-9]/.test(pwd)) strength++
 
-    if (strength <= 1) return "Weak";
-    if (strength === 2 || strength === 3) return "Medium";
-    return "Strong";
-  };
+    if (strength <= 1) return "Weak"
+    if (strength === 2 || strength === 3) return "Medium"
+    return "Strong"
+  }
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newPwd = e.target.value;
-    setPassword(newPwd);
-    setPasswordStrength(getPasswordStrength(newPwd));
-    setPasswordValid(
-      newPwd.length >= 8 && /[A-Z]/.test(newPwd) && /[0-9]/.test(newPwd)
-    );
-  };
+    const newPwd = e.target.value
+    setPassword(newPwd)
+    setPasswordStrength(getPasswordStrength(newPwd))
+    setPasswordValid(newPwd.length >= 8 && /[A-Z]/.test(newPwd) && /[0-9]/.test(newPwd))
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
+    e.preventDefault()
+    dispatch(clearError())
 
     if (!emailValid) {
-      setError("Please enter a valid email address.");
-      return;
+      dispatch({ type: "auth/setError", payload: "Please enter a valid email address." })
+      return
     }
 
     if (!passwordValid) {
-      setError("Password must be at least 8 characters long, contain one uppercase letter and one number.");
-      return;
+      dispatch({
+        type: "auth/setError",
+        payload: "Password must be at least 8 characters long, contain one uppercase letter and one number.",
+      })
+      return
     }
 
-    setIsLoading(true);
-    try {
-      const data = await registerUser(username, email, password);
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("userId", data.userId);
-      navigate("/dashboard");
-    } catch (err) {
-      console.error("Registration error:", err);
-      setError("Registration failed. Please try again.");
-    } finally {
-      setIsLoading(false);
+    const resultAction = await dispatch(register({ username, email, password }))
+
+    if (register.fulfilled.match(resultAction)) {
+      navigate("/dashboard")
     }
-  };
+  }
 
   return (
     <div className="flex h-screen w-screen overflow-hidden">
@@ -98,11 +94,7 @@ const SignUpPage: React.FC = () => {
         <div className="w-full max-w-md px-8">
           <h1 className="text-5xl font-bold mb-12">Sign Up To TBD</h1>
 
-          {error && (
-            <div className="bg-red-50 text-red-700 p-3 rounded-md mb-4">
-              {error}
-            </div>
-          )}
+          {error && <div className="bg-red-50 text-red-700 p-3 rounded-md mb-4">{error}</div>}
 
           <form onSubmit={handleSubmit}>
             <div className="mb-6">
@@ -133,9 +125,7 @@ const SignUpPage: React.FC = () => {
                 className="w-full p-3 bg-yellow-50 border-b border-gray-300 focus:outline-none focus:border-green-500"
                 required
               />
-              {!emailValid && (
-                <div className="text-red-500 text-sm mt-1">Please enter a valid email address.</div>
-              )}
+              {!emailValid && <div className="text-red-500 text-sm mt-1">Please enter a valid email address.</div>}
             </div>
 
             <div className="mb-2 relative">
@@ -167,8 +157,8 @@ const SignUpPage: React.FC = () => {
                   passwordStrength === "Weak"
                     ? "text-red-500"
                     : passwordStrength === "Medium"
-                    ? "text-yellow-600"
-                    : "text-green-600"
+                      ? "text-yellow-600"
+                      : "text-green-600"
                 }
               >
                 {passwordStrength}
@@ -199,7 +189,7 @@ const SignUpPage: React.FC = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default SignUpPage;
+export default SignUpPage

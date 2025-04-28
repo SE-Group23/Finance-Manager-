@@ -1,15 +1,23 @@
+"use client"
+
 import { useEffect } from "react"
 import { useNavigate } from "react-router-dom"
-import { logoutUser } from "../services/authService"
+import { useAppDispatch } from "../hooks"
+import { logout } from "../store/slices/authSlice"
 
 const LogoutPage = () => {
   const navigate = useNavigate()
+  const dispatch = useAppDispatch()
 
   useEffect(() => {
-    logoutUser()
-    console.log("Logging out...")
-    navigate("/login", { replace: true })
-  }, [navigate])
+    const performLogout = async () => {
+      console.log("Logging out...")
+      await dispatch(logout())
+      navigate("/login", { replace: true })
+    }
+
+    performLogout()
+  }, [navigate, dispatch])
 
   return null
 }

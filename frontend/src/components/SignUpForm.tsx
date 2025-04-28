@@ -3,17 +3,19 @@
 import type React from "react"
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { registerUser } from "../services/authService"
 import { Eye, EyeOff } from "lucide-react"
+import { useAppDispatch, useAppSelector } from "../hooks"
+import { register, clearError } from "../store/slices/authSlice"
 
 const SignUpForm: React.FC = () => {
   const [username, setUsername] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const navigate = useNavigate()
+
+  const dispatch = useAppDispatch()
+  const { loading: isLoading, error } = useAppSelector((state) => state.auth)
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword)
@@ -21,21 +23,12 @@ const SignUpForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError("")
-    setIsLoading(true)
+    dispatch(clearError())
 
-    try {
-      const data = await registerUser(username, email, password)
+    const resultAction = await dispatch(register({ username, email, password }))
 
-      localStorage.setItem("token", data.token)
-      localStorage.setItem("userId", data.userId)
-
+    if (register.fulfilled.match(resultAction)) {
       navigate("/dashboard")
-    } catch (err) {
-      console.error("Registration error:", err)
-      setError("Registration failed. Please try again.")
-    } finally {
-      setIsLoading(false)
     }
   }
 

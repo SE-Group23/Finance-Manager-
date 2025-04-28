@@ -1,35 +1,29 @@
 "use client"
 
-import React, { useState } from "react";
-// import { useNavigate } from "react-router-dom";
-import developerImage from "../assets/developer-image.svg";
+import type React from "react"
+import { useState } from "react"
+import developerImage from "../assets/developer-image.svg"
+import { useAppDispatch, useAppSelector } from "../hooks"
+import { forgotPassword } from "../store/slices/authSlice"
 
 const ForgetPassword: React.FC = () => {
-  const [email, setEmail] = useState("");
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
-  // const navigate = useNavigate();
+  const [email, setEmail] = useState("")
+  const [message, setMessage] = useState("")
+
+  const dispatch = useAppDispatch()
+  const { loading } = useAppSelector((state) => state.auth)
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+    e.preventDefault()
 
-    try {
-      const API_BASE_URL = `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}`;
-      const res = await fetch(`${API_BASE_URL}/api/auth/forgot-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
+    const resultAction = await dispatch(forgotPassword(email))
 
-      const data = await res.json();
-      setMessage(data.message || 'Check your email for reset link.');
-    } catch (err) {
-      setMessage('Failed to send reset email.');
-    } finally {
-      setLoading(false);
+    if (forgotPassword.fulfilled.match(resultAction)) {
+      setMessage(resultAction.payload)
+    } else if (forgotPassword.rejected.match(resultAction)) {
+      setMessage(resultAction.payload as string)
     }
-  };
+  }
 
   return (
     <div className="flex h-screen w-screen overflow-hidden">
@@ -55,11 +49,11 @@ const ForgetPassword: React.FC = () => {
           </p>
 
           {message && (
-            <div className={`p-3 rounded-md mb-4 ${
-              message.includes('Failed') 
-                ? 'bg-red-50 text-red-700'
-                : 'bg-green-50 text-green-700'
-            }`}>
+            <div
+              className={`p-3 rounded-md mb-4 ${
+                message.includes("Failed") ? "bg-red-50 text-red-700" : "bg-green-50 text-green-700"
+              }`}
+            >
               {message}
             </div>
           )}
@@ -98,7 +92,7 @@ const ForgetPassword: React.FC = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default ForgetPassword;
+export default ForgetPassword
