@@ -6,6 +6,7 @@ import budgetReducer from "./slices/budgetSlice"
 import assetReducer from "./slices/assetSlice"
 import zakatTaxReducer from "./slices/zakatTaxSlice"
 import chatbotReducer from "./slices/chatbotSlice"
+import calendarReducer from "./slices/calendarSlice"
 
 export const store = configureStore({
   reducer: {
@@ -16,6 +17,7 @@ export const store = configureStore({
     assets: assetReducer,
     zakatTax: zakatTaxReducer,
     chatbot: chatbotReducer,
+    calendar: calendarReducer,
   },
 })
 
