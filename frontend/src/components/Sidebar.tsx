@@ -50,7 +50,7 @@ const Sidebar: React.FC<SidebarProps> = ({ activePage }) => {
     <div className="w-[180px] bg-navbar text-white flex flex-col rounded-r-xl overflow-hidden">
       <div className="p-4 flex items-center gap-2">
         <div className="w-8 h-8 rounded overflow-hidden">
-          <img src="/src/assets/logo.png" alt="Company Logo" className="w-full h-full object-cover" />
+          <img src="/src/assets/logo.svg" alt="Company Logo" className="w-full h-full object-cover" />
         </div>
         <span className="font-bold font-inter">TBD</span>
       </div>
