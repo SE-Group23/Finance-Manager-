@@ -1,86 +1,81 @@
 "use client"
 
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import developerImage from "../assets/developer-image.svg";
-import { Eye, EyeOff } from "lucide-react";
+import type React from "react"
+import { useState, useEffect } from "react"
+import { useParams, useNavigate } from "react-router-dom"
+import developerImage from "../assets/developer-image.svg"
+import { Eye, EyeOff } from "lucide-react"
+import { useAppDispatch, useAppSelector } from "../hooks"
+import { resetPassword } from "../store/slices/authSlice"
 
 const ResetPassword: React.FC = () => {
-  const { userId, token } = useParams();
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [message, setMessage] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<string[]>([]);
-  const navigate = useNavigate();
+  const { userId, token } = useParams()
+  const [newPassword, setNewPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
+  const [message, setMessage] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [validationErrors, setValidationErrors] = useState<string[]>([])
+  const navigate = useNavigate()
+
+  const dispatch = useAppDispatch()
+  const { loading } = useAppSelector((state) => state.auth)
 
   const [validations, setValidations] = useState({
     length: false,
     capital: false,
     number: false,
-  });
+  })
 
   const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
+    setShowPassword(!showPassword)
+  }
 
   useEffect(() => {
     setValidations({
       length: newPassword.length >= 8,
       capital: /[A-Z]/.test(newPassword),
       number: /[0-9]/.test(newPassword),
-    });
+    })
 
-    const errors = [];
-    if (newPassword && !validations.length) errors.push("length");
-    if (newPassword && !validations.capital) errors.push("capital");
-    if (newPassword && !validations.number) errors.push("number");
-    
-    setValidationErrors(errors);
-  }, [newPassword]);
+    const errors = []
+    if (newPassword && !validations.length) errors.push("length")
+    if (newPassword && !validations.capital) errors.push("capital")
+    if (newPassword && !validations.number) errors.push("number")
+
+    setValidationErrors(errors)
+  }, [newPassword])
 
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setNewPassword(e.target.value);
-  };
+    setNewPassword(e.target.value)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+    e.preventDefault()
+
     if (validationErrors.length > 0) {
-      return;
+      return
     }
-    
+
     if (newPassword !== confirmPassword) {
-      setMessage("Passwords don't match");
-      return;
+      setMessage("Passwords don't match")
+      return
     }
-    
-    setLoading(true);
 
-    try {
-      const API_BASE_URL = `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}`;
-      const res = await fetch(`${API_BASE_URL}/api/auth/reset-password`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, token, newPassword }),
-      });
-
-      const data = await res.json();
-      
-      if (res.ok) {
-        setMessage(data.message || "Password reset successful!");
-        // Redirect to login after 2 seconds
-        setTimeout(() => navigate("/login"), 2000);
-      } else {
-        setMessage(data.message || "Failed to reset password");
-      }
-    } catch (err) {
-      setMessage("An error occurred. Please try again.");
-    } finally {
-      setLoading(false);
+    if (!userId || !token) {
+      setMessage("Invalid reset link")
+      return
     }
-  };
+
+    const resultAction = await dispatch(resetPassword({ userId, token, newPassword }))
+
+    if (resetPassword.fulfilled.match(resultAction)) {
+      setMessage(resultAction.payload)
+      // Redirect to login after 2 seconds
+      setTimeout(() => navigate("/login"), 2000)
+    } else if (resetPassword.rejected.match(resultAction)) {
+      setMessage(resultAction.payload as string)
+    }
+  }
 
   return (
     <div className="flex h-screen w-screen overflow-hidden">
@@ -99,16 +94,14 @@ const ResetPassword: React.FC = () => {
       <div className="w-1/2 bg-gray-50 flex items-center justify-center h-full">
         <div className="w-full max-w-md px-8">
           <h1 className="text-5xl font-bold mb-12">Reset Password</h1>
-          <p className="text-gray-600 mb-8">
-            Please enter your new password below.
-          </p>
+          <p className="text-gray-600 mb-8">Please enter your new password below.</p>
 
           {message && (
-            <div className={`p-3 rounded-md mb-4 ${
-              message.includes('successful') 
-                ? 'bg-green-50 text-green-700'
-                : 'bg-red-50 text-red-700'
-            }`}>
+            <div
+              className={`p-3 rounded-md mb-4 ${
+                message.includes("successful") ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"
+              }`}
+            >
               {message}
             </div>
           )}
@@ -134,17 +127,23 @@ const ResetPassword: React.FC = () => {
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
-              
+
               <div className="mt-2 text-sm">
                 <p className="font-medium text-gray-700 mb-1">Password must have:</p>
                 <ul className="space-y-1 pl-5 list-disc">
-                  <li className={newPassword ? (validations.length ? "text-green-600" : "text-red-600") : "text-red-600"}>
+                  <li
+                    className={newPassword ? (validations.length ? "text-green-600" : "text-red-600") : "text-red-600"}
+                  >
                     At least 8 characters
                   </li>
-                  <li className={newPassword ? (validations.capital ? "text-green-600" : "text-red-600") : "text-red-600"}>
+                  <li
+                    className={newPassword ? (validations.capital ? "text-green-600" : "text-red-600") : "text-red-600"}
+                  >
                     At least 1 capital letter
                   </li>
-                  <li className={newPassword ? (validations.number ? "text-green-600" : "text-red-600") : "text-red-600"}>
+                  <li
+                    className={newPassword ? (validations.number ? "text-green-600" : "text-red-600") : "text-red-600"}
+                  >
                     At least 1 number
                   </li>
                 </ul>
@@ -187,7 +186,7 @@ const ResetPassword: React.FC = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default ResetPassword;
+export default ResetPassword

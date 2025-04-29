@@ -1,28 +1,29 @@
 "use client"
 
 import type React from "react"
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
+import { useAppDispatch, useAppSelector } from "../hooks"
 import {
-  getTransactions,
-  createTransaction,
-  updateTransaction,
-  deleteTransaction,
-  type Transaction,
-  type TransactionInput,
-} from "../services/transactionService"
+  fetchTransactions,
+  addTransaction,
+  editTransaction,
+  removeTransaction,
+  showTransactionForm,
+  hideTransactionForm,
+  setEditingTransaction,
+} from "../store/slices/transactionSlice"
 import TransactionForm from "../components/TransactionForm"
 import TransactionItem from "../components/TransactionItem"
 import TransactionSummary from "../components/TransactionSummary"
 import Sidebar from "../components/Sidebar"
+import  {type TransactionInput, type Transaction } from "../services/transactionService"
 
 const TransactionsPage: React.FC = () => {
-  const [transactions, setTransactions] = useState<Transaction[]>([])
-  const [isFormVisible, setIsFormVisible] = useState(false)
-  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const dispatch = useAppDispatch()
+  const { transactions, isFormVisible, editingTransaction, loading, error } = useAppSelector(
+    (state) => state.transactions,
+  )
 
-  // Group transactions by date
   const groupedTransactions = transactions.reduce<Record<string, Transaction[]>>((groups, transaction) => {
     const date = new Date(transaction.transaction_date)
     const formattedDate = `${date.toLocaleString("default", { month: "short" })} ${date.getDate()}`
@@ -36,76 +37,33 @@ const TransactionsPage: React.FC = () => {
   }, {})
 
   useEffect(() => {
-    fetchTransactions()
-  }, [])
-
-  const fetchTransactions = async () => {
-    setIsLoading(true)
-    try {
-      const data = await getTransactions()
-      setTransactions(data)
-      setError(null)
-    } catch (err) {
-      setError("Failed to load transactions. Please try again later.")
-      console.error(err)
-    } finally {
-      setIsLoading(false)
-    }
-  }
+    dispatch(fetchTransactions())
+  }, [dispatch])
 
   const handleCreateTransaction = async (transaction: TransactionInput) => {
-    try {
-      const newTransaction = await createTransaction(transaction)
-      setTransactions([newTransaction, ...transactions])
-      setIsFormVisible(false)
-      setError(null)
-    } catch (err) {
-      setError("Failed to create transaction. Please try again.")
-      console.error(err)
-    }
+    dispatch(addTransaction(transaction))
   }
 
   const handleUpdateTransaction = async (transaction: TransactionInput) => {
     if (!editingTransaction) return
-
-    try {
-      const updatedTransaction = await updateTransaction(editingTransaction.transaction_id, transaction)
-      setTransactions(
-        transactions.map((t) => (t.transaction_id === updatedTransaction.transaction_id ? updatedTransaction : t)),
-      )
-      setEditingTransaction(null)
-      setIsFormVisible(false)
-      setError(null)
-    } catch (err) {
-      setError("Failed to update transaction. Please try again.")
-      console.error(err)
-    }
+    dispatch(editTransaction({ id: editingTransaction.transaction_id, transaction }))
   }
 
   const handleDeleteTransaction = async (id: number) => {
-    try {
-      await deleteTransaction(id)
-      setTransactions(transactions.filter((t) => t.transaction_id !== id))
-      setError(null)
-    } catch (err) {
-      setError("Failed to delete transaction. Please try again.")
-      console.error(err)
-    }
+    dispatch(removeTransaction(id))
   }
 
   const handleEditClick = (transaction: Transaction) => {
-    setEditingTransaction(transaction)
-    setIsFormVisible(true)
+    dispatch(setEditingTransaction(transaction))
   }
 
   const handleCancelForm = () => {
-    setIsFormVisible(false)
-    setEditingTransaction(null)
+    dispatch(hideTransactionForm())
   }
 
   return (
     <div className="flex h-screen bg-gray-50">
-      <Sidebar />
+      <Sidebar activePage="transactions"/>
 
       <div className="flex-1 overflow-auto p-6">
         <div className="max-w-5xl mx-auto">
@@ -119,7 +77,7 @@ const TransactionsPage: React.FC = () => {
             </div>
             <div className="w-1/4 pl-4 flex items-start justify-end">
               <button
-                onClick={() => setIsFormVisible(true)}
+                onClick={() => dispatch(showTransactionForm())}
                 className="bg-lime-300 hover:bg-lime-400 text-gray-800 font-medium py-4 px-6 rounded-lg flex flex-col items-center justify-center h-full w-full"
               >
                 <svg className="w-8 h-8 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -143,7 +101,7 @@ const TransactionsPage: React.FC = () => {
           <div className="bg-white rounded-lg shadow-sm p-6">
             <h2 className="text-xl font-semibold mb-4">Transaction History</h2>
 
-            {isLoading ? (
+            {loading ? (
               <div className="text-center py-8">
                 <svg
                   className="animate-spin h-8 w-8 text-teal-600 mx-auto"

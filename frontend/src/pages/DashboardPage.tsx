@@ -9,6 +9,8 @@ import NetWorthCard from "../components/NetWorthCard"
 import ExpenseBarChart from "../components/ExpenseBarChart"
 import BudgetProgressCard from "../components/BudgetProgressCard"
 import LoadingScreen from "../components/LoadingScreen"
+import { useAppDispatch, useAppSelector } from "../hooks"
+import { getDashboardData } from "../store/slices/dashboardSlice"
 
 interface Transaction {
   transaction_id: number
@@ -34,73 +36,25 @@ interface CategoryBreakdown {
   percentage: number
 }
 
-interface DashboardData {
-  netCash: number
-  totalCredit: number
-  totalDebit: number
-  recentTransactions: Transaction[]
-  budgets: Budget[]
-  budgetProgress: {
-    totalBudget: number
-    totalSpent: number
-    percentage: number
-  }
-  categoryBreakdown: CategoryBreakdown[]
-  totalMonthlyExpenses: number
-}
-
 const DashboardPage: React.FC = () => {
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
-  const [loading, setLoading] = useState<boolean>(true)
+  const dispatch = useAppDispatch()
+  const { data: dashboardData, loading, error, currentMonth } = useAppSelector((state) => state.dashboard)
+  const { isLoggedIn } = useAppSelector((state) => state.auth)
   const [pageLoading, setPageLoading] = useState<boolean>(true)
-  const [error, setError] = useState<string | null>(null)
-  const [currentMonth, setCurrentMonth] = useState<string>("")
 
   useEffect(() => {
-    const now = new Date()
-    setCurrentMonth(now.toLocaleString("default", { month: "long", year: "numeric" }))
-
     // Simulate page loading for a minimum time to show the loading screen
     const pageLoadTimer = setTimeout(() => {
       setPageLoading(false)
     }, 800)
 
-    const fetchDashboardData = async () => {
-      try {
-        const token = localStorage.getItem("token")
-        if (!token) {
-          window.location.href = "/login"
-          return
-        }
-
-        const response = await fetch(
-          `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api/dashboard`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        )
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch dashboard data")
-        }
-
-        const data = await response.json()
-        console.log("Dashboard data received:", data)
-        setDashboardData(data)
-      } catch (err) {
-        setError("Error loading dashboard data. Please try again later.")
-        console.error(err)
-      } finally {
-        setLoading(false)
-      }
+    // Check if user is logged in before fetching data
+    if (isLoggedIn) {
+      dispatch(getDashboardData())
     }
 
-    fetchDashboardData()
-
     return () => clearTimeout(pageLoadTimer)
-  }, [])
+  }, [dispatch, isLoggedIn])
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-US", {
@@ -125,7 +79,7 @@ const DashboardPage: React.FC = () => {
     return Math.min(Math.round((spent / limit) * 100), 100)
   }
 
-  if (loading) {
+  if (loading || pageLoading) {
     return <LoadingScreen />
   }
 

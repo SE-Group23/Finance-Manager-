@@ -1,9 +1,7 @@
-// frontend/src/services/budgetService.ts
 import axios from "axios"
 
 const API_URL = `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api/budgets`
 
-// Types for our budget data
 export interface Budget {
   budget_id: number
   category_id: number
@@ -12,6 +10,7 @@ export interface Budget {
   month_start: string
   spent: number
   alert: boolean
+  color?: string
 }
 
 export interface CategoryLimit {
@@ -20,7 +19,7 @@ export interface CategoryLimit {
 }
 
 export async function getBudgets() {
-  const token = localStorage.getItem("token")
+  const token = sessionStorage.getItem("token")
   const response = await axios.get(API_URL, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -30,7 +29,7 @@ export async function getBudgets() {
 }
 
 export async function setBudgets(month_start: string, category_limits: CategoryLimit[]) {
-  const token = localStorage.getItem("token")
+  const token = sessionStorage.getItem("token")
   const response = await axios.post(
     API_URL,
     { month_start, category_limits },
@@ -44,7 +43,7 @@ export async function setBudgets(month_start: string, category_limits: CategoryL
 }
 
 export async function deleteBudget(budgetId: number) {
-  const token = localStorage.getItem("token")
+  const token = sessionStorage.getItem("token")
   const response = await axios.delete(`${API_URL}/${budgetId}`, {
     headers: {
       Authorization: `Bearer ${token}`,
@@ -54,7 +53,7 @@ export async function deleteBudget(budgetId: number) {
 }
 
 export async function updateMonthlyIncome(amount: number) {
-  const token = localStorage.getItem("token")
+  const token = sessionStorage.getItem("token")
   const response = await axios.post(
     `${API_URL}/income`,
     { amount },
@@ -68,7 +67,7 @@ export async function updateMonthlyIncome(amount: number) {
 }
 
 export async function updateAlertSettings(threshold: number) {
-  const token = localStorage.getItem("token")
+  const token = sessionStorage.getItem("token")
   const response = await axios.post(
     `${API_URL}/alerts`,
     { threshold },

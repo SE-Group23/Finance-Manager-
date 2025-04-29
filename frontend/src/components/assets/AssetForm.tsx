@@ -3,6 +3,8 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { Currency, GoldUnit } from "../../types/asset"
+import { useAppDispatch, useAppSelector } from "../../hooks"
+import { clearAssetError } from "../../store/slices/assetSlice"
 
 interface AssetFormProps {
   assetType: string
@@ -23,6 +25,9 @@ const AssetForm: React.FC<AssetFormProps> = ({
   onSubmitStart,
   onSubmitEnd,
 }) => {
+  const dispatch = useAppDispatch()
+  const { formLoading, error } = useAppSelector((state) => state.assets)
+
   const normalizedAssetType = assetType.toUpperCase()
 
   const [formData, setFormData] = useState({
@@ -39,8 +44,6 @@ const AssetForm: React.FC<AssetFormProps> = ({
     currencyCode: asset?.asset_details?.currencyCode || Currency.USD,
   })
 
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
   const [tickerError, setTickerError] = useState("")
 
   useEffect(() => {
@@ -56,7 +59,7 @@ const AssetForm: React.FC<AssetFormProps> = ({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
-    
+
     if (name === "ticker") {
       setFormData((prev) => ({
         ...prev,
@@ -72,21 +75,22 @@ const AssetForm: React.FC<AssetFormProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (normalizedAssetType === "STOCK") {
       if (!formData.ticker) {
-        setError("Ticker symbol is required")
+        dispatch(clearAssetError())
+        setTickerError("Ticker symbol is required")
         return
       }
       if (tickerError) {
-        setError(tickerError)
+        dispatch(clearAssetError())
+        setTickerError(tickerError)
         return
       }
     }
-    
-    setLoading(true)
-    setError("")
+
     onSubmitStart?.()
+    dispatch(clearAssetError())
 
     try {
       const assetData: any = {
@@ -107,22 +111,19 @@ const AssetForm: React.FC<AssetFormProps> = ({
 
         assetData.quantity = quantity
       } else if (normalizedAssetType === "STOCK") {
-        assetData.purchaseValue = Number(formData.pricePerShare) * Number(formData.quantity);
-        
-        assetData.assetDetails = {
-          ticker: formData.ticker.trim().toUpperCase(), 
-          name: formData.name || formData.ticker.toUpperCase(), 
-        }
+        assetData.purchaseValue = Number(formData.pricePerShare) * Number(formData.quantity)
 
+        assetData.assetDetails = {
+          ticker: formData.ticker.trim().toUpperCase(),
+          name: formData.name || formData.ticker.toUpperCase(),
+        }
       } else if (normalizedAssetType === "CURRENCY") {
-        assetData.purchaseValue = Number(formData.quantity);
+        assetData.purchaseValue = Number(formData.quantity)
         assetData.assetDetails = {
           currencyCode: formData.currencyCode.toUpperCase(),
           name: formData.name,
         }
       }
-
-      console.log("Submitting asset data:", JSON.stringify(assetData))
 
       if (asset) {
         await updateAsset(asset.asset_id, assetData)
@@ -134,14 +135,7 @@ const AssetForm: React.FC<AssetFormProps> = ({
       window.location.reload()
     } catch (err: any) {
       console.error("Error saving asset:", err)
-      if (err.response) {
-        console.error("Error response data:", err.response.data)
-        console.error("Error response status:", err.response.status)
-        console.error("Error response headers:", err.response.headers)
-      }
-      setError(err.response?.data?.error || "Failed to save asset. Please try again.")
     } finally {
-      setLoading(false)
       onSubmitEnd?.()
     }
   }
@@ -153,6 +147,7 @@ const AssetForm: React.FC<AssetFormProps> = ({
       </h3>
 
       {error && <div className="mb-4 p-2 bg-red-100 text-red-800 rounded">{error}</div>}
+      {tickerError && <div className="mb-4 p-2 bg-red-100 text-red-800 rounded">{tickerError}</div>}
 
       <div className="mb-4">
         <label className="block text-sm font-medium mb-1">Acquisition Date</label>
@@ -168,19 +163,19 @@ const AssetForm: React.FC<AssetFormProps> = ({
 
       {normalizedAssetType === "GOLD" && (
         <>
-        <div className="mb-4">
-        <label className="block text-sm font-medium mb-1">Purchase Value (USD)</label>
-        <input
-          type="number"
-          name="purchaseValue"
-          value={formData.purchaseValue}
-          onChange={handleChange}
-          className="w-full p-2 border rounded-md text-gray-800 bg-white"
-          step="0.01"
-          min="0"
-          required
-        />
-      </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">Purchase Value (USD)</label>
+            <input
+              type="number"
+              name="purchaseValue"
+              value={formData.purchaseValue}
+              onChange={handleChange}
+              className="w-full p-2 border rounded-md text-gray-800 bg-white"
+              step="0.01"
+              min="0"
+              required
+            />
+          </div>
           <div className="mb-4">
             <label className="block text-sm font-medium mb-1">Currency of Purchase</label>
             <select
@@ -257,9 +252,7 @@ const AssetForm: React.FC<AssetFormProps> = ({
               name="ticker"
               value={formData.ticker}
               onChange={handleChange}
-              className={`w-full p-2 border rounded-md text-gray-800 bg-white ${
-                tickerError ? "border-red-500" : ""
-              }`}
+              className={`w-full p-2 border rounded-md text-gray-800 bg-white ${tickerError ? "border-red-500" : ""}`}
               placeholder="AAPL"
               required
             />
@@ -339,9 +332,9 @@ const AssetForm: React.FC<AssetFormProps> = ({
         <button
           type="submit"
           className="px-4 py-2 bg-secondary text-dark rounded-lg hover:bg-secondary-dark font-medium"
-          disabled={loading}
+          disabled={formLoading}
         >
-          {loading ? "Saving..." : "Save"}
+          {formLoading ? "Saving..." : "Save"}
         </button>
       </div>
     </form>

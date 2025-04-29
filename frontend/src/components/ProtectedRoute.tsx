@@ -1,15 +1,26 @@
+"use client"
+
 import type React from "react"
 import { Navigate } from "react-router-dom"
-import { isAuthenticated, isTokenExpired } from "../services/authService"
+import { useAppSelector } from "../hooks/useAppSelector"
+import { useEffect } from "react"
+import { useAppDispatch } from "../hooks/useAppDispatch"
+import { checkAuthStatus } from "../store/slices/authSlice"
 
 interface ProtectedRouteProps {
   children: React.ReactNode
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const isAuth = isAuthenticated() && !isTokenExpired()
+  const { isLoggedIn } = useAppSelector((state) => state.auth)
+  const dispatch = useAppDispatch()
 
-  if (!isAuth) {
+  // Check auth status when component mounts to ensure it's up-to-date with sessionStorage
+  useEffect(() => {
+    dispatch(checkAuthStatus())
+  }, [dispatch])
+
+  if (!isLoggedIn) {
     return <Navigate to="/login" replace />
   }
 

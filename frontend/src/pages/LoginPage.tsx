@@ -1,48 +1,43 @@
 "use client"
 
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { loginUser } from "../services/authService";
-import developerImage from "../assets/developer-image.svg";
-import { Eye, EyeOff } from "lucide-react";
+import type React from "react"
+import { useState } from "react"
+import { useNavigate } from "react-router-dom"
+import developerImage from "../assets/developer-image.svg"
+import { Eye, EyeOff } from "lucide-react"
+import { useAppDispatch, useAppSelector } from "../hooks"
+import { login, clearError } from "../store/slices/authSlice"
 
 const LoginPage: React.FC = () => {
-  const [email, setEmail] = useState(""); 
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const navigate = useNavigate();
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const navigate = useNavigate()
+
+  const dispatch = useAppDispatch()
+  const { loading: isLoading, error } = useAppSelector((state) => state.auth)
 
   const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
-  };
+    setShowPassword(!showPassword)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setIsLoading(true);
+    e.preventDefault()
+    dispatch(clearError())
 
-    try {
-      const data = await loginUser(email, password);
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("userId", data.userId);
-      navigate("/dashboard");
-    } catch (err) {
-      console.error("Login error:", err);
-      setError("Invalid email or password.");
-    } finally {
-      setIsLoading(false);
+    const resultAction = await dispatch(login({ email, password }))
+
+    if (login.fulfilled.match(resultAction)) {
+      navigate("/dashboard")
     }
-  };
+  }
 
   const handleForgotPassword = () => {
-    navigate("/forgot-password");
-  };
+    navigate("/forgot-password")
+  }
 
   return (
     <div className="flex h-screen w-screen overflow-hidden">
-      
       <div className="w-1/2 flex flex-col h-full">
         <div className="flex-1 bg-gradient-to-b from-teal-900 to-teal-600 flex items-center justify-center">
           <div className="flex justify-center items-center w-full h-full p-5">
@@ -59,11 +54,7 @@ const LoginPage: React.FC = () => {
         <div className="w-full max-w-md px-8">
           <h1 className="text-5xl font-bold mb-12">Welcome Back</h1>
 
-          {error && (
-            <div className="bg-red-50 text-red-700 p-3 rounded-md mb-4">
-              {error}
-            </div>
-          )}
+          {error && <div className="bg-red-50 text-red-700 p-3 rounded-md mb-4">{error}</div>}
 
           <form onSubmit={handleSubmit}>
             <div className="mb-6">
@@ -131,7 +122,7 @@ const LoginPage: React.FC = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default LoginPage;
+export default LoginPage

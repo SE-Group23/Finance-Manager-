@@ -1,142 +1,20 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect } from "react"
+import { useEffect } from "react"
 import Sidebar from "../components/Sidebar"
-import { fetchZakatAndTaxSummary } from "../services/zakatTaxService"
 import { useNavigate } from "react-router-dom"
-
-interface ZakatSummary {
-  nisaab_status: {
-    status: string
-    based_on: string
-  }
-  current_assets: number
-  cash_savings: number
-  total_assets: number
-  asset_breakdown: {
-    gold: number
-    currency: number
-    stocks: number
-  }
-  nisaab_threshold: number
-  zakat_rate: number
-  zakat_payable: number
-}
-
-interface TaxSummary {
-  threshold_status: {
-    status: string
-    based_on: string
-  }
-  annual_income: number
-  tax_bracket: string
-  tax_rate: number
-  tax_payable: number
-  due_date: {
-    date: string
-    days_remaining: number
-  }
-}
-
-const emptyZakat: ZakatSummary = {
-  nisaab_status: {
-    status: "Loading...",
-    based_on: "Loading...",
-  },
-  current_assets: 0,
-  cash_savings: 0,
-  total_assets: 0,
-  asset_breakdown: {
-    gold: 0,
-    currency: 0,
-    stocks: 0,
-  },
-  nisaab_threshold: 0,
-  zakat_rate: 0,
-  zakat_payable: 0,
-}
-
-const emptyTax: TaxSummary = {
-  threshold_status: {
-    status: "Loading...",
-    based_on: "Loading...",
-  },
-  annual_income: 0,
-  tax_bracket: "Loading...",
-  tax_rate: 0,
-  tax_payable: 0,
-  due_date: {
-    date: "Loading...",
-    days_remaining: 0,
-  },
-}
+import { useAppDispatch, useAppSelector } from "../hooks"
+import { fetchZakatTaxData } from "../store/slices/zakatTaxSlice"
 
 const ZakatTaxPage: React.FC = () => {
-  const [zakat, setZakat] = useState<ZakatSummary>(emptyZakat)
-  const [tax, setTax] = useState<TaxSummary>(emptyTax)
-  const [loading, setLoading] = useState(true)
-  const [apiError, setApiError] = useState(false)
-  const [hasZakatData, setHasZakatData] = useState(true)
-  const [hasTaxData, setHasTaxData] = useState(true)
+  const dispatch = useAppDispatch()
+  const { zakat, tax, loading, error, hasZakatData, hasTaxData } = useAppSelector((state) => state.zakatTax)
   const navigate = useNavigate()
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true)
-        setApiError(false)
-
-        const response = await fetchZakatAndTaxSummary()
-
-        if (response && response.zakat && response.tax) {
-          const zakatData = response.zakat
-          const hasAssets =
-            zakatData.current_assets > 0 ||
-            zakatData.cash_savings > 0 ||
-            zakatData.total_assets > 0 ||
-            Object.values(zakatData.asset_breakdown).some((value) => (value as number) > 0)
-
-          setHasZakatData(hasAssets)
-
-          if (!hasAssets) {
-            zakatData.nisaab_status = {
-              status: "Nisaab Threshold Not Met",
-              based_on: "no assets added",
-            }
-            zakatData.zakat_payable = 0
-          }
-
-          setZakat(zakatData)
-
-          const taxData = response.tax
-          const hasIncome = taxData.annual_income > 0
-
-          setHasTaxData(hasIncome)
-
-          if (!hasIncome) {
-            taxData.threshold_status = {
-              status: "Tax Threshold Not Met",
-              based_on: "no income added",
-            }
-            taxData.tax_payable = 0
-          }
-
-          setTax(taxData)
-        } else {
-          console.warn("API response missing expected data structure", response)
-          setApiError(true)
-        }
-      } catch (err) {
-        console.error("Failed to load Zakat & Tax data:", err)
-        setApiError(true)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchData()
-  }, [])
+    dispatch(fetchZakatTaxData())
+  }, [dispatch])
 
   const navigateToAssets = () => {
     navigate("/assets")
@@ -161,12 +39,12 @@ const ZakatTaxPage: React.FC = () => {
               <div className="flex justify-center items-center h-48">
                 <p>Loading Zakat & Tax data...</p>
               </div>
-            ) : apiError ? (
+            ) : error ? (
               <div className="bg-red-50 border border-red-200 rounded-lg p-4 my-3 text-center">
                 <p className="text-red-700 mb-2">Failed to load data</p>
                 <button
                   className="px-4 py-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-md text-sm"
-                  onClick={() => window.location.reload()}
+                  onClick={() => dispatch(fetchZakatTaxData())}
                 >
                   Try Again
                 </button>
