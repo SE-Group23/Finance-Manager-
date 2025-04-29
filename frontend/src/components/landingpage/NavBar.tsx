@@ -1,5 +1,5 @@
 import type React from "react"
-import logo from "../../assets/logo.png"
+import logo from "../../assets/logo.svg"
 
 const NavBar: React.FC = () => {
   return (
@@ -8,7 +8,7 @@ const NavBar: React.FC = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center">
             <div className="flex items-center justify-center" style={{ width: "52px", height: "52px" }}>
-              <img src={logo || "/placeholder.svg"} alt="Logo" className="h-10 w-10" />
+              <img src={logo} alt="Logo" className="h-10 w-10" />
             </div>
             <span className="ml-3 text-2xl font-bold text-white">TBD</span>
           </div>
