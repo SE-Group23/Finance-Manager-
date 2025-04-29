@@ -5,6 +5,7 @@ import transactionReducer from "./slices/transactionSlice"
 import budgetReducer from "./slices/budgetSlice"
 import assetReducer from "./slices/assetSlice"
 import zakatTaxReducer from "./slices/zakatTaxSlice"
+import chatbotReducer from "./slices/chatbotSlice"
 
 export const store = configureStore({
   reducer: {
@@ -14,8 +15,8 @@ export const store = configureStore({
     budgets: budgetReducer,
     assets: assetReducer,
     zakatTax: zakatTaxReducer,
+    chatbot: chatbotReducer,
   },
-  // This will allow us to add more reducers later for other components
 })
 
 export type RootState = ReturnType<typeof store.getState>

@@ -1,8 +1,10 @@
 "use client"
-import React, { useState, useRef, useEffect } from "react"
+import type React from "react"
+import { useRef, useEffect } from "react"
 import Sidebar from "../components/Sidebar"
 import { SendIcon, LightbulbIcon, ChatbotIcon, AlertTriangleIcon } from "../components/icons/sidebar-icons"
-import { getChatbotResponse } from "../services/chatbotService"
+import { useAppDispatch, useAppSelector } from "../hooks"
+import { setInputValue, addUserMessage, sendMessage } from "../store/slices/chatbotSlice"
 
 interface Message {
   id: string
@@ -30,9 +32,8 @@ const limitations = [
 ]
 
 const ChatbotPage: React.FC = () => {
-  const [inputValue, setInputValue] = useState<string>("")
-  const [messages, setMessages] = useState<Message[]>([])
-  const [showIntro, setShowIntro] = useState<boolean>(true)
+  const dispatch = useAppDispatch()
+  const { inputValue, messages, showIntro, loading } = useAppSelector((state) => state.chatbot)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // auto-scroll to the bottom of the chat
@@ -45,51 +46,16 @@ const ChatbotPage: React.FC = () => {
     e.preventDefault()
     if (!inputValue.trim()) return
 
-    // Hide the intro once we start sending a message
-    if (showIntro) setShowIntro(false)
+    // Add user message to state
+    dispatch(addUserMessage(inputValue.trim()))
 
-    // 1. Create the user's message
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      content: inputValue,
-      sender: "user",
-      timestamp: new Date(),
-    }
-    setMessages(prev => [...prev, userMessage])
-
-    // Clear the input
-    setInputValue("")
-
-    try {
-      // 2. Actually call the chatbot endpoint
-      const aiText = await getChatbotResponse(userMessage.content)
-
-      // 3. Create the AI message object
-      const aiMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: aiText,
-        sender: "ai",
-        timestamp: new Date(),
-      }
-
-      // 4. Add the AI message to state
-      setMessages(prev => [...prev, aiMessage])
-    } catch (error) {
-      console.error("Error getting chatbot response:", error)
-      // Show a fallback error
-      const errorMessage: Message = {
-        id: (Date.now() + 2).toString(),
-        content: "Sorry, there was a problem getting the chatbot response. Please try again.",
-        sender: "ai",
-        timestamp: new Date(),
-      }
-      setMessages(prev => [...prev, errorMessage])
-    }
+    // Send message to chatbot API
+    dispatch(sendMessage(inputValue.trim()))
   }
 
   // convenience for clicking example prompts
   const handleExampleClick = (text: string): void => {
-    setInputValue(text)
+    dispatch(setInputValue(text))
   }
 
   return (
@@ -202,17 +168,22 @@ const ChatbotPage: React.FC = () => {
               <input
                 type="text"
                 value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
+                onChange={(e) => dispatch(setInputValue(e.target.value))}
                 placeholder="Ask me anything about your budget, spending or investments!"
                 className="w-full pl-4 pr-12 py-3 rounded-full bg-white border border-gray-200 shadow-sm 
                            focus:outline-none focus:ring-2 focus:ring-navbar focus:border-transparent 
                            placeholder:font-medium placeholder:text-gray-500"
+                disabled={loading}
               />
               <button
                 type="submit"
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 w-8 h-8 flex 
-                           items-center justify-center rounded-full bg-gray-100 text-gray-500 
-                           hover:bg-navbar hover:text-white transition-colors"
+                disabled={loading || !inputValue.trim()}
+                className={`absolute right-3 top-1/2 transform -translate-y-1/2 w-8 h-8 flex 
+                           items-center justify-center rounded-full ${
+                             loading || !inputValue.trim()
+                               ? "bg-gray-100 text-gray-400"
+                               : "bg-gray-100 text-gray-500 hover:bg-navbar hover:text-white"
+                           } transition-colors`}
               >
                 <SendIcon size={16} />
               </button>
