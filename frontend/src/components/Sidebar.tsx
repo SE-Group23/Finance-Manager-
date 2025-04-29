@@ -13,7 +13,7 @@ import {
   ChatbotIcon,
   LogoutIcon,
 } from "./icons/sidebar-icons"
-import logo from "../assets/logo.svg"
+import logo from "../../assets/logo.svg"
 
 
 
