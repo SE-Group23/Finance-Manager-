@@ -1,5 +1,5 @@
 import type React from "react"
-import logo from "../assets/logo.png"
+import logo from "../../assets/logo.png"
 
 const NavBar: React.FC = () => {
   return (

@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import type { Asset } from "../../types/asset"
+import type { Asset } from "../../constants/asset_types"
 import AssetCard from "./AssetCard"
 import AssetForm from "./AssetForm"
 import AssetDetailsModal from "./AssetDetailsModal"

@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState } from "react"
-import type { TransactionInput } from "../services/transactionService"
+import type { TransactionInput } from "../../services/transactionService"
 
 interface CategoryOption {
   name: string

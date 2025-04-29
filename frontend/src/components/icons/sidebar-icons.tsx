@@ -1,6 +1,4 @@
 import type React from "react"
-// Custom icon components to replace Lucide React
-// These are SVG-based components that don't rely on the Lucide React library
 
 interface IconProps {
   className?: string

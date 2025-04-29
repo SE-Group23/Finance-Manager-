@@ -1,7 +1,7 @@
 import type React from "react"
-import HeroSection from "../components/HeroSection"
-import FeaturesSection from "../components/FeaturesSection"
-import TestimonialsSection from "../components/TestimonialsSection"
+import HeroSection from "../components/landingpage/HeroSection"
+import FeaturesSection from "../components/landingpage/FeaturesSection"
+import TestimonialsSection from "../components/landingpage/TestimonialsSection"
 
 const LandingPage: React.FC = () => {
   return (

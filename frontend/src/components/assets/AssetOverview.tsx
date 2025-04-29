@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import type { PortfolioSummary } from "../../types/asset"
+import type { PortfolioSummary } from "../../constants/asset_types"
 
 interface AssetOverviewProps {
   summary: PortfolioSummary | null

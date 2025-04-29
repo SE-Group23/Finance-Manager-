@@ -6,12 +6,6 @@ import { SendIcon, LightbulbIcon, ChatbotIcon, AlertTriangleIcon } from "../comp
 import { useAppDispatch, useAppSelector } from "../hooks"
 import { setInputValue, addUserMessage, sendMessage } from "../store/slices/chatbotSlice"
 
-interface Message {
-  id: string
-  content: string
-  sender: "user" | "ai"
-  timestamp: Date
-}
 
 const examplePrompts = [
   { text: "What's the 50/30/20 budgeting rule?" },
@@ -36,24 +30,19 @@ const ChatbotPage: React.FC = () => {
   const { inputValue, messages, showIntro, loading } = useAppSelector((state) => state.chatbot)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // auto-scroll to the bottom of the chat
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
   }, [messages])
 
-  // Handle the chat form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!inputValue.trim()) return
 
-    // Add user message to state
     dispatch(addUserMessage(inputValue.trim()))
 
-    // Send message to chatbot API
     dispatch(sendMessage(inputValue.trim()))
   }
 
-  // convenience for clicking example prompts
   const handleExampleClick = (text: string): void => {
     dispatch(setInputValue(text))
   }

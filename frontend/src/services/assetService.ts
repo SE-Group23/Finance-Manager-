@@ -1,7 +1,7 @@
 import axios from "axios"
-import type { Asset, PortfolioSummary } from "../types/asset"
+import type { Asset, PortfolioSummary } from "../constants/asset_types"
 
-const API_URL = `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api/assets`
+const API_URL = `${import.meta.env.VITE_API_HOST}/api/assets`
 
 console.log("Asset API URL:", `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api/assets`);
 

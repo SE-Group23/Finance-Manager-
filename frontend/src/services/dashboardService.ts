@@ -1,6 +1,6 @@
 import axios from "axios"
 
-const API_URL = `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api/dashboard`
+const API_URL = `${import.meta.env.VITE_API_HOST}/api/dashboard`
 
 export interface Transaction {
   transaction_id: number

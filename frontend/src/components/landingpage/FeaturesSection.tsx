@@ -1,5 +1,5 @@
 import type React from "react"
-import barChart from "../assets/bar-chart-landing.png" 
+import barChart from "../../assets/bar-chart-landing.png" 
 
 const FeaturesSection: React.FC = () => {
   return (

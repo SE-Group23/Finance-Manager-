@@ -1,6 +1,6 @@
 import { format, parseISO, isSameMonth } from "date-fns"
-import type { CalendarEvent } from "../services/calendarService"
-import type { RecurringPayment } from "../services/recurringService"
+import type { CalendarEvent } from "../../services/calendarService"
+import type { RecurringPayment } from "../../services/recurringService"
 
 interface NotificationsPanelProps {
     urgentEvents: CalendarEvent[]

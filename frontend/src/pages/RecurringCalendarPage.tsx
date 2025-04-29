@@ -2,11 +2,11 @@
 
 import { useEffect } from "react"
 import { format, addMonths, subMonths, parseISO, isSameDay, startOfDay, endOfWeek, isSameMonth } from "date-fns"
-import { EventModal } from "../components/EventModal"
-import { DeleteAllConfirmationModal } from "../components/DeleteAllConfirmationModal"
+import { EventModal } from "../components/calender-recurring/EventModal"
+import { DeleteAllConfirmationModal } from "../components/calender-recurring/DeleteAllConfirmationModal"
 import Sidebar from "../components/Sidebar"
 import { ChevronLeft, ChevronRight, Plus, Trash2 } from "lucide-react"
-import { NotificationsPanel } from "../components/NotificationsPanel"
+import { NotificationsPanel } from "../components/calender-recurring/NotificationsPanel"
 import { useAppDispatch, useAppSelector } from "../hooks"
 import {
   fetchCalendarData,

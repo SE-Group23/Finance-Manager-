@@ -4,8 +4,8 @@ import type React from "react"
 
 import { useState, useEffect } from "react"
 import { format, parseISO } from "date-fns"
-import type { CalendarEvent } from "../services/calendarService"
-import type { RecurringPayment } from "../services/recurringService"
+import type { CalendarEvent } from "../../services/calendarService"
+import type { RecurringPayment } from "../../services/recurringService"
 import { X, Trash2, ChevronDown } from "lucide-react"
 
 interface EventModalProps {

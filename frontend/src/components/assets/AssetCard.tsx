@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import type { Asset } from "../../types/asset"
+import type { Asset } from "../../constants/asset_types"
 import { Edit, Trash2 } from "lucide-react"
 
 interface AssetCardProps {
@@ -18,7 +18,6 @@ interface AssetCardProps {
 const AssetCard: React.FC<AssetCardProps> = ({
   asset,
   assetType,
-  totalValue,
   totalQuantity,
   unit,
   onDelete,
@@ -53,7 +52,8 @@ const AssetCard: React.FC<AssetCardProps> = ({
           <p className="text-sm text-gray-300">
             {assetType !== "CURRENCY"
               ? `${totalQuantity}${unit}`
-              : `${asset.quantity} ${asset.currency_code || asset.asset_details?.currencyCode || ""}`}
+              : `${asset.quantity} ${asset.asset_details?.currency || ""
+              }`}
           </p>
         </div>
         <div className="flex space-x-2">

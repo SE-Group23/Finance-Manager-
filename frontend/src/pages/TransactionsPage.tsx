@@ -12,9 +12,9 @@ import {
   hideTransactionForm,
   setEditingTransaction,
 } from "../store/slices/transactionSlice"
-import TransactionForm from "../components/TransactionForm"
-import TransactionItem from "../components/TransactionItem"
-import TransactionSummary from "../components/TransactionSummary"
+import TransactionForm from "../components/transaction/TransactionForm"
+import TransactionItem from "../components/transaction/TransactionItem"
+import TransactionSummary from "../components/transaction/TransactionSummary"
 import Sidebar from "../components/Sidebar"
 import  {type TransactionInput, type Transaction } from "../services/transactionService"
 

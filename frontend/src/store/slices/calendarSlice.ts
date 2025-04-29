@@ -8,7 +8,6 @@ import {
 } from "../../services/calendarService"
 import {
   fetchRecurringPayments,
-  createRecurringPayment,
   updateRecurringPayment,
   deleteRecurringPayment,
   type RecurringPayment,
@@ -30,7 +29,6 @@ interface CalendarState {
   refreshKey: number
 }
 
-// Helper function to load event amounts from sessionStorage
 const loadEventAmounts = (): Record<number, number> => {
   try {
     const storedAmounts = sessionStorage.getItem("eventAmounts")
@@ -43,7 +41,6 @@ const loadEventAmounts = (): Record<number, number> => {
   return {}
 }
 
-// Helper function to save event amounts to sessionStorage
 const saveEventAmounts = (amounts: Record<number, number>) => {
   try {
     sessionStorage.setItem("eventAmounts", JSON.stringify(amounts))
@@ -152,8 +149,7 @@ export const saveEvent = createAsyncThunk(
 
             savedEventId = selectedEvent.event_id
           } else {
-            const newRecurringPayment = await createRecurringPayment(recurringData)
-
+            
             await updateCalendarEvent(selectedEvent.event_id, {
               event_title: eventData.event_title,
               event_date: eventData.event_date,
@@ -170,8 +166,7 @@ export const saveEvent = createAsyncThunk(
           )
 
           if (!eventExists) {
-            const newRecurringPayment = await createRecurringPayment(recurringData)
-
+            
             await new Promise((resolve) => setTimeout(resolve, 500))
 
             const events = await fetchCalendarEvents()
@@ -244,7 +239,7 @@ export const saveEvent = createAsyncThunk(
 export const deleteEvent = createAsyncThunk("calendar/deleteEvent", async (_, { getState, rejectWithValue }) => {
   try {
     const state = getState() as { calendar: CalendarState }
-    const { selectedEvent, calendarEvents, recurringPayments, eventAmounts } = state.calendar
+    const { selectedEvent, calendarEvents, recurringPayments } = state.calendar
 
     if (!selectedEvent) {
       return rejectWithValue("No event selected for deletion.")
@@ -267,7 +262,6 @@ export const deleteEvent = createAsyncThunk("calendar/deleteEvent", async (_, { 
         await deleteCalendarEvent(event.event_id)
       }
 
-      // Return the IDs of all deleted events
       return {
         deletedEventIds: relatedEvents.map((event) => event.event_id),
       }

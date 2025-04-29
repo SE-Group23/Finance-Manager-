@@ -2,9 +2,9 @@
 
 import { useEffect } from "react"
 import { Edit, X, Plus, Save, Check, Bell } from "lucide-react"
-import { calculateBudgetStats } from "../services/budgetService"
-import LoadingScreen from "./LoadingScreen"
-import { useAppDispatch, useAppSelector } from "../hooks"
+import { calculateBudgetStats } from "../../services/budgetService"
+import LoadingScreen from "../LoadingScreen"
+import { useAppDispatch, useAppSelector } from "../../hooks"
 import {
   fetchBudgets,
   saveBudget,
@@ -14,7 +14,7 @@ import {
   setNewBudgetAmount,
   setShowAddCategory,
   setNewCategory,
-} from "../store/slices/budgetSlice"
+} from "../../store/slices/budgetSlice"
 
 export default function BudgetManagerContent() {
   const dispatch = useAppDispatch()
