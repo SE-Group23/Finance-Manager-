@@ -10,7 +10,7 @@ import { fetchAllAssetData, refreshAssets } from "../store/slices/assetSlice"
 
 export default function AssetPage() {
   const dispatch = useAppDispatch()
-  const { assets, summary, goldHistory, stockHistory, selectedStock, loading } = useAppSelector((state) => state.assets)
+  const { assets, summary, goldHistory, loading } = useAppSelector((state) => state.assets)
 
   useEffect(() => {
     dispatch(fetchAllAssetData())
@@ -23,10 +23,6 @@ export default function AssetPage() {
   const latestGoldPrice = goldHistory.length > 0 ? goldHistory[goldHistory.length - 1]?.price : 0
   const firstGoldPrice = goldHistory.length > 0 ? goldHistory[0]?.price : 0
   const goldPercentChange = firstGoldPrice > 0 ? ((latestGoldPrice - firstGoldPrice) / firstGoldPrice) * 100 : 0
-
-  const latestStockPrice = stockHistory.length > 0 ? stockHistory[stockHistory.length - 1]?.close : 0
-  const firstStockPrice = stockHistory.length > 0 ? stockHistory[0]?.close : 0
-  const stockPercentChange = firstStockPrice > 0 ? ((latestStockPrice - firstStockPrice) / firstStockPrice) * 100 : 0
 
   return (
     <div className="flex h-screen">
@@ -56,7 +52,7 @@ export default function AssetPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <div className="mb-8">
             <div className="bg-white p-6 rounded-2xl shadow">
               <h2 className="text-l font-semibold mb-4 text-gray-500">Gold Rate</h2>
               {goldHistory.length > 0 ? (
@@ -79,7 +75,7 @@ export default function AssetPage() {
                   </div>
                 </>
               )}
-              <div className="h-48 mt-4">
+              <div className="h-64 mt-4">
                 <PriceChart
                   data={goldHistory}
                   dataKey="price"
@@ -87,43 +83,6 @@ export default function AssetPage() {
                   color="#f59e0b"
                   areaColor="rgba(245, 158, 11, 0.1)"
                   title="Gold Price"
-                />
-              </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-2xl shadow">
-              <h2 className="text-l font-semibold mb-4 text-gray-500">
-                Stock Value {selectedStock && `(${selectedStock})`}
-              </h2>
-              {stockHistory.length > 0 ? (
-                <>
-                  <div className="text-4xl font-bold">${latestStockPrice.toFixed(2)}</div>
-                  <div className={`${stockPercentChange >= 0 ? "text-green-500" : "text-red-500"} font-medium`}>
-                    {stockPercentChange >= 0 ? "+" : ""}
-                    {stockPercentChange.toFixed(2)}%
-                    <span className="text-gray-500 text-sm font-normal">
-                      {" "}
-                      since{" "}
-                      {stockHistory[0]?.date ? new Date(stockHistory[0]?.date).toLocaleDateString() : "last period"}
-                    </span>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="text-4xl font-bold">$76.50</div>
-                  <div className="text-green-500 font-medium">
-                    +1.24% <span className="text-gray-500 text-sm font-normal">since last week</span>
-                  </div>
-                </>
-              )}
-              <div className="h-48 mt-4">
-                <PriceChart
-                  data={stockHistory}
-                  dataKey="close"
-                  xAxisKey="date"
-                  color="#3b82f6"
-                  areaColor="rgba(59, 130, 246, 0.1)"
-                  multiline={true}
                 />
               </div>
             </div>

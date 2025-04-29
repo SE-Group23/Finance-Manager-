@@ -16,6 +16,24 @@ import {
   setNewCategory,
 } from "../../store/slices/budgetSlice"
 
+interface CategoryOption {
+  name: string
+  value: string
+  type: "debit" | "credit"
+  color: string
+}
+
+const CATEGORY_OPTIONS: CategoryOption[] = [
+  { name: "Food and Drink", value: "Food and Drink", type: "debit", color: "bg-green-100 text-green-800" },
+  { name: "Personal", value: "Personal", type: "debit", color: "bg-pink-100 text-pink-800" },
+  { name: "Income", value: "Income", type: "credit", color: "bg-yellow-100 text-yellow-800" },
+  { name: "Transport", value: "Transport", type: "debit", color: "bg-purple-100 text-purple-800" },
+  { name: "Shopping", value: "Shopping", type: "debit", color: "bg-gray-100 text-gray-800" },
+  { name: "Entertainment", value: "Entertainment", type: "debit", color: "bg-orange-100 text-orange-800" },
+  { name: "Health and Fitness", value: "Health and Fitness", type: "debit", color: "bg-blue-100 text-blue-800" },
+  { name: "Bills and Utilities", value: "Bills and Utilities", type: "debit", color: "bg-blue-100 text-blue-800" },
+]
+
 export default function BudgetManagerContent() {
   const dispatch = useAppDispatch()
   const {
@@ -53,11 +71,13 @@ export default function BudgetManagerContent() {
 
   const handleAddCategory = async () => {
     if (!newCategory.name.trim()) {
+      // We could dispatch an action to set an error message here
       return
     }
 
     const amount = Number.parseFloat(newCategory.budget)
     if (isNaN(amount) || amount <= 0) {
+      // We could dispatch an action to set an error message here
       return
     }
 
@@ -102,29 +122,37 @@ export default function BudgetManagerContent() {
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Category Name</label>
-              <input
-                type="text"
-                value={newCategory.name}
-                onChange={(e) => dispatch(setNewCategory({ ...newCategory, name: e.target.value }))}
-                className="w-full p-2 border border-gray-300 rounded-md"
-                placeholder="e.g., Groceries"
-              />
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Select Category</label>
+            <div className="flex flex-wrap gap-2">
+              {CATEGORY_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => dispatch(setNewCategory({ ...newCategory, name: option.value }))}
+                  className={`px-3 py-1 rounded-md text-sm ${
+                    newCategory.name === option.value
+                      ? "ring-2 ring-green-500 " + option.color
+                      : option.color + " opacity-70"
+                  }`}
+                >
+                  {option.name}
+                </button>
+              ))}
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Budget Amount</label>
-              <input
-                type="number"
-                value={newCategory.budget}
-                onChange={(e) => dispatch(setNewCategory({ ...newCategory, budget: e.target.value }))}
-                className="w-full p-2 border border-gray-300 rounded-md"
-                placeholder="e.g., 200"
-                min="0"
-                step="0.01"
-              />
-            </div>
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Budget Amount</label>
+            <input
+              type="number"
+              value={newCategory.budget}
+              onChange={(e) => dispatch(setNewCategory({ ...newCategory, budget: e.target.value }))}
+              className="w-full p-2 border border-gray-300 rounded-md"
+              placeholder="e.g., 200"
+              min="0"
+              step="0.01"
+            />
           </div>
 
           <div className="flex justify-end">
@@ -146,17 +174,17 @@ export default function BudgetManagerContent() {
           <div className="flex flex-wrap justify-between mb-4">
             <div>
               <div className="text-sm text-black-300">Remaining</div>
-              <div className="text-4xl font-bold">PKR {remainingBudget.toLocaleString()}</div>
+              <div className="text-4xl font-bold">${remainingBudget.toLocaleString()}</div>
             </div>
             <div className="text-right">
               <div className="flex gap-8 mt-2.5">
                 <div>
                   <div className="text-sm text-black-300">Total</div>
-                  <div className="text-xl font-semibold">PKR {totalBudget.toLocaleString()}</div>
+                  <div className="text-xl font-semibold">${totalBudget.toLocaleString()}</div>
                 </div>
                 <div>
                   <div className="text-sm text-black-300">Spent</div>
-                  <div className="text-xl font-semibold">PKR {totalSpent.toLocaleString()}</div>
+                  <div className="text-xl font-semibold">${totalSpent.toLocaleString()}</div>
                 </div>
               </div>
             </div>
@@ -230,7 +258,7 @@ export default function BudgetManagerContent() {
                     <td className="py-4 font-medium text-gray-900">{category.category_name}</td>
                     <td className="py-4 pr-4">
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-900">PKR {category.spent}</span>
+                        <span className="text-gray-900">${category.spent}</span>
                         <div className="flex-1 h-4 bg-gray-100 rounded-full overflow-hidden">
                           <div
                             className={`h-full ${isNearLimit ? "bg-red-500" : ""}`}
@@ -250,13 +278,13 @@ export default function BudgetManagerContent() {
                             step="0.01"
                           />
                         ) : (
-                          <span className="text-gray-900">PKR {category.budget_limit}</span>
+                          <span className="text-gray-900">${category.budget_limit}</span>
                         )}
                       </div>
                     </td>
                     <td className="py-4 text-center text-gray-900">{percentUsed}%</td>
                     <td className={`py-4 text-center font-bold ${isOverBudget ? "text-red-500" : "text-gray-900"}`}>
-                      {isOverBudget ? "-" : ""}PKR {Math.abs(remaining)}
+                      {isOverBudget ? "-" : ""}${Math.abs(remaining)}
                     </td>
                     <td className="py-4 text-center">
                       {isOverBudget && <span className="ml-2 text-red-500 text-sm">Limit exceeded!</span>}

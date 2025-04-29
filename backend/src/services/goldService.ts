@@ -112,7 +112,7 @@ export async function ensureRecentGoldHistory(unit: "tola", currency: "PKR"): Pr
       }
     }
   } catch (err: any) {
-    throw new Error("Gold price service temporarily unavailable (rate limit or error)."); 
+    
   }
 }
 
