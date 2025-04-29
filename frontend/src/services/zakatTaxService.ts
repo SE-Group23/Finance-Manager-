@@ -1,11 +1,11 @@
-import axios from 'axios'
+import axios from "axios"
 
 const API_URL = `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api/zakat-tax`
 
 export async function fetchZakatAndTaxSummary() {
-  const token = localStorage.getItem('token')
+  const token = sessionStorage.getItem("token")
   if (!token) {
-    throw new Error('No token found in localStorage')
+    throw new Error("No token found in sessionStorage")
   }
 
   const config = {

@@ -146,17 +146,17 @@ export default function BudgetManagerContent() {
           <div className="flex flex-wrap justify-between mb-4">
             <div>
               <div className="text-sm text-black-300">Remaining</div>
-              <div className="text-4xl font-bold">${remainingBudget.toLocaleString()}</div>
+              <div className="text-4xl font-bold">PKR {remainingBudget.toLocaleString()}</div>
             </div>
             <div className="text-right">
               <div className="flex gap-8 mt-2.5">
                 <div>
                   <div className="text-sm text-black-300">Total</div>
-                  <div className="text-xl font-semibold">${totalBudget.toLocaleString()}</div>
+                  <div className="text-xl font-semibold">PKR {totalBudget.toLocaleString()}</div>
                 </div>
                 <div>
                   <div className="text-sm text-black-300">Spent</div>
-                  <div className="text-xl font-semibold">${totalSpent.toLocaleString()}</div>
+                  <div className="text-xl font-semibold">PKR {totalSpent.toLocaleString()}</div>
                 </div>
               </div>
             </div>
@@ -230,7 +230,7 @@ export default function BudgetManagerContent() {
                     <td className="py-4 font-medium text-gray-900">{category.category_name}</td>
                     <td className="py-4 pr-4">
                       <div className="flex items-center gap-2">
-                        <span className="text-gray-900">${category.spent}</span>
+                        <span className="text-gray-900">PKR {category.spent}</span>
                         <div className="flex-1 h-4 bg-gray-100 rounded-full overflow-hidden">
                           <div
                             className={`h-full ${isNearLimit ? "bg-red-500" : ""}`}
@@ -250,13 +250,13 @@ export default function BudgetManagerContent() {
                             step="0.01"
                           />
                         ) : (
-                          <span className="text-gray-900">${category.budget_limit}</span>
+                          <span className="text-gray-900">PKR {category.budget_limit}</span>
                         )}
                       </div>
                     </td>
                     <td className="py-4 text-center text-gray-900">{percentUsed}%</td>
                     <td className={`py-4 text-center font-bold ${isOverBudget ? "text-red-500" : "text-gray-900"}`}>
-                      {isOverBudget ? "-" : ""}${Math.abs(remaining)}
+                      {isOverBudget ? "-" : ""}PKR {Math.abs(remaining)}
                     </td>
                     <td className="py-4 text-center">
                       {isOverBudget && <span className="ml-2 text-red-500 text-sm">Limit exceeded!</span>}
