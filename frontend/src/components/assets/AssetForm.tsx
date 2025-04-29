@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { Currency, GoldUnit } from "../../types/asset"
+import { Currency, GoldUnit } from "../../constants/asset_types"
 import { useAppDispatch, useAppSelector } from "../../hooks"
 import { clearAssetError } from "../../store/slices/assetSlice"
 

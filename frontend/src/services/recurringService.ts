@@ -1,6 +1,6 @@
 import axios from "axios"
 
-const BASE = `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}`
+const BASE = `${import.meta.env.VITE_API_HOST}`
 const RECURRING_URL = `${BASE}/api/recurring-payments`
 
 interface RecurringPaymentRaw {

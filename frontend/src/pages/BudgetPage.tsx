@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import BudgetManagerContent from "../components/BudgetManager"
+import BudgetManagerContent from "../components/budget/BudgetManager"
 import Sidebar from "../components/Sidebar"
 import LoadingScreen from "../components/LoadingScreen"
 

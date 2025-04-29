@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState } from "react"
-import Navbar from "../components/NavBar"
+import Navbar from "../components/landingpage/NavBar"
 import { Send, Mail, Phone, MapPin } from 'lucide-react'
 
 const ContactPage: React.FC = () => {

@@ -1,7 +1,7 @@
 import type React from "react"
-import reviewer1 from "../assets/reviewer1.svg"
-import reviewer2 from "../assets/reviewer2.svg" 
-import reviewer3 from "../assets/reviewer3.svg"
+import reviewer1 from "../../assets/reviewer1.svg"
+import reviewer2 from "../../assets/reviewer2.svg" 
+import reviewer3 from "../../assets/reviewer3.svg"
 
 const TestimonialsSection: React.FC = () => {
   return (

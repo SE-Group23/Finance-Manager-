@@ -1,7 +1,7 @@
 "use client"
 import { format } from "date-fns"
-import { ChevronLeftIcon } from "./icons/ChevronLeftIcon"
-import { ChevronRightIcon } from "./icons/ChevronRightIcon"
+import { ChevronLeftIcon } from "../icons/ChevronLeftIcon"
+import { ChevronRightIcon } from "../icons/ChevronRightIcon"
 
 interface CalendarHeaderProps {
     currentDate: Date

@@ -15,7 +15,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { isLoggedIn } = useAppSelector((state) => state.auth)
   const dispatch = useAppDispatch()
 
-  // Check auth status when component mounts to ensure it's up-to-date with sessionStorage
   useEffect(() => {
     dispatch(checkAuthStatus())
   }, [dispatch])

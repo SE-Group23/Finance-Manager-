@@ -1,6 +1,6 @@
 "use client"
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, parseISO, getDay } from "date-fns"
-import type { CalendarEvent } from "../services/calendarService"
+import type { CalendarEvent } from "../../services/calendarService"
 
 interface CalendarGridProps {
     currentDate: Date

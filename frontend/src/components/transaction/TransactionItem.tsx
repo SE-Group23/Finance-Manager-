@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import type { Transaction } from "../services/transactionService"
+import type { Transaction } from "../../services/transactionService"
 
 interface TransactionItemProps {
   transaction: Transaction

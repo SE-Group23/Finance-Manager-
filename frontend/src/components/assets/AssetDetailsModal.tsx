@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import type { Asset } from "../../types/asset"
+import type { Asset } from "../../constants/asset_types"
 import { Edit, Trash2, X } from "lucide-react"
 
 interface AssetDetailsModalProps {
@@ -88,12 +88,14 @@ const AssetDetailsModal: React.FC<AssetDetailsModalProps> = ({ assets, assetType
                       {assetType === "STOCK"
                         ? `${asset.asset_details?.ticker} - ${asset.asset_details?.name}`
                         : assetType === "CURRENCY"
-                          ? `${asset.currencyCode || asset.asset_details?.currencyCode || ""}`
+                          ? `${asset.asset_details?.currency || ""
+                          }`
                           : asset.asset_details?.name || assetType}
                     </p>
                     <p className="text-m text-white">
                       {assetType === "CURRENCY"
-                        ? `Amount: ${asset.quantity} ${asset.currency_code || asset.asset_details?.currencyCode || ""} `
+                        ? `Amount: ${asset.quantity} ${asset.asset_details?.currency || ""
+                        } `
                         : `${asset.quantity} ${asset.asset_details?.unit || getUnit()} - `}
                       
                     </p>

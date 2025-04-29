@@ -1,6 +1,6 @@
 import axios from "axios"
 
-const API_URL = `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api/chatbot`
+const API_URL = `${import.meta.env.VITE_API_HOST}/api/chatbot`
 
 export async function getChatbotResponse(message: string) {
   const token = sessionStorage.getItem("token")

@@ -5,36 +5,12 @@ import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import { ArrowUp, ArrowDown, ChevronRight } from "lucide-react"
 import Sidebar from "../components/Sidebar"
-import NetWorthCard from "../components/NetWorthCard"
-import ExpenseBarChart from "../components/ExpenseBarChart"
-import BudgetProgressCard from "../components/BudgetProgressCard"
+import NetWorthCard from "../components/dashboard/NetWorthCard"
+import ExpenseBarChart from "../components/dashboard/ExpenseBarChart"
+import BudgetProgressCard from "../components/dashboard/BudgetProgressCard"
 import LoadingScreen from "../components/LoadingScreen"
 import { useAppDispatch, useAppSelector } from "../hooks"
 import { getDashboardData } from "../store/slices/dashboardSlice"
-
-interface Transaction {
-  transaction_id: number
-  amount: number
-  transaction_type: "credit" | "debit"
-  vendor: string
-  description: string
-  transaction_date: string
-  category_name: string
-}
-
-interface Budget {
-  budget_id: number
-  budget_limit: number
-  category_name: string
-  spent: number
-  month_start?: string
-}
-
-interface CategoryBreakdown {
-  category_name: string
-  amount: number
-  percentage: number
-}
 
 const DashboardPage: React.FC = () => {
   const dispatch = useAppDispatch()
@@ -43,12 +19,10 @@ const DashboardPage: React.FC = () => {
   const [pageLoading, setPageLoading] = useState<boolean>(true)
 
   useEffect(() => {
-    // Simulate page loading for a minimum time to show the loading screen
     const pageLoadTimer = setTimeout(() => {
       setPageLoading(false)
     }, 800)
 
-    // Check if user is logged in before fetching data
     if (isLoggedIn) {
       dispatch(getDashboardData())
     }

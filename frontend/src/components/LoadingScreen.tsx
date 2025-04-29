@@ -1,5 +1,4 @@
 import type React from "react"
-import { DollarSign } from "lucide-react"
 
 interface LoadingScreenProps {
   fullScreen?: boolean

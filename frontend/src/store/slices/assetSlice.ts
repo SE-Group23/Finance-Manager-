@@ -9,7 +9,7 @@ import {
   updateAsset,
   deleteAsset,
 } from "../../services/assetService"
-import type { Asset, PortfolioSummary } from "../../types/asset"
+import type { Asset, PortfolioSummary } from "../../constants/asset_types"
 
 interface AssetState {
   assets: Asset[]

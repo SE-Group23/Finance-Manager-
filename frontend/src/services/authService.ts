@@ -1,8 +1,7 @@
 import axios from "axios"
 
-const API_URL = `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}/api/auth`
+const API_URL = `${import.meta.env.VITE_API_HOST}/api/auth`
 
-// Update axios interceptors to use sessionStorage
 axios.interceptors.request.use(
   (config) => {
     const token = sessionStorage.getItem("token")

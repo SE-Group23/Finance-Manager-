@@ -1,6 +1,6 @@
 import axios from "axios"
 
-const BASE = `${import.meta.env.VITE_API_HOST}:${import.meta.env.VITE_API_PORT}`
+const BASE = `${import.meta.env.VITE_API_HOST}`
 const CALENDAR_URL = `${BASE}/api/calendar`
 
 export interface CalendarEvent {

@@ -1,5 +1,5 @@
 import type React from "react"
-import type { Transaction } from "../services/transactionService"
+import type { Transaction } from "../../services/transactionService"
 
 interface TransactionSummaryProps {
   transactions: Transaction[]

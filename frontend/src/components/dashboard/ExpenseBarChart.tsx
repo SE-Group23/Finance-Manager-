@@ -59,7 +59,7 @@ const ExpenseBarChart: React.FC<ExpenseBarChartProps> = ({ data, totalAmount }) 
             <XAxis type="number" hide domain={[0, "dataMax + 200"]} />
             <YAxis type="category" dataKey="name" tick={{ fontSize: 12 }} width={80} />
             <Bar dataKey="value" barSize={20} radius={[0, 4, 4, 0]} animationDuration={700}>
-              {chartData.map((entry,index) => (
+              {chartData.map((_,index) => (
                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
               ))}
               <LabelList dataKey="value" content={renderCustomLabel} />
