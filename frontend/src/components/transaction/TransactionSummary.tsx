@@ -39,10 +39,10 @@ const TransactionSummary: React.FC<TransactionSummaryProps> = ({ transactions })
     const amount = Number(value)
 
     if (isNaN(amount)) {
-      return "$0"
+      return "PKR 0"
     }
 
-    return amount % 1 === 0 ? `$${amount.toFixed(0)}` : `$${amount.toFixed(2)}`
+    return amount % 1 === 0 ? `PKR ${amount.toFixed(0)}` : `PKR ${amount.toFixed(2)}`
   }
 
   return (

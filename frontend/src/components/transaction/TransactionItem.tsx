@@ -33,10 +33,10 @@ const TransactionItem: React.FC<TransactionItemProps> = ({ transaction, onEdit, 
     const amount = Number(value)
 
     if (isNaN(amount)) {
-      return "$0"
+      return "PKR 0"
     }
 
-    return amount % 1 === 0 ? `$${Math.abs(amount).toFixed(0)}` : `$${Math.abs(amount).toFixed(2)}`
+    return amount % 1 === 0 ? `PKR ${Math.abs(amount).toFixed(0)}` : `PKR ${Math.abs(amount).toFixed(2)}`
   }
 
   return (

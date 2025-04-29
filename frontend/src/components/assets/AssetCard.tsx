@@ -24,12 +24,6 @@ const AssetCard: React.FC<AssetCardProps> = ({
   onEdit,
   onClick,
 }) => {
-  const purchaseValue = Number.parseFloat(asset.purchase_value.toString())
-  const currentValue = Number.parseFloat(asset.current_value.toString())
-  const percentChange = ((currentValue - purchaseValue) / purchaseValue) * 100
-  const formattedPercentChange = percentChange.toFixed(1)
-  const isPositive = percentChange >= 0
-
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation()
     if (onDelete) {
@@ -69,13 +63,7 @@ const AssetCard: React.FC<AssetCardProps> = ({
       <div className="flex justify-between mt-4">
         <div>
           <p className="text-sm text-gray-300">Purchase Value</p>
-          <p className="text-l font-semibold">${Number.parseFloat(asset.purchase_value.toString()).toFixed(2)}</p>
-        </div>
-        <div>
-          <p className={`text-sm font-semibold ${isPositive ? "text-green-400" : "text-red-400"}`}>
-            {isPositive ? "+" : ""}
-            {formattedPercentChange}%
-          </p>
+          <p className="text-l font-semibold">PKR {Number.parseFloat(asset.purchase_value.toString()).toFixed(2)}</p>
         </div>
       </div>
     </div>
